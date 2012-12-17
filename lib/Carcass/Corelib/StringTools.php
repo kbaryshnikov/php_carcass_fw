@@ -20,6 +20,10 @@ class StringTools {
         return strlen($packed) ? unpack($pack_mode . '*', $packed) : array();
     }
 
+    public static function parseTemplate($template_string, array $args) {
+        return StringTemplate::parseString($template_string, $args);
+    }
+
     public static function split($s, $separator, $limit = null, array $defaults = []) {
         if (is_array($limit)) {
             $defaults = $limit;

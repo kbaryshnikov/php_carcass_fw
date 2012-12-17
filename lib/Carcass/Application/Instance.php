@@ -55,6 +55,7 @@ class Instance {
     protected $Debugger;
     protected $PathManager;
     protected $ConnectionManager;
+    protected $Crypter = null;
 
     private static $instance = null;
 
@@ -84,6 +85,10 @@ class Instance {
 
     public static function getPathManager() {
         return static::$instance->PathManager;
+    }
+
+    public static function getCrypter() {
+        return static::$instance->getApplicationCrypter();
     }
 
     public static function getEnv($key, $default_value = null) {
@@ -261,6 +266,17 @@ class Instance {
             }
         }
         return rtrim($dirname, '/') . '/';
+    }
+
+    protected function getApplicationCrypter() {
+        if (null === $this->Crypter) {
+            $crypter_settings = $this->ConfigReader->getPath('application.secret', null);
+            if (is_object($crypter_settings)) {
+                $crypter_settings = $crypter_settings->exportArray();
+            }
+            $this->Crypter = new Corelib\Crypter($crypter_settings);
+        }
+        return $this->Crypter;
     }
 
     protected static function getCarcassRootDir() {
