@@ -7,7 +7,7 @@ use Carcass\Mail as Mail;
 class WriterFactory {
 
     public static function assemble($name, $arguments) {
-        $method = 'assemble' . $name . 'Writer';
+        $method = 'assemble' . str_replace('_', '', $name) . 'Writer';
         if (!method_exists(get_called_class(), $method)) {
             throw new \InvalidArgumentException("Unknown writer name: '$name'");
         }

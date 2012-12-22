@@ -26,7 +26,7 @@ class Dispatcher {
     }
 
     public function addDestination(WriterInterface $Writer, $level) {
-        $this->destinations[] = new Corelib\Hash(['Writer' => $Writer, 'level' => $this->resolveLevel($level)]);
+        $this->destinations[] = new Corelib\Hash(['Writer' => $Writer, 'level' => static::resolveLevel($level)]);
         return $this;
     }
 

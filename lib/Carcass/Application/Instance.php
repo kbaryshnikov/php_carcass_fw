@@ -22,8 +22,6 @@ class Instance {
         'config_dir' => 'config/',
     ];
 
-    protected static $log_writer_defaults = [];
-
     protected static $debug_reporter_defaults = [
         'cli' => 'console',
         'web' => 'firebug',
@@ -158,10 +156,13 @@ class Instance {
         $this->app_env = (array)(include $this->app_root . $this->options['env_file']) + static::$env_defaults;
         $this->app_env['app_root'] = &$this->app_root;
         if (!isset($this->app_env['configuration_name'])) {
-            throw new \RuntimeException('configuration_name is not defined in env');
+            $this->app_env['configuration_name'] = null;
         }
         if (!is_array($this->app_env['lib_path'])) {
-            $this->app_env['lib_path'] = [];
+            $this->app_env['lib_path'] = [$this->app_env['lib_path']];
+        }
+        if (empty($this->app_env['lib_path'])) {
+            $this->app_env['lib_path'] = [$this->app_root . 'lib/'];
         }
         array_unshift($this->app_env['lib_path'], static::getCarcassRootDir());
     }
@@ -209,12 +210,31 @@ class Instance {
     }
 
     protected function getConfigSubdirs() {
-        return [$this->app_env['configuration_name'] . '/', ''];
+        return $this->app_env['configuration_name'] ? [$this->app_env['configuration_name'] . '/', ''] : [''];
     }
 
 
     protected function setupLogger() {
-        $this->Logger = new Log\Dispatcher(self::$log_writer_defaults + $this->ConfigReader->exportArrayFrom('application.log', []));
+        $log_cfg = $this->ConfigReader->exportArrayFrom('application.log', []);
+        if (!$log_cfg) {
+            $log_cfg = static::getLogDefaults();
+        }
+        $this->Logger = new Log\Dispatcher($log_cfg);
+    }
+
+    protected static function getLogDefaults() {
+        $result = [];
+        if (ini_get('log_errors') && $target = ini_get('error_log')) {
+            if ($target == 'syslog') {
+                $result['syslog'] = ['Notice'];
+            } else {
+                $result['error_log'] = ['Notice'];
+            }
+        }
+        if (ini_get('display_errors') && defined('STDERR')) {
+            $result['file'] = ['Notice', ['filename' => STDERR]];
+        }
+        return $result;
     }
 
 

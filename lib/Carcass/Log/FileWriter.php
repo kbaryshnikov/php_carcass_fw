@@ -16,7 +16,13 @@ class FileWriter implements WriterInterface {
     }
 
     public function log(Message $Message) {
-        error_log($Message->getFormattedString() . "\n", 3, $this->filename);
+        if (defined('STDOUT') && $this->filename === STDOUT) { 
+            fprintf(STDOUT, $Message->getFormattedString() . "\n");
+        } elseif (defined('STDERR') && $this->filename === STDERR) {
+            fprintf(STDERR, $Message->getFormattedString() . "\n");
+        } else {
+            error_log($Message->getFormattedString() . "\n", 3, $this->filename);
+        }
         return $this;
     }
 
