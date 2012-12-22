@@ -12,6 +12,10 @@ class Item implements ItemInterface, \Iterator, \ArrayAccess, \Countable, Coreli
 
     protected $storage = [];
 
+    public function __construct(array $data = null) {
+        $data and $this->import($data);
+    }
+
     public function getPath($path, $default_value = null) {
         if (false === $key = strtok($path, '.')) {
             return $default_value;

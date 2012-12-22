@@ -2,7 +2,9 @@
 
 namespace Carcass\Application;
 
-class Cli_Response extends Response {
+use Carcass\Corelib as Corelib;
+
+class Cli_Response extends Corelib\Response {
 
     protected $status = 0;
 

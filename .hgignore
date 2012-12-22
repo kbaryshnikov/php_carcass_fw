@@ -1,0 +1,9 @@
+syntax: glob
+*/.*.swp
+.*.swp
+*.tmproj
+*/*.tmproj
+*/.DS_Store
+.DS_Store
+*/.~*
+tags

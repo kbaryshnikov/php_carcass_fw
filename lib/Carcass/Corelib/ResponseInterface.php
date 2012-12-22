@@ -1,6 +1,6 @@
 <?php
 
-namespace Carcass\Application;
+namespace Carcass\Corelib;
 
 interface ResponseInterface {
 

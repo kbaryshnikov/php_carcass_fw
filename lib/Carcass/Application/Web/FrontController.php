@@ -13,11 +13,11 @@ class Web_FrontController implements ControllerInterface {
         $Router = null,
         $Config = null;
 
-    public function __construct(Request $Request, array $dependency_classes) {
+    public function __construct(Corelib\Request $Request, array $dependency_classes) {
         $this->Request = $Request;
         $this->dependency_classes = $dependency_classes;
 
-        $ConfigReader = Instance::getConfigReader();
+        $ConfigReader = Injector::getConfigReader();
         if (!$ConfigReader->has('web')) {
             throw new \RuntimeException('No web configuration found');
         }
@@ -28,10 +28,10 @@ class Web_FrontController implements ControllerInterface {
         try {
             $this->getRouter()->route($this->Request, $this);
         } catch (\Exception $e) {
-            Instance::getLogger()->logException($e);
-            if (Instance::getDebugger()->isEnabled()) {
-                Instance::getDebugger()->dumpException($e);
-                $this->showInternalError(Instance::getDebugger()->exceptionToString($e));
+            Injector::getLogger()->logException($e);
+            if (Injector::getDebugger()->isEnabled()) {
+                Injector::getDebugger()->dumpException($e);
+                $this->showInternalError(Injector::getDebugger()->exceptionToString($e));
             } else {
                 $this->showInternalError();
             }
@@ -44,9 +44,9 @@ class Web_FrontController implements ControllerInterface {
 
         $page_class = "{$controller}Page";
 
-        include_once Instance::getPathManager()->getPathToPhpFile('page', $page_class);
+        include_once Injector::getPathManager()->getPathToPhpFile('page', $page_class);
 
-        $page_fq_class = Instance::getFqClassName($page_class);
+        $page_fq_class = Injector::getFqClassName($page_class);
 
         $Page = new $page_fq_class($this->Request, $this->getResponse(), $this->getRouter());
         $Page->dispatch($action, $Args);
@@ -61,12 +61,12 @@ class Web_FrontController implements ControllerInterface {
             $this->getResponse()->setStatus(500);
             try {
                 $this->getResponse()->write(
-                    file_get_contents(Instance::getPathManager()->getPath('var', $this->Config->unhandled_exception_stub_file))
+                    file_get_contents(Injector::getPathManager()->getPath('var', $this->Config->unhandled_exception_stub_file))
                 );
                 return;
             } catch (\Exception $e) {
-                Instance::getLogger()->logException($e);
-                Instance::getDebugger()->dumpException($e);
+                Injector::getLogger()->logException($e);
+                Injector::getDebugger()->dumpException($e);
             }
         }
         $this->getResponse()->writeHttpError(500, null, $message);

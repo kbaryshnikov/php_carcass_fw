@@ -12,7 +12,7 @@ class Cli_RequestBuilder {
         } else {
             $args = [];
         }
-        return new Request([
+        return new Corelib\Request([
             'Args' => $args,
             'Env'  => $_SERVER,
         ]);

@@ -2,8 +2,10 @@
 
 namespace Carcass\Application;
 
+use Carcass\Corelib as Corelib;
+
 interface RouterInterface {
 
-    public function route(Request $Request, ControllerInterface $Controller);
+    public function route(Corelib\Request $Request, ControllerInterface $Controller);
 
 }

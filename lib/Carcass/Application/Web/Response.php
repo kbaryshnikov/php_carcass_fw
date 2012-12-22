@@ -4,7 +4,7 @@ namespace Carcass\Application;
 
 use Carcass\Corelib as Corelib;
 
-class Web_Response extends Response {
+class Web_Response extends Corelib\Response {
 
     const
         COOKIE_MAX_RELATIVE_VALUE = 999999999,

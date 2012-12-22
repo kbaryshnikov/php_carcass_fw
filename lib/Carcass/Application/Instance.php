@@ -24,21 +24,6 @@ class Instance {
 
     protected static $log_writer_defaults = [];
 
-    protected static $run_mode_defaults = [
-        'cli' => [
-            'request_builder_class' => 'Cli_RequestBuilder',
-            'response_class' => 'Cli_Response',
-            'router_class' => 'Cli_Router',
-            'fc_class' => 'Cli_FrontController',
-        ],
-        'web' => [
-            'request_builder_class' => 'Web_RequestBuilder',
-            'response_class' => 'Web_Response',
-            'router_class' => 'Web_Router_Config',
-            'fc_class' => 'Web_FrontController',
-        ],
-    ];
-
     protected static $debug_reporter_defaults = [
         'cli' => 'console',
         'web' => 'firebug',
@@ -54,6 +39,7 @@ class Instance {
     protected $Logger;
     protected $Debugger;
     protected $PathManager;
+    protected $Injector;
     protected $ConnectionManager;
     protected $Crypter = null;
 
@@ -61,34 +47,6 @@ class Instance {
 
     public static function run($app_root, array $overrides = []) {
         new static($app_root, $overrides);
-    }
-
-    public static function getConfigReader() {
-        return static::$instance->ConfigReader;
-    }
-
-    public static function getAutoloader() {
-        return static::$instance->Autoloader;
-    }
-
-    public static function getLogger() {
-        return static::$instance->Logger;
-    }
-
-    public static function getDebugger() {
-        return static::$instance->Debugger;
-    }
-
-    public static function getConnectionManager() {
-        return static::$instance->ConnectionManager;
-    }
-
-    public static function getPathManager() {
-        return static::$instance->PathManager;
-    }
-
-    public static function getCrypter() {
-        return static::$instance->getApplicationCrypter();
     }
 
     public static function getEnv($key, $default_value = null) {
@@ -120,31 +78,73 @@ class Instance {
         $this->setupLogger();
         $this->setupDebugger();
         $this->setupPathManager();
-        $this->setupConnectionManager();
+        $this->setupDependencies();
     }
 
 
     protected function executeRunMode() {
-        $dependency_classes = $this->getRunModeDependencyClasses();
-        $Request = $dependency_classes['request_builder_class']::assembleRequest();
-        foreach (['_GET', '_POST', '_SERVER', '_FILES', '_COOKIE', '_SESSION', '_REQUEST', '_ENV'] as $global) {
-            unset($$global);
-        }
-        $FrontController = new $dependency_classes['fc_class']($Request, [
-            'router_class' => $dependency_classes['router_class'],
-            'response_class' => $dependency_classes['response_class'],
-        ]);
-        $FrontController->run();
+        $this->Injector->FrontController->run();
     }
 
-    protected function getRunModeDependencyClasses() {
-        $config = $this->ConfigReader->exportArrayFrom('application.run_mode.' . $this->app_env['run_mode'], []);
-        if (isset(static::$run_mode_defaults[$this->app_env['run_mode']])) {
-            $config = array_filter($config) + static::$run_mode_defaults[$this->app_env['run_mode']];
+    protected function setupDependencies() {
+        $this->Injector = Injector::setInstance(new Corelib\Injector);
+
+        $dep_config = $this->ConfigReader->exportArrayFrom('application.dependencies.' . $this->app_env['run_mode'], []);
+        $dep_map = $this->prefixNamespaces(isset($dep_config['map']) && is_array($dep_config['map']) ? $dep_config['map'] : []);
+
+        if (isset($dep_config['fn']) && $dep_config['fn'] instanceof Closure) {
+            $setupFn = $dep_config['fn'];
+        } else {
+            $setupFn = [ $this, 'setupDependencies' . $this->app_env['run_mode'] ];
         }
-        return array_map(function($item) {
-            return substr($item, 0, 1) === '\\' ? $item : (__NAMESPACE__ . '\\' . $item);
-        }, $config);
+
+        $this->Injector->dep_map = $dep_map;
+        $this->Injector->app_env = $this->app_env;
+        $this->Injector->ConfigReader = $this->ConfigReader;
+        $this->Injector->PathManager  = $this->PathManager;
+        $this->Injector->Debugger     = $this->Debugger;
+        $this->Injector->Logger       = $this->Logger;
+
+        if (is_callable($setupFn)) {
+            $setupFn($this->Injector, $dep_map);
+        } else {
+            throw new \LogicException("Cannot setupDependencies() for {$this->app_env['run_mode']} mode: no setup function "
+                                    . "is defined in configuration, and mode is not supported internally");
+        }
+    }
+
+    protected function setupDependenciesCli($Injector, array $dep_map) {
+        $this->Injector->Request = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function($I) {
+            $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Cli_RequestBuilder');
+            class_exists($class);
+            return $class::assembleRequest();
+        });
+        $this->Injector->Response = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function($I) {
+            $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Cli_Response');
+            return new $class;
+        });
+        $this->Injector->Router = $this->Injector->reuse(isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function($I) {
+            $class = (isset($I->dep_map['Router']) ? $I->dep_map['Router'] : '\Carcass\Application\Cli_Router');
+            return new $class;
+        });
+        $this->Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function($I) {
+            $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Cli_FrontController');
+            return new $class($I->Request, $I->Response, $I->Router);
+        };
+    }
+
+
+    protected static function prefixNamespaces(array $list) {
+        return array_map([get_called_class(), 'prefixNamespace'], $list);
+    }
+
+    protected static function prefixNamespace($name) {
+        if (substr($name, 0, 1) === '_') {
+            return __NAMESPACE__ . '\\' . substr($name, 1);
+        } elseif (substr($name, 0, 1) !== '\\') {
+            return static::getFqClassName($name);
+        }
+        return $name;
     }
 
 

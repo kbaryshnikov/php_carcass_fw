@@ -5,24 +5,24 @@ namespace Carcass\Application;
 use Carcass\Corelib;
 
 class Cli_FrontController implements ControllerInterface {
-    use Corelib\DependencyFactoryTrait;
 
     protected
         $Request,
         $Response = null,
         $Router = null;
 
-    public function __construct(Request $Request, array $dependency_classes) {
+    public function __construct(Corelib\Request $Request, Corelib\Response $Response, RouterInterface $Router) {
         $this->Request = $Request;
-        $this->dependency_classes = $dependency_classes;
+        $this->Response = $Response;
+        $this->Router = $Router;
     }
 
     public function run() {
         try {
             $this->getRouter()->route($this->Request, $this);
         } catch (\Exception $e) {
-            Instance::getLogger()->logException($e);
-            Instance::getDebugger()->dumpException($e);
+            Injector::getLogger()->logException($e);
+            Injector::getDebugger()->dumpException($e);
             $this->getResponse()->setStatus(255);
         }
         exit($this->getResponse()->getStatus());
@@ -34,7 +34,7 @@ class Cli_FrontController implements ControllerInterface {
         $script_class = "{$controller}Script";
 
         try {
-            include_once Instance::getPathManager()->getPathToPhpFile('scripts', $script_class);
+            include_once Injector::getPathManager()->getPathToPhpFile('scripts', $script_class);
         } catch (WarningException $e) {
             $this->getResponse()->setStatus(2)->writeErrorLn("Could not load '$script_class' implementation file: " . $e->getMessage());
             return;

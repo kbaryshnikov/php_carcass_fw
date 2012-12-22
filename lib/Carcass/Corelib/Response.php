@@ -1,8 +1,8 @@
 <?php
 
-namespace Carcass\Application;
+namespace Carcass\Corelib;
 
-abstract class Response implements ResponseInterface {
+class Response implements ResponseInterface {
     
     protected
         $status = null,

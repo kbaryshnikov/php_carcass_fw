@@ -6,7 +6,7 @@ use Carcass\Corelib as Corelib;
 
 abstract class Controller {
 
-    public function __construct(Request $Request, ResponseInterface $Response, RouterInterface $Router) {
+    public function __construct(Corelib\Request $Request, Corelib\ResponseInterface $Response, RouterInterface $Router) {
         $this->Request = $Request;
         $this->Response = $Response;
         $this->Router = $Router;
