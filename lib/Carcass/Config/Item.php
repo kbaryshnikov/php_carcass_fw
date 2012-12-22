@@ -51,6 +51,11 @@ class Item implements ItemInterface, \Iterator, \ArrayAccess, \Countable, Coreli
         return $this->get($key);
     }
 
+    protected function &getRef($key) {
+        $value = $this->getPath($key);
+        return $value;
+    }
+
     protected function &getDataArrayPtr() {
         return $this->storage;
     }

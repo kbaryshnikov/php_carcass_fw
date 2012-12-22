@@ -210,7 +210,7 @@ class Instance {
     }
 
     protected function getConfigSubdirs() {
-        return $this->app_env['configuration_name'] ? [$this->app_env['configuration_name'] . '/', ''] : [''];
+        return $this->app_env['configuration_name'] ? ['', $this->app_env['configuration_name'] . '/'] : [''];
     }
 
 

@@ -9,16 +9,96 @@ use Carcass\Config as Config;
 class BuildngxScript extends Application\Controller {
 
     public function actionDefault($Args) {
+        $target = $Args->get('o', null);
         $app_root = rtrim($Args->get('app-root', getcwd()), '/') . '/';
         $AppEnv = new Corelib\Hash(include "{$app_root}env.php");
-        $cfg = new Config\Reader($this->getConfigLocations($app_root, $AppEnv));
-        $ngxcfg = "{$app_root}config/nginx.conf.php";
-        if (!file_exists($ngxcfg)) {
-            $this->Response->writeErrorLn("File not found: '$ngxcfg'");
+        $Config = new Config\Reader($this->getConfigLocations($app_root, $AppEnv));
+        try {
+            $vars = $this->buildVars($Config);
+            $vars['app_root'] = rtrim($app_root, '/');
+        } catch (\Exception $e) {
+            $this->Response->writeLn("Configuration failure: " . $e->getMessage());
             return 1;
         }
-        include $ngxcfg;
+        $ngx_cfg = "{$app_root}config/nginx.conf";
+        $ngx_fcgi_cfg = "{$app_root}config/nginx-fastcgi.conf";
+        if (file_exists($ngx_fcgi_cfg)) {
+            $vars['FASTCGI'] = $this->parse($ngx_fcgi_cfg, $vars);
+        }
+        if (!file_exists($ngx_cfg)) {
+            $this->Response->writeErrorLn("File not found: '$ngx_cfg'");
+            return 1;
+        }
+        $result = $this->parse($ngx_cfg, $vars);
+        if ($target) {
+            file_put_contents($target, $result, LOCK_EX);
+        } else {
+            $this->Response->write($result);
+        }
         return 0;
+    }
+
+    protected function parse($file, array $args) {
+        return Corelib\StringTemplate::constructFromFile($file)->parse($args);
+    }
+
+    protected function buildVars($Config) {
+        $vars = [
+            'app_name' => $Config->application->name,
+        ];
+        foreach ($this->Request->Env->exportArray() as $k => $v) {
+            $vars["ENV_$k"] = $v;
+        }
+
+        $vars['fcgi_addr'] = $Config->web->server->socket;
+
+        if ($Config->web->server->has('listen')) {
+            $vars['listen'] = self::assocToValArray($Config->web->server->listen);
+        }
+
+        $server_names = [];
+        if ($Config->web->site->has('domain')) {
+            $server_names[] = $Config->web->site->domain;
+        }
+        if ($Config->web->site->has('aliases')) {
+            foreach ($Config->web->site->aliases as $alias) {
+                $server_names[] = $alias;
+            }
+        }
+        $vars['server_names'] = $server_names ? join(' ', $server_names) : null;
+
+        if ($Config->web->server->has('ssl')) {
+            foreach ($Config->web->server->ssl as $key => $value) {
+                $vars['ssl'][$key] = static::assocToValArray($value);
+            }
+        }
+
+        if ($Config->web->server->has('realip')) {
+            if ($Config->web->server->realip->has('header')) {
+                $vars['realip_header'] = $Config->web->server->realip->header;
+            }
+            $vars['realip_from'] = static::assocToValArray($Config->web->server->realip->from);
+        }
+
+        foreach ($Config->exportArrayFrom('web') as $k => $v) {
+            if (substr($k, 0, 4) == 'web_') {
+                $vars[$k] = $v;
+            }
+        }
+
+        return $vars;
+    }
+
+    protected static function assocToValArray($array) {
+        if (!Corelib\ArrayTools::isTraversable($array)) {
+            $array = [$array];
+        }
+
+        $result = [];
+        foreach ($array as $value) {
+            $result[] = ['value' => $value];
+        }
+        return $result;
     }
 
     protected function getConfigLocations($app_root, $AppEnv) {
@@ -38,7 +118,7 @@ class BuildngxScript extends Application\Controller {
     }
 
     protected function getConfigSubdirs($AppEnv) {
-        return $AppEnv->get('configuration_name') ? [$AppEnv->get('configuration_name') . '/', ''] : [''];
+        return $AppEnv->get('configuration_name') ? ['', $AppEnv->get('configuration_name') . '/'] : [''];
     }
 
     protected static function fixPathes(array $dirnames) {
