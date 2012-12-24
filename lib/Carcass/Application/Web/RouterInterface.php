@@ -2,10 +2,12 @@
 
 namespace Carcass\Application;
 
-class Web_RouterInterface extends RouterInterface {
+use Carcass\Corelib as Corelib;
 
-    public function getUrl($route, array $args);
+interface Web_RouterInterface extends RouterInterface {
 
-    public function getAbsoluteUrl($route, array $args);
+    public function getUrl(Corelib\Request $Request, $route, array $args);
+
+    public function getAbsoluteUrl(Corelib\Request $Request, $route, array $args);
 
 }

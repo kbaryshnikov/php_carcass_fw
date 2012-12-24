@@ -9,7 +9,14 @@ use Carcass\Config as Config;
 class BuildngxScript extends Application\Controller {
 
     public function actionDefault($Args) {
+        if ($Args->get('h')) {
+            $this->printHelp();
+            return 0;
+        }
         $target = $Args->get('o', null);
+        if (!is_writeable($target)) {
+            throw new \RuntimeException("'$target' is not writeable");
+        }
         $app_root = rtrim($Args->get('app-root', getcwd()), '/') . '/';
         $AppEnv = new Corelib\Hash(include "{$app_root}env.php");
         $Config = new Config\Reader($this->getConfigLocations($app_root, $AppEnv));
@@ -68,9 +75,7 @@ class BuildngxScript extends Application\Controller {
         $vars['server_names'] = $server_names ? join(' ', $server_names) : null;
 
         if ($Config->web->server->has('ssl')) {
-            foreach ($Config->web->server->ssl as $key => $value) {
-                $vars['ssl'][$key] = static::assocToValArray($value);
-            }
+            $vars['ssl'] = static::assocToValArray($Config->web->server->ssl);
         }
 
         if ($Config->web->server->has('realip')) {
@@ -95,8 +100,9 @@ class BuildngxScript extends Application\Controller {
         }
 
         $result = [];
-        foreach ($array as $value) {
-            $result[] = ['value' => $value];
+
+        foreach ($array as $key => $value) {
+            $result[] = ['key' => $key, 'value' => $value];
         }
         return $result;
     }
@@ -133,6 +139,13 @@ class BuildngxScript extends Application\Controller {
             }
         }
         return rtrim($dirname, '/') . '/';
+    }
+
+    protected function printHelp() {
+        (new Help([
+            '-o filename' => 'Output to <filename>, default: stdout',
+            '-h' => 'Show help',
+        ], 'buildngx arguments:'))->displayTo($this->Response);
     }
 
 }

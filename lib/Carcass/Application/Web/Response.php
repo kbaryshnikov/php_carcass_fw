@@ -27,16 +27,16 @@ class Web_Response extends Corelib\Response {
             'httponly' => true,
         ];
 
-    public function __construct(Request $Request, $no_auto_buffering = false) {
+    public function __construct(Corelib\Request $Request, $no_auto_buffering = false) {
         $this->configureFromEnv($Request->Env);
         $no_auto_buffering or $this->begin();
     }
 
     public function configureFromEnv(Corelib\DatasourceInterface $Env) {
-        if ($Env->has('HTTP_HOST')) {
-            $this->cookie_settings['domain'] = '.' . preg_replace('#www\.#', '', trim($Env->get('HTTP_HOST', '.')));
+        if ($Env->has('HOST')) {
+            $this->cookie_settings['domain'] = '.' . preg_replace('#www\.#', '', $Env->HOST);
         }
-        if ($Env->has('HTTPS') && 0 != strcasecmp($Env->HTTPS, 'off')) {
+        if ($Env->get('SCHEME') === 'https') {
             $this->cookie_settings['secure'] = true;
         }
         if ($Env->has('SERVER_PROTOCOL') && preg_match('#^HTTP/(\d+\.\d+)#', $Env->SERVER_PROTOCOL, $matches)) {

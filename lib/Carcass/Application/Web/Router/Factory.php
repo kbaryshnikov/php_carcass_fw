@@ -2,10 +2,21 @@
 
 namespace Carcass\Application;
 
-class Web_Router_Factory {
+use Carcass\Config as Config;
 
-    public static function assembleConfigRouter() {
-        return new Web_Router_Config(Instance::getConfig()->web->routes);
+class Web_Router_Factory {
+    
+    public static function assembleByConfig(Config\Item $RouteConfig) {
+        switch ($RouteConfig->name) {
+            case 'map':
+                return static::assembleMapRouter($RouteConfig);
+            default:
+                throw new \LogicException("Unknown router name: '{$RouteConfig->name}'");
+        }
+    }
+
+    public static function assembleMapRouter(Config\Item $Config) {
+        return new Web_Router_Map($Config->exportArrayFrom('map', []), $Config->exportArrayFrom('args', []));
     }
 
 }

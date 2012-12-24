@@ -131,6 +131,25 @@ class Instance {
         };
     }
 
+    protected function setupDependenciesWeb($Injector, array $dep_map) {
+        $this->Injector->Request = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function($I) {
+            $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Web_RequestBuilder');
+            class_exists($class);
+            return $class::assembleRequest();
+        });
+        $this->Injector->Response = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function($I) {
+            $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Web_Response');
+            return new $class($I->Request);
+        });
+        $this->Injector->Router = $this->Injector->reuse(isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function($I) {
+            return \Carcass\Application\Web_Router_Factory::assembleByConfig($I->ConfigReader->web->router);
+        });
+        $this->Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function($I) {
+            $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Web_FrontController');
+            return new $class($I->Request, $I->Response, $I->Router, $I->ConfigReader->web);
+        };
+    }
+
 
     protected static function prefixNamespaces(array $list) {
         return array_map([get_called_class(), 'prefixNamespace'], $list);

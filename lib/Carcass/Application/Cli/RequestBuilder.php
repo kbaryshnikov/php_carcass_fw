@@ -14,8 +14,23 @@ class Cli_RequestBuilder {
         }
         return new Corelib\Request([
             'Args' => $args,
-            'Env'  => $_SERVER,
+            'Env'  => static::setupCliEnv($_SERVER),
         ]);
+    }
+
+    protected static function setupCliEnv(array $env) {
+        $env['HOST'] = static::detectHostname($env);
+        return $env;
+    }
+
+    protected static function detectHostname($env) {
+        $host = null;
+        if (!empty($env['HOST'])) {
+            $host = $env['HOST'];
+        } else {
+            $host = php_uname('h');
+        }
+        return rtrim( strtolower($host), '.' );
     }
 
 }

@@ -8,8 +8,8 @@ class Cli_FrontController implements ControllerInterface {
 
     protected
         $Request,
-        $Response = null,
-        $Router = null;
+        $Response,
+        $Router;
 
     public function __construct(Corelib\Request $Request, Corelib\Response $Response, RouterInterface $Router) {
         $this->Request = $Request;

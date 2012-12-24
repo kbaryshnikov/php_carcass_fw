@@ -109,6 +109,22 @@ class ArrayTools {
     }
 
     /**
+     * Executes map function on associative array.
+     * 
+     * @param array    $array            Array to map
+     * @param Callable $filter_function  (&$key, $value) returns new value, can modify key
+     * @return array Filtered array
+     */
+    public static function mapAssoc(array $array, Callable $map_function) {
+        $result = [];
+        foreach ($array as $key => $value) {
+            $value = $map_function($key, $value);
+            $result[$key] = $value;
+        }
+        return $result;
+    }
+
+    /**
      * Resursive implode
      * 
      * @param string $separator 

@@ -5,23 +5,18 @@ namespace Carcass\Application;
 use Carcass\Corelib;
 
 class Web_FrontController implements ControllerInterface {
-    use Corelib\DependencyFactoryTrait;
 
     protected
         $Request,
-        $Response = null,
-        $Router = null,
-        $Config = null;
+        $Response,
+        $Router,
+        $Config;
 
-    public function __construct(Corelib\Request $Request, array $dependency_classes) {
+    public function __construct(Corelib\Request $Request, Corelib\Response $Response, RouterInterface $Router, Config\Item $WebConfig = null) {
         $this->Request = $Request;
-        $this->dependency_classes = $dependency_classes;
-
-        $ConfigReader = Injector::getConfigReader();
-        if (!$ConfigReader->has('web')) {
-            throw new \RuntimeException('No web configuration found');
-        }
-        $this->Config = $ConfigReader->web;
+        $this->Response = $Response;
+        $this->Router = $Router;
+        $this->Config = $WebConfig;
     }
 
     public function run() {

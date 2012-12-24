@@ -162,7 +162,7 @@ class Crypter {
      */
     public function encryptSalted($s, $salt = null, $secret = null) {
         if (empty($salt)) {
-            $salt = $this->getRandomString(6, 8, join('', array_merge(range('A','Z'),range('a','z'),range(0,9))));
+            $salt = static::getRandomString(6, 8, join('', array_merge(range('A','Z'),range('a','z'),range(0,9))));
         }
         return $salt . '$' . StringTools::webSafeBase64Encode(mcrypt_encrypt(
             $this->crypt_algo,
@@ -202,7 +202,7 @@ class Crypter {
      * @param int $max
      * @return int
      */
-    static public function getRandomNumber($min = 0, $max = 65535) {
+    public static function getRandomNumber($min = 0, $max = 65535) {
         $min = (int)$min;
         $max = (int)$max;
         if ($min > $max) {
@@ -213,7 +213,7 @@ class Crypter {
         return intval($random_int * ($max - $min + 1) / ~(1<<63)) + $min;
     }
 
-    static public function getRandomString($min_len = 8, $max_len = null, $chars = 'abcdefghijklmnopqrstuvwxyz') {
+    public static function getRandomString($min_len = 8, $max_len = null, $chars = 'abcdefghijklmnopqrstuvwxyz') {
         if ($max_len === null) $max_len = $min_len;
         if ($min_len < 1 || $max_len < 1 || $max_len < $min_len) {
             throw new \InvalidArgumentException('Invalid length value(s)');
@@ -222,10 +222,10 @@ class Crypter {
             throw new \InvalidArgumentException('Invalid chars argument value');
         }
         $result = '';
-        $result_length = self::getRandomNumber($min_len, $max_len);
+        $result_length = static::getRandomNumber($min_len, $max_len);
         $chars_length  = mb_strlen($chars);
         for ($i = 0; $i < $result_length; $i++) {
-            $result .= mb_substr($chars, self::getRandomNumber(0, $chars_length-1), 1);
+            $result .= mb_substr($chars, static::getRandomNumber(0, $chars_length-1), 1);
         }
         return $result;
     }
