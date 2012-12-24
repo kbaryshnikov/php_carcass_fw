@@ -30,11 +30,20 @@ class Web_Router_Map implements Web_RouterInterface {
         }
     }
 
-    public function getUrl(Corelib\Request $Request, $route, array $args) {
-    #    return (new Corelib\Url($this->findUrl($route)
+    public function getUrl(Corelib\Request $Request, $route, array $args = []) {
+        return $this->getUrlInstanceByRoute($route, $args)->getRelative();
     }
 
-    public function getAbsoluteUrl(Corelib\Request $Request, $route, array $args) {
+    public function getAbsoluteUrl(Corelib\Request $Request, $route, array $args = []) {
+        return $this->getUrlInstanceByRoute($route, $args)->getAbsolute($Request->Env->HOST, $Request->Env->get('SCHEME', 'http'));
+    }
+
+    protected function getUrlInstanceByRoute($route, array $args) {
+        $url = $this->findUrl($route);
+        if (null === $url) {
+            throw new \InvalidArgumentException("Route not registered: '$route'");
+        }
+        return new Corelib\Url($url, $args);
     }
 
     protected function findRoute($uri) {
@@ -83,7 +92,7 @@ class Web_Router_Map implements Web_RouterInterface {
     }
 
     protected static function normalize($route) {
-        return strtok($route, '.') . '.' . (strtok(null) ?: 'Default');
+        return ucfirst(strtok($route, '.')) . '.' . ucfirst(strtok(null) ?: 'Default');
     }
 
     protected function compileMap(array $map) {

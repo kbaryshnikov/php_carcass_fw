@@ -16,12 +16,12 @@ class Web_Router_Simple implements Web_RouterInterface {
         }
     }
 
-    public function getUrl(Corelib\Request $Request, $route, array $args) {
+    public function getUrl(Corelib\Request $Request, $route, array $args = []) {
         return $this->buildUrl($route, $args)->getRelative();
     }
 
-    public function getAbsoluteUrl(Corelib\Request $Request, $route, array $args) {
-        return $this->getUrl($Request, $route, $args)->getAbsolute($Request->Env->HOST, $Request->Env->SCHEME);
+    public function getAbsoluteUrl(Corelib\Request $Request, $route, array $args = []) {
+        return $this->buildUrl($route, $args)->getAbsolute($Request->Env->HOST, $Request->Env->get('SCHEME', 'http'));
     }
 
     protected function findRoute($uri) {

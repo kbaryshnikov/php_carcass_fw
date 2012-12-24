@@ -2,7 +2,8 @@
 
 namespace Carcass\Application;
 
-use Carcass\Corelib;
+use Carcass\Corelib as Corelib;
+use Carcass\Config as Config;
 
 class Web_FrontController implements ControllerInterface {
 
@@ -20,11 +21,17 @@ class Web_FrontController implements ControllerInterface {
     }
 
     public function run() {
+        $debugger_is_enabled = Injector::getDebugger()->isEnabled();
+        register_shutdown_function(function() use ($debugger_is_enabled) {
+            if ($e = error_get_last()) {
+                $this->showInternalError( $debugger_is_enabled ? "$e[message] in $e[file] line $e[line]" : null );
+            }
+        });
         try {
             $this->getRouter()->route($this->Request, $this);
         } catch (\Exception $e) {
             Injector::getLogger()->logException($e);
-            if (Injector::getDebugger()->isEnabled()) {
+            if ($debugger_is_enabled) {
                 Injector::getDebugger()->dumpException($e);
                 $this->showInternalError(Injector::getDebugger()->exceptionToString($e));
             } else {
@@ -39,7 +46,7 @@ class Web_FrontController implements ControllerInterface {
 
         $page_class = "{$controller}Page";
 
-        include_once Injector::getPathManager()->getPathToPhpFile('page', $page_class);
+        include_once Injector::getPathManager()->getPathToPhpFile('pages', $page_class);
 
         $page_fq_class = Injector::getFqClassName($page_class);
 

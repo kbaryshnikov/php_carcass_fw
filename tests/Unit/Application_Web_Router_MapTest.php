@@ -10,11 +10,11 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
     private static $cfg = [
         'Index'             => '/',
         'Users.Default'     => '/users/',
-        'Users.byId'        => '/users/{#id}',
-        'Users.byIdEx'      => '/users/{#id}-{$title}/{+extra}',
+        'Users.ById'        => '/users/{#id}',
+        'Users.ByIdEx'      => '/users/{#id}-{$title}/{+extra}',
         'News'              => '/news/',
-        'News.byTitle'      => '/news/{$title}',
-        'News.byIdAndTitle' => '/news/id/{#id}[-{$title}]',
+        'News.ByTitle'      => '/news/{$title}',
+        'News.ByIdAndTitle' => '/news/id/{#id}[-{$title}]',
         'Search'            => '/search/{+q}',
         'Nested'            => '/nested/[{#id}[-{$title}]]',
     ];
@@ -39,7 +39,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
         $R = new Application\Web_Router_Map(self::$cfg);
 
         $C = $this->getControllerMock();
-        $C->expects($this->once())->method('dispatch')->with($this->equalTo('Users.byId'), $this->equalTo(new Corelib\Hash(['id'=>1])));
+        $C->expects($this->once())->method('dispatch')->with($this->equalTo('Users.ById'), $this->equalTo(new Corelib\Hash(['id'=>1])));
         $R->route($this->getRequest('/users/1'), $C);
     }
 
@@ -47,7 +47,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
         $R = new Application\Web_Router_Map(self::$cfg);
 
         $C = $this->getControllerMock();
-        $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.byTitle'), $this->equalTo(new Corelib\Hash(['title'=>'foo'])));
+        $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.ByTitle'), $this->equalTo(new Corelib\Hash(['title'=>'foo'])));
         $R->route($this->getRequest('/news/foo'), $C);
     }
 
@@ -63,7 +63,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
         $R = new Application\Web_Router_Map(self::$cfg);
 
         $C = $this->getControllerMock();
-        $C->expects($this->once())->method('dispatch')->with($this->equalTo('Users.byIdEx'), $this->equalTo(new Corelib\Hash(['id'=>1,'title'=>'name','extra'=>'1/2/3'])));
+        $C->expects($this->once())->method('dispatch')->with($this->equalTo('Users.ByIdEx'), $this->equalTo(new Corelib\Hash(['id'=>1,'title'=>'name','extra'=>'1/2/3'])));
         $R->route($this->getRequest('/users/1-name/1/2/3'), $C);
     }
 
@@ -71,11 +71,11 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
         $R = new Application\Web_Router_Map(self::$cfg);
 
         $C = $this->getControllerMock();
-        $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.byIdAndTitle'), $this->equalTo(new Corelib\Hash(['id'=>1,'title'=>'name'])));
+        $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.ByIdAndTitle'), $this->equalTo(new Corelib\Hash(['id'=>1,'title'=>'name'])));
         $R->route($this->getRequest('/news/id/1-name'), $C);
 
         $C = $this->getControllerMock();
-        $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.byIdAndTitle'), $this->equalTo(new Corelib\Hash(['id'=>1])));
+        $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.ByIdAndTitle'), $this->equalTo(new Corelib\Hash(['id'=>1])));
         $R->route($this->getRequest('/news/id/1'), $C);
     }
 
@@ -115,6 +115,25 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
         $R = new Application\Web_Router_Map([
             '/{}' => 'foo'
         ]);
+    }
+
+    public function testBuildUrl() {
+        $R = new Application\Web_Router_Map(self::$cfg);
+        $this->assertEquals('/', $R->getUrl(new Corelib\Request, 'index'));
+        $this->assertEquals('/', $R->getUrl(new Corelib\Request, 'index.default'));
+        $this->assertEquals('/users/1', $R->getUrl(new Corelib\Request, 'users.byId', ['id'=>1]));
+    }
+
+    public function testAbsoluteUrl() {
+        $R = new Application\Web_Router_Map(self::$cfg);
+        $Request = new Corelib\Request([
+            'Env' => [
+                'HOST' => 'example.com'
+            ]
+        ]);
+        $this->assertEquals('http://example.com/users/1', $R->getAbsoluteUrl($Request, 'users.byId', ['id'=>1]));
+        $Request->Env->SCHEME = 'https';
+        $this->assertEquals('https://example.com/users/1', $R->getAbsoluteUrl($Request, 'users.byId', ['id'=>1]));
     }
 
     protected function getControllerMock() {

@@ -208,11 +208,29 @@ class Crypter {
         if ($min > $max) {
             list($min, $max) = array($max, $min);
         }
-        $random_ints = unpack("V*", file_get_contents("/dev/urandom", false, null, null, 8));
+        $random_ints = unpack("V*", static::getRandomBytes(8));
         $random_int = ($random_ints[2] << 31) | $random_ints[1];
         return intval($random_int * ($max - $min + 1) / ~(1<<63)) + $min;
     }
 
+    /**
+     * Generates random bytes
+     * 
+     * @param int $count of bytes
+     * @return string
+     */
+    public static function getRandomBytes($count) {
+        return file_get_contents("/dev/urandom", false, null, null, $count);
+    }
+
+    /**
+     * getRandomString 
+     * 
+     * @param int $min_len 
+     * @param mixed $max_len 
+     * @param string $chars 
+     * @return string
+     */
     public static function getRandomString($min_len = 8, $max_len = null, $chars = 'abcdefghijklmnopqrstuvwxyz') {
         if ($max_len === null) $max_len = $min_len;
         if ($min_len < 1 || $max_len < 1 || $max_len < $min_len) {

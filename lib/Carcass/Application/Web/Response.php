@@ -91,7 +91,7 @@ class Web_Response extends Corelib\Response {
     }
 
     public function writeHttpError($status = 500, $title = null, $message = null) {
-        if ($this->buffering) {
+        if ($this->is_buffering) {
             $this->rollback();
         }
         $this->setStatus(500);

@@ -38,7 +38,7 @@ class Debugger {
         return $this;
     }
 
-    public function exceptionToString(\Exception $e) {
+    public function exceptionToString(\Exception $Exception) {
         return sprintf(
             "%s in %s line %d\n%s\n%s",
             get_class($Exception),

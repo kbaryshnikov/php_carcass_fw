@@ -12,6 +12,11 @@ trait HashTrait {
 
     protected $storage = [];
 
+    public function clear() {
+        $this->storage = [];
+        return $this;
+    }
+
     protected function deepClone(array &$clone_values = null) {
         $set_result = false;
         $result = [];
