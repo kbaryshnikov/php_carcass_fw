@@ -2,11 +2,12 @@
 
 namespace Carcass\Process;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class ShellCommand {
 
     const
+        STDIN  = 0,
         STDOUT = 1,
         STDERR = 2;
 
@@ -23,8 +24,8 @@ class ShellCommand {
         $this->args_template = $args_template;
     }
 
-    public static function construct($cmd, $args_template = null) {
-        return new static($cmd, $args_template);
+    public static function run($cmd, $args_template = null, array $args = [], &$stdout = null, &$stderr = null) {
+        return (new static($cmd, $args_template))->prepare($args)->execute($stdout, $stderr);
     }
 
     public function setEnv(array $env = null) {
@@ -38,7 +39,7 @@ class ShellCommand {
     }
 
     public function setInputSource($input = null) {
-        if (null !== $input && !is_array($input) && !$input instanceof Traversable) {
+        if (null !== $input && !Corelib\ArrayTools::isTraversable($input)) {
             throw new \InvalidArgumentException("Argument is expected to be typeof null|array|Traversable");
         }
         $this->input = $input;
@@ -53,13 +54,13 @@ class ShellCommand {
         return $this;
     }
 
-    public function execute(&$stdout = false, &$stderr = false) {
+    public function execute(&$stdout = null, &$stderr = null) {
         $args = Corelib\StringTools::parseTemplate($this->args_template, $this->args);
         $command = escapeshellcmd($this->cmd) . ' ' . $args;
         $descriptorspec = [
-            0 => ["pipe", "r"],
-            1 => false === $stdout ? ['file', '/dev/null', 'a'] : ["pipe", "w"],
-            2 => false === $stderr ? ['file', '/dev/null', 'a'] : ["pipe", "w"],
+            self::STDIN  => ["pipe", "r"],
+            self::STDOUT => null === $stdout ? ['file', '/dev/null', 'a'] : ["pipe", "w"],
+            self::STDERR => null === $stderr ? ['file', '/dev/null', 'a'] : ["pipe", "w"],
         ];
         $process = proc_open($command, $descriptorspec, $pipes, $this->cwd, $this->env);
         if (!is_resource($process)) {
@@ -67,17 +68,17 @@ class ShellCommand {
         }
         if ($this->input) {
             foreach ($this->input as $line) {
-                fwrite($pipes[0], $line);
+                fwrite($pipes[self::STDIN], $line);
             }
         }
-        fclose($pipes[0]);
-        if (false !== $stdout) {
-            $stdout = stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
+        fclose($pipes[self::STDIN]);
+        if (null !== $stdout) {
+            $stdout = stream_get_contents($pipes[self::STDOUT]);
+            fclose($pipes[self::STDOUT]);
         }
-        if (false !== $stderr) {
-            $stderr = stream_get_contents($pipes[2]);
-            fclose($pipes[2]);
+        if (null !== $stderr) {
+            $stderr = stream_get_contents($pipes[self::STDERR]);
+            fclose($pipes[self::STDERR]);
         }
         return proc_close($process);
     }

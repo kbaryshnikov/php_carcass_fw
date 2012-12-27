@@ -2,7 +2,7 @@
 
 namespace Carcass\Application;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Cli_Response extends Corelib\Response {
 

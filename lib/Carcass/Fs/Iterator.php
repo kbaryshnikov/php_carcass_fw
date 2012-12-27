@@ -2,7 +2,7 @@
 
 namespace Carcass\Fs;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Iterator implements \Iterator, Corelib\ExportableInterface {
 

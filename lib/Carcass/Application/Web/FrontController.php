@@ -2,8 +2,8 @@
 
 namespace Carcass\Application;
 
-use Carcass\Corelib as Corelib;
-use Carcass\Config as Config;
+use Carcass\Corelib;
+use Carcass\Config;
 
 class Web_FrontController implements ControllerInterface {
 

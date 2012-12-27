@@ -2,7 +2,7 @@
 
 namespace Carcass\Config;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Item implements ItemInterface, \Iterator, \ArrayAccess, \Countable, Corelib\ExportableInterface {
     use Corelib\DatasourceTrait, Corelib\ExportableTrait, Corelib\ArrayObjectTrait, Corelib\ArrayObjectDatasourceTrait {

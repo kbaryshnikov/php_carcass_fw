@@ -2,7 +2,7 @@
 
 namespace Carcass\DevTools;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Timer {
 

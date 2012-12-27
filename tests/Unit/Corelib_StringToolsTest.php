@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/carcass-test.php';
 
-use \Carcass\Corelib as Corelib;
+use \Carcass\Corelib;
 
 class Corelib_StringToolsTest extends PHPUnit_Framework_TestCase {
     

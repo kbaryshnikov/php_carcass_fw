@@ -2,7 +2,7 @@
 
 namespace Carcass\Application;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Web_Router_Map implements Web_RouterInterface {
 

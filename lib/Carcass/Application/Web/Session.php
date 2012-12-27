@@ -2,7 +2,7 @@
 
 namespace Carcass\Application;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Web_Session {
 
@@ -21,7 +21,7 @@ class Web_Session {
         $Response,
         $Data;
 
-    public function __construct(Corelib\Request $Request, Web_Response $Response) {
+    public function __construct(Corelib\Request $Request, Web_Response $Response, Web_SessionStorage_Interface $PersistentStorage = null) {
         $this->cookie_name = self::DEFAULT_COOKIE_NAME;
         $this->cookie_lifetime = self::DEFAULT_COOKIE_LIFETIME;
 
@@ -29,6 +29,8 @@ class Web_Session {
         $this->Response = $Response;
 
         $this->Data = new Corelib\Hash;
+
+        $PersistentStorage and $this->setPersistentStorage($PersistentStorage);
     }
 
     public function setPersistentStorage(Web_SessionStorage_Interface $PersistentStorage) {
@@ -36,14 +38,13 @@ class Web_Session {
         return $this;
     }
 
-    public function enableSendingSessionIdentifiersToUserAgent() {
-        $this->send_ident_to_user_agent = true;
+    public function enableSendingSessionIdentifiersToUserAgent($bool = true) {
+        $this->send_ident_to_user_agent = (bool)$bool;
         return $this;
     }
 
     public function disableSendingSessionIdentifiersToUserAgent() {
-        $this->send_ident_to_user_agent = false;
-        return $this;
+        return $this->enableSendingSessionIdentifiersToUserAgent(false);
     }
 
     public function __call($method, array $args) {

@@ -2,9 +2,8 @@
 
 namespace Carcass\Image;
 
-use Carcass\Corelib as Corelib;
-use Carcass\Session as Session;
-use Carcass\Application as Application;
+use Carcass\Corelib;
+use Carcass\Application;
 
 class Captcha_Imagick {
 
@@ -30,7 +29,7 @@ class Captcha_Imagick {
         $font_file = null,
         $font_size = 42,
 
-        $noise_chars   = '_-,.\'`/-:\\',
+        $noise_chars = '_-,.\'`/-:\\',
 
         $allowed_chars = 'ABCDEFGHKLNPRSTXYZ123456789';
 
@@ -41,7 +40,7 @@ class Captcha_Imagick {
      * @param string $session_field
      * @return void
      */
-    public function __construct(Session\Session $Session, $session_field = self::DEFAULT_SESSION_FIELD) {
+    public function __construct(Application\Web_Session $Session, $session_field = self::DEFAULT_SESSION_FIELD) {
         $this->Session = $Session;
         $this->session_field = $session_field;
         $this->loadText();

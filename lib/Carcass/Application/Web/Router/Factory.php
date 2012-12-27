@@ -2,7 +2,7 @@
 
 namespace Carcass\Application;
 
-use Carcass\Config as Config;
+use Carcass\Config;
 
 class Web_Router_Factory {
     

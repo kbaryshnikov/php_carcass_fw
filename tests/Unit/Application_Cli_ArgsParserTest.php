@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/carcass-test.php';
 
-use \Carcass\Application as Application;
+use \Carcass\Application;
 
 class Application_Cli_ArgsParserTest extends PHPUnit_Framework_TestCase {
     

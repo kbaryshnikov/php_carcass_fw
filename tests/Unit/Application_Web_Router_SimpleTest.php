@@ -2,8 +2,8 @@
 
 require_once __DIR__ . '/carcass-test.php';
 
-use \Carcass\Application as Application;
-use \Carcass\Corelib as Corelib;
+use \Carcass\Application;
+use \Carcass\Corelib;
 
 class Application_Web_Router_SimpleTest extends PHPUnit_Framework_TestCase {
 

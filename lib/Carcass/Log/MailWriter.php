@@ -2,7 +2,7 @@
 
 namespace Carcass\Log;
 
-use Carcass\Mail as Mail;
+use Carcass\Mail;
 
 class MailWriter implements WriterInterface {
 

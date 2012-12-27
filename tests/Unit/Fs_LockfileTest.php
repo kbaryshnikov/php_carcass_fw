@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/carcass-test.php';
 
-use \Carcass\Fs as Fs;
+use \Carcass\Fs;
 
 class Fs_LockFileTest extends PHPUnit_Framework_TestCase {
 

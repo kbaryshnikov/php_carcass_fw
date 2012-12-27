@@ -2,7 +2,7 @@
 
 namespace Carcass\Log;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Dispatcher {
 

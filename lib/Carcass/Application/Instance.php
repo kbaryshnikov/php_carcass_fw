@@ -2,11 +2,11 @@
 
 namespace Carcass\Application;
 
-use Carcass\Corelib as Corelib;
-use Carcass\Config as Config;
-use Carcass\Log as Log;
-use Carcass\DevTools as DevTools;
-use Carcass\Connection as Connection;
+use Carcass\Corelib;
+use Carcass\Config;
+use Carcass\Log;
+use Carcass\DevTools;
+use Carcass\Connection;
 
 class Instance {
 
@@ -114,7 +114,6 @@ class Instance {
     protected function setupDependenciesCli($Injector, array $dep_map) {
         $this->Injector->Request = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function($I) {
             $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Cli_RequestBuilder');
-            class_exists($class);
             return $class::assembleRequest();
         });
         $this->Injector->Response = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function($I) {
@@ -134,7 +133,6 @@ class Instance {
     protected function setupDependenciesWeb($Injector, array $dep_map) {
         $this->Injector->Request = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function($I) {
             $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Web_RequestBuilder');
-            class_exists($class);
             return $class::assembleRequest();
         });
         $this->Injector->Response = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function($I) {
@@ -144,12 +142,22 @@ class Instance {
         $this->Injector->Router = $this->Injector->reuse(isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function($I) {
             return \Carcass\Application\Web_Router_Factory::assembleByConfig($I->ConfigReader->web->router);
         });
+        $this->Injector->ConnectionManager = $this->Injector->reuse(isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function($I) {
+            $class = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
+            return (new $class)->register($I->ConfigReader->exportArrayFrom('connections'));
+        });
+        $this->Injector->Session = $this->Injector->reuse(isset($dep_map['SessionFn']) ? $dep_map['SessionFn'] : function($I) {
+            return \Carcass\Application\Web_SessionFactory::assembleByConfig(
+                $I->ConfigReader->exportHashFrom('web.session'),
+                $I->Request,
+                $I->Response
+            );
+        });
         $this->Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function($I) {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Web_FrontController');
             return new $class($I->Request, $I->Response, $I->Router, $I->ConfigReader->web);
         };
     }
-
 
     protected static function prefixNamespaces(array $list) {
         return array_map([get_called_class(), 'prefixNamespace'], $list);
@@ -183,7 +191,9 @@ class Instance {
         if (empty($this->app_env['lib_path'])) {
             $this->app_env['lib_path'] = [$this->app_root . 'lib/'];
         }
-        array_unshift($this->app_env['lib_path'], static::getCarcassRootDir());
+        foreach (array_reverse(static::getCarcassLibDirs()) as $lib_dir) {
+            array_unshift($this->app_env['lib_path'], $lib_dir);
+        }
     }
 
 
@@ -318,8 +328,10 @@ class Instance {
         return $this->Crypter;
     }
 
-    protected static function getCarcassRootDir() {
-        return dirname(dirname(__DIR__));
+    protected static function getCarcassLibDirs() {
+        $carcass_lib_dir = dirname(dirname(__DIR__)) . '/';
+        $vendor_lib_dir = dirname($carcass_lib_dir) . '/vendor/';
+        return [$carcass_lib_dir, $vendor_lib_dir];
     }
 
     protected function __clone() {

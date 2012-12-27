@@ -3,7 +3,7 @@
 require_once __DIR__ . '/carcass-test.php';
 
 use \Carcass;
-use \Carcass\Corelib as Corelib;
+use \Carcass\Corelib;
 
 class ArrayObjectTraitUser implements Iterator, ArrayAccess, Countable {
     use Corelib\ArrayObjectTrait;

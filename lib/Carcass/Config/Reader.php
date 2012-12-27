@@ -2,7 +2,7 @@
 
 namespace Carcass\Config;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Reader extends Item {
 

@@ -1,32 +1,29 @@
 <?php
 
-class Carcass_Mail_Sender_Swift implements Carcass_Mail_Sender_Interface {
+namespace Carcass\Mail;
 
-    protected static $initialized = false;
+use Carcass\Corelib;
+
+require_once 'Swift/lib/swift_required.php';
+
+class Sender_Swift implements Sender_Interface {
 
     protected
         $SwiftTransport,
         $method,
         $params;
 
-    protected static function initialize() {
-        require 'Swift/lib/swift_required.php';
-    }
-
     public function __construct($method, array $params = array()) {
-        if (!static::$initialized) {
-            static::initialize();
-        }
         $this->method = $method;
         $this->params = $params;
     }
 
-    public function send(Carcass_Mail_Message $Message, $to) {
+    public function send(Message $Message, $to) {
         if (!is_array($to)) {
-            $to = array($to);
+            $to = $to instanceof Corelib\ExportableInterface ? $to->exportArray() : array($to);
         }
 
-        $SwiftMessage = Swift_Message::newInstance()
+        $SwiftMessage = \Swift_Message::newInstance()
             ->setSubject($Message->subject)
             ->setFrom(array($Message->sender))
             ->setTo(is_array($to) ? $to : array($to))
@@ -35,11 +32,11 @@ class Carcass_Mail_Sender_Swift implements Carcass_Mail_Sender_Interface {
         if ($Message->attachments) {
             foreach ($Message->attachments as $attachment) {
                 if (isset($attachment->contents)) {
-                    $SwiftAttachment = Swift_Attachment::newInstance()->setBody($attachment->contents);
+                    $SwiftAttachment = \Swift_Attachment::newInstance()->setBody($attachment->contents);
                 } elseif (isset($attachment->filename)) {
-                    $SwiftAttachment = Swift_Attachment::fromPath($attachment->filename);
+                    $SwiftAttachment = \Swift_Attachment::fromPath($attachment->filename);
                 } else {
-                    throw new LogicException("Invalid attachment");
+                    throw new \LogicException("Invalid attachment");
                 }
                 $SwiftAttachment->setContentType($attachment->mime_type);
                 $SwiftMessage->attach($SwiftAttachment);
@@ -59,7 +56,7 @@ class Carcass_Mail_Sender_Swift implements Carcass_Mail_Sender_Interface {
             } else {
                 $result = $SwiftTransport->batchSend($SwiftMessage);
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // pass
         }
 
@@ -82,9 +79,9 @@ class Carcass_Mail_Sender_Swift implements Carcass_Mail_Sender_Interface {
     protected function assembleSwiftTransport() {
         switch ($this->method) {
             case 'mail':
-                return Swift_MailTransport::newInstance();
+                return \Swift_MailTransport::newInstance();
             case 'smtp':
-                $SwiftTransport = Swift_SmtpTransport::newInstance(
+                $SwiftTransport = \Swift_SmtpTransport::newInstance(
                     !empty( $this->params['host'] ) ? $this->params['host'] : '127.0.0.1',
                     !empty( $this->params['port'] ) ? $this->params['port'] : 25
                 );
@@ -96,7 +93,7 @@ class Carcass_Mail_Sender_Swift implements Carcass_Mail_Sender_Interface {
                 }
                 return $SwiftTransport;
             default:
-                throw new LogicException("Invalid configuration: unknown mail.method '{$this->method}'");
+                throw new \LogicException("Invalid configuration: unknown mail.method '{$this->method}'");
         }
     }
 

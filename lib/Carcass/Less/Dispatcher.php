@@ -2,7 +2,7 @@
 
 namespace Carcass\Less;
 
-use Carcass\Fs as Fs;
+use Carcass\Fs;
 
 class Dispatcher {
 

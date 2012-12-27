@@ -2,7 +2,7 @@
 
 namespace Carcass\Http;
 
-use Carcass\Corelib as Corelib;
+use Carcass\Corelib;
 
 class Client {
 
