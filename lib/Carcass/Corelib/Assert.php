@@ -71,6 +71,10 @@ class Assert {
         }
     }
 
+    protected function _isNumeric($value) {
+        return is_numeric($value);
+    }
+
     protected function _is($value) {
         return true == $value;
     }
@@ -97,6 +101,10 @@ class Assert {
 
     protected function _matchesRegexp($value, $regexp) {
         return preg_match($regexp, $value);
+    }
+
+    protected function _isTraversable($value) {
+        return is_array($var) || $var instanceof \Traversable;
     }
 
     protected $exception_to_throw = null;
