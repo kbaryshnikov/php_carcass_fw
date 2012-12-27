@@ -4,7 +4,7 @@ namespace Carcass\Connection;
 
 class Manager {
 
-    protected $dsn_map = [
+    protected $dsn_type_map = [
         'memcached' => '\Carcass\Memcached\Connection',
         'mysql'     => '\Carcass\Database\Mysql_Connection',
         'hs'        => '\Carcass\Database\HandlerSocket_Connection',
@@ -13,13 +13,13 @@ class Manager {
 
     protected $registry = [];
 
-    public function registerDsn($name, $class) {
-        $this->dsn_map[$name] = $class;
+    public function registerType($name, $class) {
+        $this->dsn_type_map[$name] = $class;
         return $this;
     }
 
-    public function registerDsns(array $map) {
-        $this->dsn_map = $map + $dsn_map;
+    public function registerTypes(array $map) {
+        $this->dsn_type_map = $map + $dsn_type_map;
         return $this;
     }
 
@@ -76,10 +76,10 @@ class Manager {
 
     protected function assembleConnection($dsn_string) {
         $type = $Dsn->getType();
-        if (!isset($this->dsn_map[$type])) {
+        if (!isset($this->dsn_type_map[$type])) {
             throw new \LogicException("Do not know how to assemble an instance of '$type' connection");
         }
-        $class = $this->dsn_map[$type];
+        $class = $this->dsn_type_map[$type];
         if ($Dsn instanceof DsnPool) {
             if ($class instanceof PoolConnectionInterface) {
                 $Connection = $class::constructWithPool($Dsn);
