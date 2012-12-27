@@ -23,19 +23,24 @@ class Manager {
         return $this;
     }
 
-    public function getConnectionByDsnString($dsn_string) {
-        return $this->getConnectionByDsn(Dsn::factory($dsn));
+    public function replaceTypes(array $map) {
+        $this->dsn_type_map = $map;
+        return $this;
+    }
+
+    public function getConnection($dsn_string) {
+        return $this->getConnectionByDsn(Dsn::factory($dsn_string));
     }
 
     public function getConnectionByDsn($Dsn) {
         $normalized_string_dsn = (string)$Dsn;
         if (!isset($this->registry[$normalized_string_dsn])) {
-            $this->registry[$normalized_string_dsn] = $this->assembleConnection($dsn_string);
+            $this->registry[$normalized_string_dsn] = $this->assembleConnection($Dsn);
         }
         return $this->registry[$normalized_string_dsn];
     }
 
-    public function forEachConection(Callable $fn) {
+    public function forEachConnection(Callable $fn) {
         foreach ($this->registry as $dsn => $Connection) {
             $fn($Connection, $dsn);
         }
@@ -74,14 +79,14 @@ class Manager {
         });
     }
 
-    protected function assembleConnection($dsn_string) {
+    protected function assembleConnection($Dsn) {
         $type = $Dsn->getType();
         if (!isset($this->dsn_type_map[$type])) {
             throw new \LogicException("Do not know how to assemble an instance of '$type' connection");
         }
         $class = $this->dsn_type_map[$type];
         if ($Dsn instanceof DsnPool) {
-            if ($class instanceof PoolConnectionInterface) {
+            if (array_key_exists(__NAMESPACE__ . '\PoolConnectionInterface', class_implements($class))) {
                 $Connection = $class::constructWithPool($Dsn);
             } else {
                 throw new \LogicException("'$type' connection does not support pools, but pool dsn given");
