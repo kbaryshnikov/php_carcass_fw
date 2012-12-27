@@ -52,17 +52,17 @@ class Manager {
     }
 
     public function begin(TransactionalConnectionInterface $Source = null) {
-        $this->iterateTransactionMethod('begin');
+        $this->iterateTransactionMethod('begin', $Source);
         return $this;
     }
 
     public function commit(TransactionalConnectionInterface $Source = null) {
-        $this->iterateTransactionMethod('commit');
+        $this->iterateTransactionMethod('commit', $Source);
         return $this;
     }
 
     public function rollback(TransactionalConnectionInterface $Source = null) {
-        $this->iterateTransactionMethod('rollback');
+        $this->iterateTransactionMethod('rollback', $Source);
         return $this;
     }
 
