@@ -102,6 +102,27 @@ class Memcached_ConnectionTest extends PHPUnit_Framework_TestCase {
         $McConn->commit();
     }
 
+    public function testRawCall() {
+        $McMock = $this->getMcMock();
+        $McMock->expects($this->once())->method('set')->with($this->equalTo('a'), $this->equalTo(1))->will($this->returnValue(true));
+        $McMock->expects($this->never())->method('add');
+        $McConn = new Connection($this->getTestPool());
+        $McConn->setMemcacheInstance($McMock);
+        $McConn->begin();
+        $this->assertTrue($McConn->callRaw('set', 'a', '1'));
+        $McConn->add('a', '1');
+    }
+
+    public function testRawRequiredCall() {
+        $McMock = $this->getMcMock();
+        $McMock->expects($this->once())->method('set')->with($this->equalTo('a'), $this->equalTo(1))->will($this->returnValue(false));
+        $McConn = new Connection($this->getTestPool());
+        $McConn->setMemcacheInstance($McMock);
+        $McConn->begin();
+        $this->setExpectedException('LogicException');
+        $McConn->callRawRequired('set', 'a', '1');
+    }
+
     protected function getTestPool() {
         return Carcass\Connection\Dsn::factory(['memcached://localhost']);
     }

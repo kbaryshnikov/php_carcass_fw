@@ -59,25 +59,18 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return $this->dispatch(array_shift($args), $args, true);
     }
 
-    public function __call($method, array $args) {
-        return $this->dispatch($method, $args);
+    public function callRaw($method, $args) {
+        $args = func_get_args();
+        return $this->dispatch(array_shift($args), $args, false, true);
     }
 
-    public function dispatch($method, array $args, $is_required = false) {
-        if (!isset(static::$mc_calls[$method])) {
-            throw new \BadMethodCallException("Invalid method call: '$method'");
-        }
-        $this->triggerScheduledTransaction();
-        if ($this->delay_mode && true == static::$mc_calls[$method]) {
-            $this->delayed_calls[] = [$method, $args, $is_required];
-            $result = true;
-        } else {
-            $result = call_user_func_array([$this->getMc(), $method], $args);
-            if (false === $result && $is_required) {
-                throw new \LogicException("Required call {$method}() returned false");
-            }
-        }
-        return $result;
+    public function callRawRequired($method, $args) {
+        $args = func_get_args();
+        return $this->dispatch(array_shift($args), $args, true, true);
+    }
+
+    public function __call($method, array $args) {
+        return $this->dispatch($method, $args);
     }
 
     public function close() {
@@ -94,16 +87,35 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         $this->delayed_calls = [];
     }
 
-    protected function rollbackTransaction() {
-        $this->delay_mode = false;
-        $this->delayed_calls = [];
-    }
-
     protected function commitTransaction() {
         $this->delay_mode = false;
         while ($call = array_shift($this->delayed_calls)) {
             $this->dispatch($call[0], $call[1], $call[2]);
         }
+    }
+
+    protected function rollbackTransaction() {
+        $this->delay_mode = false;
+        $this->delayed_calls = [];
+    }
+
+    protected function dispatch($method, array $args, $is_required = false, $no_delay = false) {
+        if (!isset(static::$mc_calls[$method])) {
+            throw new \BadMethodCallException("Invalid method call: '$method'");
+        }
+        if (!$no_delay) {
+            $this->triggerScheduledTransaction();
+        }
+        if (!$no_delay && $this->delay_mode && true == static::$mc_calls[$method]) {
+            $this->delayed_calls[] = [$method, $args, $is_required];
+            $result = true;
+        } else {
+            $result = call_user_func_array([$this->getMc(), $method], $args);
+            if (false === $result && $is_required) {
+                throw new \LogicException("Required call {$method}() returned false");
+            }
+        }
+        return $result;
     }
 
     protected function getMc() {

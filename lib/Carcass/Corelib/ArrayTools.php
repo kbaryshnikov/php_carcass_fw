@@ -8,6 +8,10 @@ class ArrayTools {
         return is_array($var) || $var instanceof \Traversable;
     }
 
+    public static function isArrayAccessable($var) {
+        return is_array($var) || $var instanceof \ArrayAccess;
+    }
+
     /**
      * Recursively merge arrays by keys with filter
      *

@@ -2,6 +2,7 @@
 
 namespace Carcass\Memcached;
 
+use Carcass\Corelib;
 use Carcass\Corelib\StringTemplate;
 use Carcass\Corelib\ArrayTools;
 use Carcass\Corelib\Assert;
@@ -79,6 +80,13 @@ class KeyBuilder extends StringTemplate {
 
     public function setNul(array $values = null) {
         return $this->nullOr('set', $values);
+    }
+
+    public function parse($args = null) {
+        if ($args instanceof Corelib\ExportableInterface) {
+            $args = $args->exportArray();
+        }
+        return parent::parse($args);
     }
 
     protected function nullOr($method, $value /* args */) {
