@@ -75,8 +75,8 @@ class Assert {
         return is_numeric($value);
     }
 
-    protected function _is($value) {
-        return true == $value;
+    protected function _is($value, $equal_to = true) {
+        return $equal_to == $value;
     }
 
     protected function _isNot($value) {
@@ -111,6 +111,6 @@ class Assert {
 
 }
 
-class Assert_Exception extends \RuntimeException {
+class AssertException extends \RuntimeException {
     // pass
 }

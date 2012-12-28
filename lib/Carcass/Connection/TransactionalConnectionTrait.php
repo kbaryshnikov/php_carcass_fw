@@ -23,7 +23,7 @@ trait TransactionalConnectionTrait {
         return $this;
     }
 
-    public function begin() {
+    public function begin($local = false) {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_NONE:
                 $this->transaction_status = self::$TRANSACTION_SCHEDULED;
@@ -34,13 +34,13 @@ trait TransactionalConnectionTrait {
                 $this->transaction_counter++;
                 break;
         }
-        if ($this->ConnectionManager) {
+        if (!$local && $this->ConnectionManager) {
             $this->ConnectionManager->begin($this);
         }
         return $this;
     }
 
-    public function commit() {
+    public function commit($local = false) {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_NONE:
             case self::$TRANSACTION_SCHEDULED:
@@ -53,13 +53,13 @@ trait TransactionalConnectionTrait {
                 $this->transaction_counter--;
                 break;
         }
-        if ($this->ConnectionManager) {
+        if (!$local && $this->ConnectionManager) {
             $this->ConnectionManager->commit($this);
         }
         return $this;
     }
 
-    public function rollback() {
+    public function rollback($local = false) {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_STARTED:
                 $this->rollbackTransaction();
@@ -69,7 +69,7 @@ trait TransactionalConnectionTrait {
                 $this->transaction_counter = 0;
                 break;
         }
-        if ($this->ConnectionManager) {
+        if (!$local && $this->ConnectionManager) {
             $this->ConnectionManager->rollback($this);
         }
         return $this;
@@ -94,9 +94,9 @@ trait TransactionalConnectionTrait {
     }
 
     protected function triggerScheduledTransaction() {
-        if ($this->transaction_status === self::TRANSACTION_SCHEDULED) {
+        if ($this->transaction_status === self::$TRANSACTION_SCHEDULED) {
             $this->beginTransaction();
-            $this->transaction_status = self::TRANSACTION_STARTED;
+            $this->transaction_status = self::$TRANSACTION_STARTED;
         }
         return $this;
     }

@@ -5,8 +5,10 @@ namespace Carcass\Memcached;
 use Carcass\Connection\ConnectionInterface;
 use Carcass\Connection\PoolConnectionInterface;
 use Carcass\Connection\TransactionalConnectionInterface;
+use Carcass\Connection\TransactionalConnectionTrait;
 use Carcass\Connection\Dsn;
 use Carcass\Connection\DsnPool;
+use Carcass\Corelib;
 
 class Connection implements PoolConnectionInterface, TransactionalConnectionInterface {
     use TransactionalConnectionTrait;
@@ -44,6 +46,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     }
 
     public function __construct(DsnPool $Pool) {
+        Corelib\Assert::onFailureThrow('memcached dsn is required')->is('memcached', $Pool->getType());
         $this->Pool = $Pool;
     }
 
@@ -122,8 +125,17 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return $this;
     }
 
+    public function setMemcacheInstance($Mc) {
+        $this->MemcachedInstance = $Mc;
+        return $this;
+    }
+
+    protected function constructMemcacheInstance() {
+        return new \Memcache;
+    }
+
     protected function assembleMemcachedInstance() {
-        $Mc = new \Memcache;
+        $Mc = $this->constructMemcacheInstance();
         $compress_threshold = 0;
         $compress_threshold_min_savings = -1;
         foreach ($this->Pool as $Item) {

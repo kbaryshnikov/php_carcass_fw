@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/carcass-test.php';
-
 use \Carcass\Application;
 use \Carcass\Corelib;
 

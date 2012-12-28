@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/carcass-test.php';
-
 use \Carcass\Fs;
 
 class Fs_LockFileTest extends PHPUnit_Framework_TestCase {

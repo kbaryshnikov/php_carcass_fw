@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/carcass-test.php';
-
 use \Carcass;
 
 class ConfigReaderStub extends Carcass\Config\Reader {

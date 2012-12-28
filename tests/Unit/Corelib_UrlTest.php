@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/carcass-test.php';
-
 use \Carcass\Corelib;
 
 class Corelib_UrlTest extends PHPUnit_Framework_TestCase {

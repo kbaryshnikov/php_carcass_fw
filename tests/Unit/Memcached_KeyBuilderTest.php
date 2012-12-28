@@ -1,10 +1,8 @@
 <?php
 
-require_once __DIR__ . '/carcass-test.php';
-
 use \Carcass\Memcached\KeyBuilder;
 
-class Memcached_KeyBuilder extends PHPUnit_Framework_TestCase {
+class Memcached_KeyBuilderTest extends PHPUnit_Framework_TestCase {
     
     public function testScalars() {
         $this->assertEquals('test', KeyBuilder::parseString('test'));

@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/carcass-test.php';
-
 use \Carcass\Application;
 
 class Application_PathManagerTest extends PHPUnit_Framework_TestCase {
