@@ -20,6 +20,11 @@ if (class_exists('\\Blitz', false)) {
             return static::constructFromString($string)->parse($args);
         }
 
+        public function cleanAll() {
+            $this->clean();
+            $this->cleanGlobals();
+        }
+
     }
 
 } else {

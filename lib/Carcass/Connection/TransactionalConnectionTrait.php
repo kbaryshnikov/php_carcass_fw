@@ -17,6 +17,7 @@ trait TransactionalConnectionTrait {
     // protected function beginTransaction();
     // protected function rollbackTransaction();
     // protected function commitTransaction();
+    // query method must call triggerScheduledTransaction()
 
     public function setManager(Manager $Manager) {
         $this->ConnectionManager = $Manager;
@@ -66,7 +67,7 @@ trait TransactionalConnectionTrait {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_STARTED:
                 $this->rollbackTransaction();
-                // no break intentonally
+                // no break intentionally
             case self::$TRANSACTION_NONE:
             case self::$TRANSACTION_SCHEDULED:
                 $this->transaction_counter = 0;

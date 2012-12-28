@@ -50,6 +50,10 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         $this->Pool = $Pool;
     }
 
+    public function buildKey($template, array $args = []) {
+        return $this->getKeyBuilder($template)->parse($args);
+    }
+
     public function callRequired($method /* ... */) {
         $args = func_get_args();
         return $this->dispatch(array_shift($args), $args, true);
@@ -109,10 +113,13 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return $this->MemcachedInstance;
     }
 
-    protected function getKeyBuilder() {
+    protected function getKeyBuilder($template) {
         if (null === $this->KeyBuilder) {
             $this->KeyBuilder = $this->assembleKeyBuilder();
+        } else {
+            $this->KeyBuilder->cleanAll();
         }
+        $this->KeyBuilder->load($template);
         return $this->KeyBuilder;
     }
 

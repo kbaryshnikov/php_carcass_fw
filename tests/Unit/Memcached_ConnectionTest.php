@@ -1,5 +1,6 @@
 <?php
 
+use \Carcass\Memcached;
 use \Carcass\Memcached\Connection;
 
 class Memcached_ConnectionTest extends PHPUnit_Framework_TestCase {
@@ -29,6 +30,29 @@ class Memcached_ConnectionTest extends PHPUnit_Framework_TestCase {
             $result = $McConn->$test_method('a');
             $this->assertEquals('a_value', $result);
         }
+    }
+
+    public function testKeyTemplating() {
+        $McMock = $this->getMcMock();
+        $McMock->expects($this->once())->method('get')
+            ->with($this->equalTo('a_string_123'))
+            ->will($this->returnValue('a_value'));
+        $McConn = new Connection($this->getTestPool());
+        $McConn->setMemcacheInstance($McMock);
+        $result = $McConn->get($McConn->buildKey('{{ s(a) }}_{{ s(b) }}_{{ id(id) }}', ['a'=>'a', 'b'=>'string', 'id'=>123]));
+        $this->assertEquals($result, 'a_value');
+    }
+
+    public function testKeyTemplatingWithKeyObject() {
+        $McMock = $this->getMcMock();
+        $McMock->expects($this->once())->method('get')
+            ->with($this->equalTo('a_string_123'))
+            ->will($this->returnValue('a_value'));
+        $McConn = new Connection($this->getTestPool());
+        $McConn->setMemcacheInstance($McMock);
+        $key = Memcached\Key::create('{{ s(a) }}_{{ s(b) }}_{{ id(id) }}');
+        $result = $McConn->get($key(['a'=>'a', 'b'=>'string', 'id'=>123]));
+        $this->assertEquals($result, 'a_value');
     }
 
     public function testPseudoTransactionCommit() {

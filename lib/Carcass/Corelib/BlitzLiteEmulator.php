@@ -6,6 +6,7 @@ class BlitzLiteEmulator {
 
     protected
         $set = array(),
+        $globals = array(),
         $ctx = array(),
         $stack = array(),
         $compiled = null,
@@ -37,22 +38,32 @@ class BlitzLiteEmulator {
     public function load($string) {
         $this->tpl = $string;
         $this->compiled = null;
-        $this->clear();
+        $this->clean();
     }
 
     public function loadFile($string) {
         $this->tpl = file_get_contents($string);
         $this->compiled = null;
-        $this->clear();
+        $this->clean();
     }
 
-    public function clear() {
+    public function clean() {
         $this->set = array();
+        $this->result = null;
+    }
+
+    public function cleanGlobals() {
+        $this->globals = array();
         $this->result = null;
     }
 
     public function set(array $set) {
         $this->set = $set + $this->set;
+        $this->result = null;
+    }
+
+    public function setGlobals(array $globals) {
+        $this->globals = $globals + $this->globals;
         $this->result = null;
     }
 
@@ -81,16 +92,23 @@ class BlitzLiteEmulator {
         if (is_numeric($addr)) {
             return $addr;
         }
-        $ptr = $this->context;
+        foreach (array($this->context, $this->globals) as $ptr) {
+            if ($this->__findValueIn($ptr, $addr)) {
+                return $ptr;
+            }
+        }
+        return false;
+    }
+
+    protected function __findValueIn(&$ptr, $addr) {
         foreach (explode('.', trim($addr)) as $k) {
             if (isset($ptr[$k])) {
                 $ptr = $ptr[$k];
             } else {
-                $ptr = false;
-                break;
+                return false;
             }
         }
-        return $ptr;
+        return true;
     }
 
     protected function __push() {
