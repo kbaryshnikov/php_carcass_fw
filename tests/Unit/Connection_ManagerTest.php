@@ -148,6 +148,4 @@ class TestTransactionalConnection extends TestConnection implements Connection\T
         $this->transaction = 'rollback';
     }
 
-    public function doInTransaction(Callable $fn) {}
-
 }

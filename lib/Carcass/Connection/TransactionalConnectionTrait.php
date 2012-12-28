@@ -53,6 +53,9 @@ trait TransactionalConnectionTrait {
                 $this->transaction_counter--;
                 break;
         }
+        if ($this->transaction_counter == 0) {
+            $this->transaction_status = self::$TRANSACTION_NONE;
+        }
         if (!$local && $this->ConnectionManager) {
             $this->ConnectionManager->commit($this);
         }
@@ -69,6 +72,7 @@ trait TransactionalConnectionTrait {
                 $this->transaction_counter = 0;
                 break;
         }
+        $this->transaction_status = self::$TRANSACTION_NONE;
         if (!$local && $this->ConnectionManager) {
             $this->ConnectionManager->rollback($this);
         }

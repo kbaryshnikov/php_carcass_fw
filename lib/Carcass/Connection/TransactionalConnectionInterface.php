@@ -2,7 +2,7 @@
 
 namespace Carcass\Connection;
 
-interface TransactionalConnectionInterface extends ConnectionInterface {
+interface TransactionalConnectionInterface {
 
     public function setManager(Manager $Manager);
 
@@ -12,7 +12,4 @@ interface TransactionalConnectionInterface extends ConnectionInterface {
 
     public function rollback($local = false);
 
-    public function doInTransaction(Callable $fn);
-
 }
-
