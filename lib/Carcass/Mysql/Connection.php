@@ -13,6 +13,7 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
 
     protected
         $Dsn,
+        $QueryParser = null,
         $Connection = null,
         $last_result = null;
 
@@ -20,8 +21,8 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return new static($Dsn);
     }
 
-    public static function getQueryParser() {
-        return new QueryParser;
+    public function getQueryParser($template) {
+        return new QueryParser($this, $template);
     }
 
     public function __construct(Dsn $Dsn) {
@@ -34,6 +35,10 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         }
 
         $this->Dsn = $Dsn;
+    }
+
+    public function executeQueryTemplate($query_template, array $args = []) {
+        return $this->executeQuery($this->getQueryParser($query_template)->parse($args));
     }
 
     public function executeQuery($query) {
@@ -75,6 +80,10 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
 
     public function getWarnings() {
         return $this->getConnection()->get_warnings();
+    }
+
+    public function escapeString($s) {
+        return $this->getConnection()->escape_string($s);
     }
 
     protected function beginTransaction() {

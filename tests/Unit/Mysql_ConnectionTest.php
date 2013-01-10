@@ -94,4 +94,19 @@ class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(['id' => '1', 's' => 'new'], $row);
     }
 
+    public function testQueryTemplate() {
+        $Dsn = new Carcass\Connection\Dsn(test_mysql_get_dsn());
+        $Conn = Mysql\Connection::constructWithDsn($Dsn);
+        $Conn->executeQueryTemplate("INSERT INTO test SET s = {{ s(s) }}", ['s' => 'foo']);
+        $Conn->executeQueryTemplate("INSERT INTO test SET s = {{ snul(s) }}", []);
+        $Conn->executeQueryTemplate("UPDATE test SET s = {{ s(s) }} WHERE id = {{ id(i) }}", ['i' => 1, 's' => '1']);
+        $Conn->executeQueryTemplate("UPDATE test SET s = {{ s(s) }} WHERE s is null", ['s' => '2']);
+        $Conn->executeQueryTemplate("INSERT INTO test SET s = {{ s(s) }}", ['s' => 'third']);
+        $Conn->executeQueryTemplate("SELECT * FROM test ORDER BY id LIMIT {{ lim(limit) }}", ['limit' => 2]);
+        $row = $Conn->fetch();
+        $this->assertEquals(['id' => '1', 's' => '1'], $row);
+        $row = $Conn->fetch();
+        $this->assertEquals(['id' => '2', 's' => '2'], $row);
+    }
+
 }
