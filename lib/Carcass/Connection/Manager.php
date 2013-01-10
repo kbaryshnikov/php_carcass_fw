@@ -6,9 +6,8 @@ class Manager {
 
     protected $dsn_type_map = [
         'memcached' => '\Carcass\Memcached\Connection',
-        'mysql'     => '\Carcass\Database\Mysql_Connection',
-        'hs'        => '\Carcass\Database\HandlerSocket_Connection',
-        'pgsql'     => '\Carcass\Database\Pgsql_Connection',
+        'mysql'     => '\Carcass\Mysql\Connection',
+        'hs'        => '\Carcass\HandlerSocket\Connection',
     ];
 
     protected $registry = [];

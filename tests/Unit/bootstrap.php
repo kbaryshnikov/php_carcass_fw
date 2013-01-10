@@ -8,3 +8,11 @@ spl_autoload_register(function($class) {
     }
     return false;
 });
+
+function test_mysql_get_dsn() {
+    return 'mysql://test:test@localhost/test';
+}
+
+function test_mysql_get_connection() {
+    return new mysqli('localhost', 'test', 'test', 'test');
+}

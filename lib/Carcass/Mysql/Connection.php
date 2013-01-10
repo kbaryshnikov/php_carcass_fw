@@ -29,16 +29,11 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
 
         static $reporting_was_setup = false;
         if (!$reporting_was_setup) {
-            \mysqli_report(MYSQLI_REPORT_ALL);
+            \mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
             $reporting_was_setup = true;
         }
 
         $this->Dsn = $Dsn;
-    }
-
-    public function setCharset($charset) {
-        $this->getConnection()->set_charset($charset);
-        return $this;
     }
 
     public function executeQuery($query) {
@@ -115,7 +110,7 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
     }
 
     protected function createConnectionByCurrentDsn() {
-        $this->Connection = new \mysqli(
+        $Connection = new \mysqli(
             $this->Dsn->get('hostname', null),
             $this->Dsn->get('user', null),
             $this->Dsn->get('password', null),
@@ -123,7 +118,8 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
             $this->Dsn->get('port', null),
             $this->Dsn->get('socket', null)
         );
-        $this->setCharset($this->Dsn->args->get('charset', 'utf8'));
+        $Connection->set_charset($this->Dsn->args->get('charset', 'utf8'));
+        return $Connection;
     }
 
     protected function doExecuteQuery($query) {

@@ -84,6 +84,7 @@ trait TransactionalConnectionTrait {
         $e = null;
         try {
             $this->begin();
+            array_unshift($args, $this);
             $result = call_user_func_array($fn, $args);
             $this->commit();
         } catch (\Exception $e) {
