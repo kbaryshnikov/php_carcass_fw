@@ -10,6 +10,11 @@ class Database {
         $this->Connection = $Connection;
     }
 
+    public function query($template, array $args = []) {
+        $this->executeQueryTemplate($template, $args);
+        return $this->getAffectedRows();
+    }
+
     /**
      * Executes a select query. Retrns array of rows, grouped depending on arguments.
      *

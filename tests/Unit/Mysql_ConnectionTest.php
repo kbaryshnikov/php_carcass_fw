@@ -100,13 +100,71 @@ class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
         $Conn->executeQueryTemplate("INSERT INTO test SET s = {{ s(s) }}", ['s' => 'foo']);
         $Conn->executeQueryTemplate("INSERT INTO test SET s = {{ snul(s) }}", []);
         $Conn->executeQueryTemplate("UPDATE test SET s = {{ s(s) }} WHERE id = {{ id(i) }}", ['i' => 1, 's' => '1']);
-        $Conn->executeQueryTemplate("UPDATE test SET s = {{ s(s) }} WHERE s is null", ['s' => '2']);
-        $Conn->executeQueryTemplate("INSERT INTO test SET s = {{ s(s) }}", ['s' => 'third']);
+        $Conn->executeQueryTemplate("UPDATE test SET s = {{ s(s) }} WHERE s is null", ['s' => 'second\'value']);
+        $Conn->executeQueryTemplate("INSERT INTO test SET s = {{ s(s) }}", ['s' => 'third value']);
         $Conn->executeQueryTemplate("SELECT * FROM test ORDER BY id LIMIT {{ lim(limit) }}", ['limit' => 2]);
         $row = $Conn->fetch();
         $this->assertEquals(['id' => '1', 's' => '1'], $row);
         $row = $Conn->fetch();
-        $this->assertEquals(['id' => '2', 's' => '2'], $row);
+        $this->assertEquals(['id' => '2', 's' => 'second\'value'], $row);
+    }
+
+    public function testMysqlDatabaseWrapper() {
+        $Dsn = new Carcass\Connection\Dsn(test_mysql_get_dsn());
+        $Conn = Mysql\Connection::constructWithDsn($Dsn);
+        $Db = new Mysql\Database($Conn);
+        $Db->query("INSERT INTO test (s) VALUES {{ BEGIN values }} ( {{ s }} ) {{ UNLESS _last }} , {{ END }} {{ END }}", ['values' => [
+            ['s' => '1'],
+            ['s' => '2'],
+            ['s' => '3'],
+        ]]);
+
+        $expected = [
+            ['id'=>'1','s'=>'1'],
+            ['id'=>'2','s'=>'2'],
+        ];
+        $result = $Db->getAll("SELECT * FROM test WHERE id <= {{ id(id) }} ORDER BY id", [ 'id' => 2 ]);
+        $this->assertEquals($expected, $result);
+
+        $expected = [
+            '1' => ['id'=>'1','s'=>'1'],
+            '2' => ['id'=>'2','s'=>'2'],
+        ];
+        $result = $Db->getAll("SELECT * FROM test WHERE id <= {{ id(id) }} ORDER BY id", [ 'id' => 2 ], [ 'id' => 1 ]);
+        $this->assertEquals($expected, $result);
+
+        $expected = [
+            '1' => [['id'=>'1','s'=>'1']],
+            '2' => [['id'=>'2','s'=>'2']],
+        ];
+        $result = $Db->getAll("SELECT * FROM test WHERE id <= {{ id(id) }} ORDER BY id", [ 'id' => 2 ], [ 'id' => INF ]);
+        $this->assertEquals($expected, $result);
+
+        $expected = [
+            '1' => [['1' => ['id'=>'1','s'=>'1']]],
+            '2' => [['2' => ['id'=>'2','s'=>'2']]],
+        ];
+        $result = $Db->getAll("SELECT * FROM test WHERE id <= {{ id(id) }} ORDER BY id", [ 'id' => 2 ], [ 'id' => INF, 's' => 1 ]);
+        $this->assertEquals($expected, $result);
+
+        $expected = ['id'=>'1','s'=>'1'];
+        $result = $Db->getRow("SELECT * FROM test WHERE id <= {{ id(id) }} ORDER BY id LIMIT {{ lim(limit) }}", [ 'id' => 2, 'limit' => 1 ]);
+        $this->assertEquals($expected, $result);
+
+        $expected = ['1', '2', '3'];
+        $result = $Db->getCol("SELECT s FROM test ORDER BY id", []);
+        $this->assertEquals($expected, $result);
+
+        $expected = ['1', '2', '3'];
+        $result = $Db->getCol("SELECT s FROM test ORDER BY id", [], 's');
+        $this->assertEquals($expected, $result);
+
+        $expected = ['1' => '1', '2' => '2', '3' => '3'];
+        $result = $Db->getCol("SELECT id, s FROM test ORDER BY id", [], 'id', 's');
+        $this->assertEquals($expected, $result);
+
+        $result = $Db->getCell("SELECT s FROM test WHERE id = {{ id(id) }}", ['id' => 1]);
+        $this->assertEquals('1', $result);
     }
 
 }

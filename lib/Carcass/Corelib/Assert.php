@@ -4,8 +4,6 @@ namespace Carcass\Corelib;
 
 class Assert {
 
-    protected static $instance = null;
-
     private function __construct() {
         // pass
     }
@@ -15,10 +13,7 @@ class Assert {
     }
 
     public static function __callStatic($name, $arguments) {
-        if (!isset(self::$instance)) {
-            self::$instance = new self;
-        }
-        return call_user_func_array([self::$instance, $name], $arguments);
+        return call_user_func_array([new self, $name], $arguments);
     }
 
     public function __call($name, $arguments) {

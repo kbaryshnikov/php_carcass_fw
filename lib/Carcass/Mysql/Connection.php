@@ -38,7 +38,12 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
     }
 
     public function executeQueryTemplate($query_template, array $args = []) {
-        return $this->executeQuery($this->getQueryParser($query_template)->parse($args));
+        $query = $this->parseTemplate($query_template, $args);
+        return $this->executeQuery($query);
+    }
+
+    protected function parseTemplate($query_template, array $args) {
+        return $this->getQueryParser($query_template)->parse($args);
     }
 
     public function executeQuery($query) {
@@ -47,7 +52,7 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
     }
 
     public function fetch(\mysqli_result $result = null) {
-        return $this->getResult($result)->fetch_assoc();
+        return $this->getResult($result)->fetch_assoc() ?: false;
     }
 
     public function freeResult(\mysqli_result $result = null) {
