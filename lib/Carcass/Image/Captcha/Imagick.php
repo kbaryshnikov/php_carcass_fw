@@ -5,7 +5,7 @@ namespace Carcass\Image;
 use Carcass\Corelib;
 use Carcass\Application;
 
-class Captcha_Imagick {
+class Captcha_Imagick implements Captcha_Interface {
 
     const DEFAULT_SESSION_FIELD = 'captcha';
 
@@ -40,9 +40,9 @@ class Captcha_Imagick {
      * @param string $session_field
      * @return void
      */
-    public function __construct(Application\Web_Session $Session, $session_field = self::DEFAULT_SESSION_FIELD) {
+    public function __construct(Application\Web_Session $Session, $session_field = null) {
         $this->Session = $Session;
-        $this->session_field = $session_field;
+        $this->session_field = $session_field ?: self::DEFAULT_SESSION_FIELD;
         $this->loadText();
     }
 
