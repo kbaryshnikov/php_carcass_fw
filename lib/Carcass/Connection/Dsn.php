@@ -19,6 +19,11 @@ class Dsn extends Corelib\Hash {
         $this->parseDsn($dsn_str);
     }
 
+    public static function constructByTokens(Corelib\Hash $Tokens) {
+        parent::__construct();
+        $this->parseDsnTokens($Tokens);
+    }
+
     public function getType() {
         return $this->type;
     }
@@ -46,6 +51,10 @@ class Dsn extends Corelib\Hash {
         }
         $Tokens = new Corelib\Hash($tokens);
 
+        return $this->parseDsnTokens($Tokens);
+    }
+
+    public function parseDsnTokens(Corelib\Hash $Tokens) {
         if ($Tokens->has('query')) {
             parse_str($Tokens->query, $args);
         } else {

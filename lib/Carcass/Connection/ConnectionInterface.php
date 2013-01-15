@@ -6,4 +6,6 @@ interface ConnectionInterface {
 
     public static function constructWithDsn(Dsn $Dsn);
 
+    public function getDsn();
+
 }

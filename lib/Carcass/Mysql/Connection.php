@@ -25,6 +25,10 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return new QueryParser($this, $template);
     }
 
+    public function getDsn() {
+        return $this->Dsn;
+    }
+
     public function __construct(Dsn $Dsn) {
         Corelib\Assert::onFailureThrow('mysql dsn is required')->is('mysql', $Dsn->getType());
 

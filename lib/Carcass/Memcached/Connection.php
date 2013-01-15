@@ -45,6 +45,10 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return new static($Pool);
     }
 
+    public function getDsn() {
+        return $this->Pool;
+    }
+
     public function __construct(DsnPool $Pool) {
         Corelib\Assert::onFailureThrow('memcached dsn is required')->is('memcached', $Pool->getType());
         $this->Pool = $Pool;
