@@ -23,12 +23,12 @@ class HandlerSocket_Index {
 
     public function connect() {
         if (!$this->Connection->query($this->index_connect_cmd)) {
-            throw new \RuntimeException("Could not query index {$this->index_id}");
+            throw new \RuntimeException("Could not query index {$this->index_id}, command: '".join("\t", $this->index_connect_cmd)."'");
         }
     }
 
     /**
-     * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='
+     * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='.
      * @param array  $qargs     index column values to fetch
      * @param array  $extras    array of extra options:
                                 limit => array(int limit, int offset)
@@ -39,14 +39,23 @@ class HandlerSocket_Index {
         if (count($qargs) > count($this->cols)) {
             throw new \InvalidArgumentException('count(qargs) must not exceed count(cols)');
         }
-        $qargs = array_values($qargs);
+        if ($op == '==') {
+            $fetch_one = true;
+            $op = '=';
+        } else {
+            $fetch_one = false;
+        }
         array_unshift($qargs, $this->getIndexId(), $op, count($qargs));
         if (isset($extras['limit'])) {
-            if (!is_array($extras['limit']) || count($extras['limit']) != 2) {
-                throw new \InvalidArgumentException('extras.limit must be array(int limit, int offset)');
+            if (is_int($extras['limit']) || (is_string($extras['limit']) && ctype_digit($extras['limit']))) {
+                $qargs[] = $extras['limit'];
+                $qargs[] = 0;
+            } elseif (!is_array($extras['limit']) || count($extras['limit']) != 2) {
+                throw new \InvalidArgumentException('extras.limit must be int limit or array(int limit, int offset)');
+            } else {
+                $qargs[] = reset($extras['limit']);
+                $qargs[] = next($extras['limit']);
             }
-            $qargs[] = reset($extras['limit']);
-            $qargs[] = next($extras['limit']);
         }
         if (isset($extras['in'])) {
             if (!is_array($extras['in']) || count($extras['in']) != 2) {
@@ -82,7 +91,11 @@ class HandlerSocket_Index {
         if (!$result) {
             return false;
         }
-        return $this->parseFindResponse($result);
+        $result = $this->parseFindResponse($result);
+        if (!empty($result) && $fetch_one) {
+            $result = reset($result);
+        }
+        return $result;
     }
 
     protected function parseFindResponse(array $response) {

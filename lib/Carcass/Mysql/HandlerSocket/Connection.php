@@ -17,7 +17,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
 
     protected
         $Dsn,
-        $exception_on_errors = true,
+        $exception_on_errors = false,
         $next_dbname = null,
         $socket = null,
         $indexes = array(),
@@ -31,6 +31,10 @@ class HandlerSocket_Connection implements ConnectionInterface {
     public function __construct(Dsn $Dsn) {
         Corelib\Assert::onFailureThrow('handlersocket dsn is required')->is('handlersocket', $Dsn->getType());
         $this->Dsn = $Dsn;
+    }
+
+    public function getDsn() {
+        return $this->Dsn;
     }
 
     public function throwExceptionOnErrors($bool) {
@@ -122,8 +126,8 @@ class HandlerSocket_Connection implements ConnectionInterface {
                 $this->socket = fsockopen('unix://' . $this->Dsn->socket, null, $errno, $errstr);
             } else {
                 $this->socket = fsockopen(
-                    $this->Dsn->get('hostname', 'localhost'),
-                    $this->Dsn->get('port', static::DEFAULT_PORT),
+                    $this->Dsn->get('hostname') ?: 'localhost',
+                    $this->Dsn->get('port') ?: static::DEFAULT_PORT,
                     $errno,
                     $errstr,
                     static::CONN_TIMEOUT
