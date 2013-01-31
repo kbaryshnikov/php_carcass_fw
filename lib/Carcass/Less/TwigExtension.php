@@ -26,14 +26,14 @@ class TwigExtension extends \Twig_Extension {
     }
 
     public function getFunctions() {
-        return ['less' => new Twig_Function_Method($this, 'less')];
+        return ['less' => new \Twig_Function_Method($this, 'less')];
     }
 
     public function less($file) {
         try {
             return $this->url_prefix . $this->Dispatcher->compile($file, $mtime) . '?' . $mtime;
         } catch (\Exception $e) {
-            throw new Twig_Error($e->getMessage(), 0, $e);
+            throw new \Twig_Error($e->getMessage(), 0, $e);
         }
     }
 
