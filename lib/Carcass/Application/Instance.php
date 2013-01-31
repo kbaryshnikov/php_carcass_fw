@@ -52,6 +52,9 @@ class Instance {
     }
 
     public static function getFqClassName($class_name) {
+        if (substr($class_name, 0, 1) == '\\') {
+            return $class_name;
+        }
         $app_namespace = static::getEnv('namespace');
         return $app_namespace ? "$app_namespace\\$class_name" : "\\$class_name";
     }
@@ -165,7 +168,7 @@ class Instance {
 
     protected static function prefixNamespace($name) {
         if (substr($name, 0, 1) === '_') {
-            return __NAMESPACE__ . '\\' . substr($name, 1);
+            return (__NAMESPACE__ . '\\') . substr($name, 1);
         } elseif (substr($name, 0, 1) !== '\\') {
             return static::getFqClassName($name);
         }
@@ -184,6 +187,9 @@ class Instance {
         $this->app_env['app_root'] = &$this->app_root;
         if (!isset($this->app_env['configuration_name'])) {
             $this->app_env['configuration_name'] = null;
+        }
+        if (!isset($this->app_env['revision'])) {
+            $this->app_env['revision'] = time();
         }
         if (!is_array($this->app_env['lib_path'])) {
             $this->app_env['lib_path'] = [$this->app_env['lib_path']];
@@ -216,6 +222,7 @@ class Instance {
 
     protected function setupConfigReader() {
         $this->ConfigReader = new Config\Reader($this->getConfigLocations());
+        $this->ConfigReader->addConfigVar('APP_ROOT', $this->app_root);
     }
 
     protected function getConfigLocations() {

@@ -3,6 +3,7 @@
 namespace Carcass\Application;
 
 use Carcass\Memcached;
+use Carcass\Connection;
 
 class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
 
@@ -15,11 +16,17 @@ class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
         $mc_expire = self::DEFAULT_MC_EXPIRE,
         $Memcached;
 
-    /**
-     * @param Carcass\Memcached\Connection $Memcached Memcached connection object
-     */
-    public function __construct(Memcached\Connection $Memcached) {
-        $this->Memcached = $Memcached;
+    public function __construct($memcache_connection_or_dsn) {
+        $this->setConnection(
+            $memcache_connection_or_dsn instanceof Memcached\Connection
+                ? $memcache_connection_or_dsn
+                : Connection\Manager::getConnection($dsn)
+        );
+    }
+
+    public function setConnection(Memcached\Connection $Connection) {
+        $this->Memcached = $Connection;
+        return $this;
     }
 
     /**

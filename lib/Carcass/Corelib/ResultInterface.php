@@ -2,13 +2,11 @@
 
 namespace Carcass\Corelib;
 
-interface ViewInterface {
+interface ResultInterface extends ExportableInterface {
 
     public function assign($key, $value);
 
     public function bind($Object);
-
-    public function render();
 
     public function displayTo(ResponseInterface $Response);
 

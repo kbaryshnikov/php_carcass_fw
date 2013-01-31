@@ -8,10 +8,25 @@ class Reader extends Item {
 
     protected $config_file_template = '%s.config.php';
     protected $search_dirs;
+    protected $config_vars = [];
 
     public function __construct(array $search_dirs, $config_file_template = null) {
         $this->search_dirs = array_map(function($dir) { return rtrim($dir, '/') . '/'; }, $search_dirs);
         $config_file_template and $this->config_file_template = $config_file_template;
+    }
+
+    public function addConfigVar($key, $value) {
+        return $this->setConfigVars([$key => $value]);
+    }
+
+    public function setConfigVars(array $vars) {
+        $this->config_vars = $vars + $this->config_vars;
+        return $this;
+    }
+
+    public function cleanConfigVars() {
+        $this->config_vars = [];
+        return $this;
     }
 
     public function has($key) {
@@ -37,6 +52,7 @@ class Reader extends Item {
     }
 
     protected function readConfigFile($config_file) {
+        extract($this->config_vars);
         return (array)(include $config_file);
     }
 

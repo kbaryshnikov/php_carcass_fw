@@ -51,7 +51,19 @@ class Web_FrontController implements ControllerInterface {
         $page_fq_class = Injector::getFqClassName($page_class);
 
         $Page = new $page_fq_class($this->Request, $this->getResponse(), $this->getRouter());
-        $Page->dispatch($action, $Args);
+        $this->displayResult($Page->dispatch($action, $Args));
+    }
+
+    protected function displayResult($result) {
+        if ($result instanceof Web_Renderer_Interface) {
+            $result->displayTo($this->getResponse());
+        } elseif (is_string($result)) {
+            $this->getResponse()->write($result);
+        } elseif (is_int($result)) {
+            $this->getResponse()->writeHttpError($result);
+        } else {
+            $this->showInternalError("No result");
+        }
     }
 
     public function dispatchNotFound($error_message) {

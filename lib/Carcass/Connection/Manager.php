@@ -27,8 +27,13 @@ class Manager {
         return $this;
     }
 
-    public function getConnection($dsn_string) {
-        return $this->getConnectionByDsn(Dsn::factory($dsn_string));
+    public function getConnection($dsn) {
+        if ($dsn instanceof Dsn || $dsn instanceof DsnPool) {
+            $Dsn = $dsn;
+        } else {
+            $Dsn = Dsn::factory($dsn);
+        }
+        return $this->getConnectionByDsn($Dsn);
     }
 
     public function getConnectionByDsn($Dsn) {

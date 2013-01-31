@@ -41,6 +41,18 @@ class PathManager {
         return $this->app_root;
     }
 
+    /**
+     * @param string $path if does not start with '/', gets prefixed with application root, otherwise returned as is
+     * @return string absolute path
+     */
+    public function getAbsolutePath($path) {
+        if (substr($path, 0, 1) !== '/') {
+            return $this->app_root . $path;
+        } else {
+            return $path;
+        }
+    }
+
     public function getPathTo($location_name, $suffix = '') {
         if (!isset($this->paths[$location_name])) {
             throw new \RuntimeException("Location with name '$location_name' is not registered");

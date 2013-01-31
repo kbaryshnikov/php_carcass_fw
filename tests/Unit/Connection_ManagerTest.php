@@ -113,6 +113,8 @@ class TestConnection implements Connection\ConnectionInterface {
         return $self;
     }
 
+    public function getDsn(){}
+
 }
 
 class TestPoolConnection extends TestConnection implements Connection\PoolConnectionInterface {

@@ -6,16 +6,13 @@ use Carcass\Fs;
 
 class Dispatcher {
 
-    const
-        LESS_CACHE_KEY = 'less_{{ s(file) }}';
-
     protected
         $Compiler = null,
         $Cacher = null,
         $less_path,
         $target_path = null;
 
-    public function __construct($Cacher, $less_path, $target_path = null) {
+    public function __construct(Cacher_Interface $Cacher, $less_path, $target_path = null) {
         $this->Cacher = $Cacher;
         $this->setLessPath($less_path);
         $target_path and $this->setTargetPath($target_path);
@@ -46,10 +43,9 @@ class Dispatcher {
     }
 
     public function compileFileToLessString($file, &$mtime = null) {
-        $file_name = $this->less_path . '/' . ($file = ltrim($file, '/'));
-        $cache_key = $this->Cacher->key(self::LESS_CACHE_KEY, compact('file'));
+        $file_name = $this->less_path . '/' . ltrim($file, '/');
 
-        $less_cache = $this->Cacher->get($cache_key);
+        $less_cache = $this->Cacher->get($file_name);
         if (!is_array($less_cache) || empty($less_cache)) {
             $less_cache = null;
         }
@@ -57,7 +53,7 @@ class Dispatcher {
         $result = $this->getCompiler()->cachedCompile( $less_cache ?: $file_name );
 
         if (!$less_cache || $result['updated'] > $less_cache['updated']) {
-            $this->Cacher->set($cache_key, $result);
+            $this->Cacher->put($file_name, $result);
         }
 
         $mtime = $result['updated'];

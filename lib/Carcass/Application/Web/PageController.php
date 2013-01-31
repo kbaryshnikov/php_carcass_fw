@@ -2,37 +2,60 @@
 
 namespace Carcass\Application;
 
-class Web_PageController extends Controller {
+use Carcass\Corelib;
+
+abstract class Web_PageController extends Controller {
+
+    protected $Result = null;
 
     public function dispatch($action, Corelib\Hash $Args) {
         $method = 'action' . $action;
         if (!method_exists($this, $method)) {
             throw new \RuntimeException("Action not implemented: '$action'");
         }
-        $View = $this->$method($Args);
-        if (is_int($View)) {
-            $View = $this->createErrorView($View);
+        $this->initBeforeAction();
+        return $this->handleActionResult($this->$method($Args));
+    }
+
+    protected function initBeforeAction() {
+        $this->initResultObject();
+    }
+
+    protected function handleActionResult($result) {
+        if (is_int($result)) {
+            if ($status < 400 || $status >= 600) {
+                throw new \InvalidArgumentException('error status must be in range [400, 600)');
+            }
+            return $this->getRenderer()->setError($status);
         }
-        $View->displayTo($this->Response);
+        return $result;
     }
 
-    protected function createErrorView($status) {
-        if ($status < 400 || $status >= 600) {
-            throw new \InvalidArgumentException('error status must be in range [400, 600)');
-        }
-        return new Web_View_HttpError($status);
+    protected function getRenderer(Corelib\ResultInterface $Result, $template_file = null) {
+        return $this->assembleRenderer($template_file)->set($Result);
     }
 
-    protected function createView() {
-        return new Web_View;
+    protected function assembleRenderer($template_file = null) {
+        $RendererCfg = Injector::getConfigReader()->web->renderer;
+        $class_name = Corelib\ObjectTools::resolveRelativeClassName($RendererCfg->class, '\Carcass\Application\Web_Renderer_');
+        return new $class_name($RendererCfg->exportArrayFrom('args'), $template_file);
     }
 
-    protected function createRedirectView($route, array $args = []) {
-        return new $this->createRawRedirectView($this->getRouter()->getAbsoluteUrl($route, $args));
+    protected function initResultObject() {
+        $this->Result = new Corelib\Result;
     }
 
-    protected function createRawRedirectView($url) {
-        return new Web_View_Redirect($url);
+    protected function redirectToRoute($route, array $args = [], $status = 302) {
+        $url = $this->getRouter()->getAbsoluteUrl($route, $args);
+        return $this->redirectToUrl($url, $status);
+    }
+
+    protected function redirectToUrl($url, $status = 302) {
+        return new Web_Renderer_Redirect($url, $status);
+    }
+
+    protected function sendFile($location) {
+        return new Web_Renderer_Sendfile($location);
     }
 
 }
