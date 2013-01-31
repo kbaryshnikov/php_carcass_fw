@@ -8,8 +8,8 @@ class ObjectTools {
         return spl_object_hash($object);
     }
 
-    public static function construct($class_name, array $ctor_args) {
-        return (new \ReflectionClass($class_name))->newInstanceArgs($ctor_args);
+    public static function construct($class_name, $ctor_args) {
+        return (new \ReflectionClass($class_name))->newInstanceArgs((array)$ctor_args);
     }
 
     public static function resolveRelativeClassName($name, $_prefix = false, $namespace = false) {
@@ -18,6 +18,9 @@ class ObjectTools {
         }
         if ($namespace && substr($name, 0, 1) !== '\\') {
             $name = $namespace . '\\' . $name;
+        }
+        if (substr($name, 0, 1) != '\\') {
+            $name = '\\' . $name;
         }
         return $name;
     }

@@ -1488,7 +1488,7 @@ class Compiler {
     /* environment functions */
 
     protected function makeOutputBlock($type, $selectors = null) {
-        $b = new stdclass;
+        $b = new \stdclass;
         $b->lines = array();
         $b->children = array();
         $b->selectors = $selectors;
@@ -1499,7 +1499,7 @@ class Compiler {
 
     // the state of execution
     protected function pushEnv($block = null) {
-        $e = new stdclass;
+        $e = new \stdclass;
         $e->parent = $this->env;
         $e->store = array();
         $e->block = $block;
@@ -1739,6 +1739,7 @@ class Compiler {
                 return $this->formatterName;
             $className = "Formatter_$this->formatterName";
         }
+        $className = __NAMESPACE__ . '\\' . $className;
 
         return new $className;
     }

@@ -31,9 +31,9 @@ abstract class Web_PageController extends Controller {
         return $result;
     }
 
-    protected function getRenderer(Corelib\ResultInterface $Result = null, $template_file = null) {
+    protected function getRenderer($template_file = null) {
         $Renderer = $this->assembleRenderer($template_file);
-        $Result and $Renderer->set($Result);
+        $this->Result and $Renderer->set($this->Result);
         return $Renderer;
     }
 

@@ -164,7 +164,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         foreach ($this->Pool as $Item) {
             $Mc->addServer(
                 $Item->has('socket') ? ('unix://' . $Item->socket) : $Item->hostname,
-                $Item->has('socket') ? 0 : $Item->get('port', 11211),
+                $Item->has('socket') ? 0 : ($Item->get('port') ?: 11211),
                 $Item->args->get('persistent', true),
                 $Item->args->get('weight', 1),
                 $Item->args->get('timeout', 1),

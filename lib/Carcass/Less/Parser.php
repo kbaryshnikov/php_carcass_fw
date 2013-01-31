@@ -63,7 +63,7 @@ class Parser {
 
         if (!self::$operatorString) {
             self::$operatorString =
-                '('.implode('|', array_map(array('Compiler', 'preg_quote'),
+                '('.implode('|', array_map(array(__NAMESPACE__ . '\\Compiler', 'preg_quote'),
                     array_keys(self::$precedence))).')';
 
             $commentSingle = Compiler::preg_quote(self::$commentSingle);
@@ -293,7 +293,7 @@ class Parser {
     protected function isDirective($dirname, $directives) {
         // TODO: cache pattern in parser
         $pattern = implode("|",
-            array_map(array("Compiler", "preg_quote"), $directives));
+            array_map(array(__NAMESPACE__ . '\\Compiler', "preg_quote"), $directives));
         $pattern = '/^(-[a-z-]+-)?(' . $pattern . ')$/i';
 
         return preg_match($pattern, $dirname);
@@ -578,7 +578,7 @@ class Parser {
         $this->eatWhiteDefault = false;
 
         $stop = array("'", '"', "@{", $end);
-        $stop = array_map(array("Compiler", "preg_quote"), $stop);
+        $stop = array_map(array(__NAMESPACE__ . '\\Compiler', "preg_quote"), $stop);
         // $stop[] = self::$commentMulti;
 
         if (!is_null($rejectStrs)) {
@@ -1195,7 +1195,7 @@ class Parser {
     }
 
     protected function pushBlock($selectors=null, $type=null) {
-        $b = new stdclass;
+        $b = new \stdclass;
         $b->parent = $this->env;
 
         $b->type = $type;

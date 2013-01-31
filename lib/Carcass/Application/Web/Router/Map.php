@@ -5,6 +5,7 @@ namespace Carcass\Application;
 use Carcass\Corelib;
 
 class Web_Router_Map implements Web_RouterInterface {
+    use Web_Router_StaticTrait;
 
     protected static $default_options = [
         'auto_trailing_slashes' => true,

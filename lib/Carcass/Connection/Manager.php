@@ -18,7 +18,7 @@ class Manager {
     }
 
     public function registerTypes(array $map) {
-        $this->dsn_type_map = $map + $dsn_type_map;
+        $this->dsn_type_map = $map + $this->dsn_type_map;
         return $this;
     }
 

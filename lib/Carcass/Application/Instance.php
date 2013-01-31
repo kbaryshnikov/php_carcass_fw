@@ -117,7 +117,7 @@ class Instance {
     protected function setupDependenciesCli($Injector, array $dep_map) {
         $this->Injector->Request = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function($I) {
             $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Cli_RequestBuilder');
-            return $class::assembleRequest();
+            return $class::assembleRequest($this->app_env);
         });
         $this->Injector->Response = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function($I) {
             $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Cli_Response');
@@ -136,7 +136,7 @@ class Instance {
     protected function setupDependenciesWeb($Injector, array $dep_map) {
         $this->Injector->Request = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function($I) {
             $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Web_RequestBuilder');
-            return $class::assembleRequest();
+            return $class::assembleRequest($this->app_env);
         });
         $this->Injector->Response = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function($I) {
             $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Web_Response');
@@ -147,14 +147,7 @@ class Instance {
         });
         $this->Injector->ConnectionManager = $this->Injector->reuse(isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function($I) {
             $class = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
-            return (new $class)->register($I->ConfigReader->exportArrayFrom('connections'));
-        });
-        $this->Injector->Session = $this->Injector->reuse(isset($dep_map['SessionFn']) ? $dep_map['SessionFn'] : function($I) {
-            return \Carcass\Application\Web_SessionFactory::assembleByConfig(
-                $I->ConfigReader->exportHashFrom('web.session'),
-                $I->Request,
-                $I->Response
-            );
+            return (new $class)->registerTypes($I->ConfigReader->exportArrayFrom('connections', []));
         });
         $this->Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function($I) {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Web_FrontController');

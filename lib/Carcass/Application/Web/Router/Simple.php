@@ -5,6 +5,7 @@ namespace Carcass\Application;
 use Carcass\Corelib;
 
 class Web_Router_Simple implements Web_RouterInterface {
+    use Web_Router_StaticTrait;
 
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
         $uri = $Request->Env->has('DOCUMENT_URI') ? $Request->Env->DOCUMENT_URI : strtok($Request->Env->REQUEST_URI, '?');

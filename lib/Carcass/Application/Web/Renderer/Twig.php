@@ -68,6 +68,8 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
             $env_args['autoescape'] = true;
         }
         $Env = new \Twig_Environment($this->assembleTwigLoader(), $env_args);
+        $Env->addFunction(new \Twig_SimpleFunction('url', [$this, 'getTwigUrl']));
+        $Env->addFunction(new \Twig_SimpleFunction('static', [$this, 'getTwigStaticUrl']));
         foreach ($this->getSetting('extensions', []) as $ext_class => $ext_ctor_args) {
             $Env->addExtension(
                 Corelib\ObjectTools::construct(
@@ -76,19 +78,43 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
                 )
             );
         }
+        return $Env;
+    }
+
+    public function getTwigUrl($url, array $args = []) {
+        if ($this->getTwigIsAbsolute($url)) {
+            return Injector::getRouter()->getAbsoluteUrl(Injector::getRequest(), $url, $args);
+        } else {
+            return Injector::getRouter()->getUrl(Injector::getRequest(), $url, $args);
+        }
+    }
+
+    public function getTwigStaticUrl($url) {
+        $absolute = $this->getTwigIsAbsolute($url);
+        return Injector::getRouter()->getStaticUrl(Injector::getRequest(), $url, $absolute);
+    }
+
+    protected function getTwigIsAbsolute(&$url) {
+        if (substr($url, 0, 1) == ':') {
+            $absolute = true;
+            $url = substr($url, 1);
+        } else {
+            $absolute = false;
+        }
+        return $absolute;
     }
 
     protected function assembleTwigLoader() {
         return Corelib\ObjectTools::construct(
-            Corelib\ObjectTools::resolveRelativeClassName($this->getSetting('loader.type', 'Filesystem'), '\Twig_Loader_'),
+            Corelib\ObjectTools::resolveRelativeClassName($this->getSetting('loader.class', '_Filesystem'), '\Twig_Loader_'),
             (array)$this->getSetting('loader.args', [])
         );
     }
 
     protected static function ensureTwigLibraryIsLoaded() {
-        if (!class_exists('Twig_Autoloader', false)) {
+        if (!class_exists('\Twig_Autoloader', false)) {
             require_once 'Twig/Autoloader.php';
-            Twig_Autoloader::register();
+            \Twig_Autoloader::register();
         }
     }
 
