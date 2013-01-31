@@ -14,7 +14,7 @@ class BuildngxScript extends Application\Controller {
             return 0;
         }
         $target = $Args->get('o', null);
-        if (!is_writeable($target)) {
+        if ($target && !is_writeable($target)) {
             throw new \RuntimeException("'$target' is not writeable");
         }
         $app_root = rtrim($Args->get('app-root', getcwd()), '/') . '/';
