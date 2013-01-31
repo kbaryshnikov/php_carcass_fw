@@ -48,7 +48,7 @@ class Web_FrontController implements ControllerInterface {
 
         include_once Injector::getPathManager()->getPathToPhpFile('pages', $page_class);
 
-        $page_fq_class = Injector::getFqClassName($page_class);
+        $page_fq_class = Instance::getFqClassName($page_class);
 
         $Page = new $page_fq_class($this->Request, $this->getResponse(), $this->getRouter());
         $this->displayResult($Page->dispatch($action, $Args));

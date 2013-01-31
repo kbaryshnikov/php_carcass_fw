@@ -94,7 +94,7 @@ class Web_Response extends Corelib\Response {
         if ($this->is_buffering) {
             $this->rollback();
         }
-        $this->setStatus(500);
+        $this->setStatus($status);
         $this->write($this->formatHttpError($title, $message));
         return $this;
     }
@@ -134,7 +134,7 @@ class Web_Response extends Corelib\Response {
     }
 
     protected function sendHeaders() {
-        if (!$this->headers_sent) {
+        if ($this->headers_sent) {
             throw new \LogicException("Headers already sent");
         }
         $status = $this->getStatus();
@@ -151,7 +151,7 @@ class Web_Response extends Corelib\Response {
                 header("$name: $value");
             }
         }
-        foreach ($cookies as $name => $values) {
+        foreach ($this->cookies as $name => $values) {
             list ($value, $options) = $values;
             $options = (array)$options + $this->cookie_settings;
             setcookie($name, $value, $options['expire'], $options['path'], $options['domain'], $options['secure'], $options['httponly']);

@@ -21,6 +21,8 @@ class Web_Renderer_Json extends Web_Renderer_Base {
 
     protected $access_policy = [];
 
+    protected $content_type = 'application/json';
+
     public function allowOrigin($origin, $methods = ['GET', 'POST']) {
         $this->access_policy['Allow-Origin'] = $origin;
         $this->access_policy['Allow-Methods'] = $methods;
@@ -54,6 +56,10 @@ class Web_Renderer_Json extends Web_Renderer_Base {
         }
         unset($render_data[self::CROSS_ORIGIN_POLICY_KEY]);
         return Corelib\ArrayTools::jsonEncode($render_data);
+    }
+
+    protected function displayErrorBodyTo(Web_Response $Response) {
+        $Response->write('{"error":' . intval($this->status) . '}');
     }
 
 }

@@ -23,16 +23,18 @@ abstract class Web_PageController extends Controller {
 
     protected function handleActionResult($result) {
         if (is_int($result)) {
-            if ($status < 400 || $status >= 600) {
+            if ($result < 400 || $result >= 600) {
                 throw new \InvalidArgumentException('error status must be in range [400, 600)');
             }
-            return $this->getRenderer()->setError($status);
+            return $this->getRenderer()->setStatus($result);
         }
         return $result;
     }
 
-    protected function getRenderer(Corelib\ResultInterface $Result, $template_file = null) {
-        return $this->assembleRenderer($template_file)->set($Result);
+    protected function getRenderer(Corelib\ResultInterface $Result = null, $template_file = null) {
+        $Renderer = $this->assembleRenderer($template_file);
+        $Result and $Renderer->set($Result);
+        return $Renderer;
     }
 
     protected function assembleRenderer($template_file = null) {

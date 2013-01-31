@@ -4,11 +4,13 @@ namespace Carcass\Application;
 
 use Carcass\Corelib;
 
-abstract class Web_Renderer_Base {
+abstract class Web_Renderer_Base implements Web_Renderer_Interface {
 
     protected $status = 200;
     protected $RenderData = null;
     protected $render_result = null;
+    protected $content_type = 'text/html';
+    protected $content_charset = 'utf-8';
 
     public function setStatus($status) {
         $this->status = (int)$status;
@@ -17,6 +19,14 @@ abstract class Web_Renderer_Base {
 
     public function set(Corelib\ExportableInterface $RenderData) {
         $this->RenderData = $RenderData;
+        return $this;
+    }
+
+    public function setContentType($mime, $charset = null) {
+        $this->content_type = $mime;
+        if (null !== $charset) {
+            $this->content_charset = $charset;
+        }
         return $this;
     }
 
@@ -29,17 +39,29 @@ abstract class Web_Renderer_Base {
 
     public function displayTo(Web_Response $Response) {
         $this->sendHeaders($Response);
-        $Response->write($this->render());
+        $body = $this->render();
+        if (strlen($body)) {
+            $Response->write($body);
+        } else {
+            if ($this->status >= 400) {
+                $this->displayErrorBodyTo($Response);
+            }
+        }
         return $this;
     }
 
     protected function sendHeaders(Web_Response $Response) {
         $Response->setStatus($this->status);
+        $Response->sendHeader('Content-Type', $this->content_type . '; charset=' . $this->content_charset);
     }
 
     /**
      * @return string
      */
     abstract protected function doRender(array $render_data);
+
+    protected function displayErrorBodyTo(Web_Response $Response) {
+        $Response->writeHttpError($this->status);
+    }
 
 }
