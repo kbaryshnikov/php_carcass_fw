@@ -20,6 +20,7 @@ class BuildngxScript extends Application\Controller {
         $app_root = rtrim($Args->get('app-root', getcwd()), '/') . '/';
         $AppEnv = new Corelib\Hash(include "{$app_root}env.php");
         $Config = new Config\Reader($this->getConfigLocations($app_root, $AppEnv));
+        $Config->addConfigVar('APP_ROOT', $app_root);
         try {
             $vars = $this->buildVars($Config);
             $vars['app_root'] = rtrim($app_root, '/');
