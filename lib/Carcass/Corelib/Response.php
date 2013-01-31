@@ -9,6 +9,10 @@ class Response implements ResponseInterface {
         $is_buffering = false,
         $buffer = '';
 
+    public function isBuffering() {
+        return $this->is_buffering;
+    }
+
     public function begin() {
         if ($this->is_buffering) {
             throw new \LogicException("Already buffering");

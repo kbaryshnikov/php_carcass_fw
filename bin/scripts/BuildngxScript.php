@@ -14,9 +14,6 @@ class BuildngxScript extends Application\Controller {
             return 0;
         }
         $target = $Args->get('o', null);
-        if ($target && !is_writeable($target)) {
-            throw new \RuntimeException("'$target' is not writeable");
-        }
         $app_root = rtrim($Args->get('app-root', getcwd()), '/') . '/';
         $AppEnv = new Corelib\Hash(include "{$app_root}env.php");
         $Config = new Config\Reader($this->getConfigLocations($app_root, $AppEnv));

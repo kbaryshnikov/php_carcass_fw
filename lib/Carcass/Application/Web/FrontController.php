@@ -38,7 +38,7 @@ class Web_FrontController implements ControllerInterface {
                 $this->showInternalError();
             }
         }
-        $this->getResponse()->commit();
+        $this->getResponse()->isBuffering() and $this->getResponse()->commit();
     }
 
     public function dispatch($fq_action, Corelib\Hash $Args) {
