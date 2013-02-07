@@ -60,6 +60,25 @@ class Manager {
         return $this;
     }
 
+    public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
+        $e = null;
+        try {
+            $this->begin();
+            array_unshift($args, $this);
+            $result = call_user_func_array($fn, $args);
+            $this->commit();
+        } catch (\Exception $e) {
+            $this->rollback();
+        }
+        if (null !== $finally_fn) {
+            $finally_fn();
+        }
+        if (null !== $e) {
+            throw $e;
+        }
+        return $result;
+    }
+
     public function begin(TransactionalConnectionInterface $Source = null) {
         $this->iterateTransactionMethod('begin', $Source);
         return $this;

@@ -6,7 +6,7 @@ use Carcass\Rule;
 use Carcass\Filter;
 use Carcass\Corelib;
 
-class Collection extends Corelib\Hash implements FieldInterface {
+class Set extends Corelib\Hash implements FieldInterface {
     use Corelib\RenderableTrait, FilterTrait, RuleTrait {
         RuleTrait::validate as validateOwnRules;
     }

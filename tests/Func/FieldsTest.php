@@ -9,7 +9,7 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
     public function testFieldsBaseGetSet() {
         $Id = new Field\Id(1);
         $Text = new Field\Scalar('test');
-        $C = new Field\Fields([
+        $C = new Field\Set([
             'id'   => $Id,
             'text' => $Text,
         ]);
@@ -38,7 +38,7 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testFieldsAddFieldsFactory() {
-        $C = new Field\Fields([
+        $C = new Field\Set([
             'id'    => 'id',
             'id2'   => ['id', 2],
         ]);
@@ -54,9 +54,9 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
     public function testInnerFieldss() {
         $Id = new Field\Id(1);
         $Text = new Field\Scalar('test');
-        $C = new Field\Fields([
+        $C = new Field\Set([
             'id'   => $Id,
-            'inner' => $Inner = new Field\Fields([
+            'inner' => $Inner = new Field\Set([
                 'text' => $Text
             ]),
         ]);
@@ -73,7 +73,7 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testFilters() {
-        $C = new Field\Fields;
+        $C = new Field\Set;
         $C->addFields([
             'i'    => 'scalar',
             's'    => 'scalar',
@@ -93,7 +93,7 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testRules() {
-        $C = new Field\Fields([
+        $C = new Field\Set([
             'i' => ['scalar', 1],
             'x' => ['scalar', -1],
             's' => ['scalar', ''],
