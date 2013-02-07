@@ -3,7 +3,7 @@
 namespace Carcass\Corelib;
 
 trait HashTrait {
-    use DatasourceRefTrait, DataReceiverTrait, ExportableTrait, ArrayObjectTrait, ArrayObjectDatasourceTrait, ArrayObjectDataReceiverTrait {
+    use DatasourceRefTrait, DataReceiverTrait, ExportableTrait, RenderableTrait, ArrayObjectTrait, ArrayObjectDatasourceTrait, ArrayObjectDataReceiverTrait {
         ArrayObjectDatasourceTrait::hasArrayObjectItemByKey insteadof ArrayObjectTrait;
         ArrayObjectDatasourceTrait::getArrayObjectItemByKey insteadof ArrayObjectTrait;
         ArrayObjectDataReceiverTrait::setArrayObjectItemByKey insteadof ArrayObjectTrait;
@@ -14,6 +14,7 @@ trait HashTrait {
 
     public function clear() {
         $this->storage = [];
+        $this->untaint();
         return $this;
     }
 
@@ -63,6 +64,10 @@ trait HashTrait {
     }
 
     protected function &getDataArrayPtr() {
+        return $this->storage;
+    }
+
+    protected function getRenderArray() {
         return $this->storage;
     }
 

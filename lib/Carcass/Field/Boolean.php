@@ -13,13 +13,4 @@ class Boolean extends Base {
         return $this->value;
     }
 
-    public function exportRenderArray() {
-        $result = [
-            'value' => $this->value,
-            'attributes' => $this->attributes,
-        ];
-
-        return $result;
-    }
-
 }

@@ -81,4 +81,32 @@ class Corelib_HashTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $Hash2->sub->x);
     }
 
+    public function testExportArray() {
+        $Hash = new Hash($array = ['x' => 1, 'y' => 2]);
+        $this->assertEquals($array, $Hash->exportArray());
+    }
+
+    public function testRender() {
+        $Hash = new Hash($array = ['x' => 1, 'y' => 2]);
+        $Result = $this->getMock('\Carcass\Corelib\Result');
+        $Result
+            ->expects($this->once())
+            ->method('assign')
+            ->with($this->identicalTo($array));
+        $Hash->renderTo($Result);
+    }
+
+    public function testRenderFn() {
+        $Hash = new Hash(['x' => 1, 'y' => 2]);
+        $array = ['x' => 2, 'y' => 4];
+        $Result = $this->getMock('\Carcass\Corelib\Result');
+        $Result->expects($this->once())
+            ->method('assign')
+            ->with($this->identicalTo($array));
+        $Hash->setRenderer(function($Result) {
+            $Result->assign(array_map(function($value) { return $value * 2; }, $this->exportArray()));
+        });
+        $Hash->renderTo($Result);
+    }
+
 }

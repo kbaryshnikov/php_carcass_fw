@@ -23,14 +23,14 @@ trait DataReceiverTrait {
 
     public function set($key, $value) {
         $this->changeWith(function() use ($key, $value) {
-            $this->doSet($key, $value);
+            return $this->doSet($key, $value);
         });
         return $this;
     }
 
     public function delete($key) {
         $this->changeWith(function() use ($key) {
-            $this->doUnset($key);
+            return $this->doUnset($key);
         });
         return $this;
     }
@@ -73,18 +73,24 @@ trait DataReceiverTrait {
         } else {
             $this->getDataArrayPtr()[$key] = $value;
         }
+        return true;
     }
 
     protected function doUnset($key) {
-        unset($this->getDataArrayPtr()[$key]);
+        if (array_key_exists($key, $this->getDataArrayPtr())) {
+            unset($this->getDataArrayPtr()[$key]);
+            return true;
+        }
+        return false;
     }
 
     protected function changeWith(Callable $applier) {
         if ($this->is_locked) {
             throw new \LogicException("Data receiver is locked");
         }
-        $applier();
-        $this->taint();
+        if (false !== $applier()) {
+            $this->taint();
+        }
     }
 
 }

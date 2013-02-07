@@ -3,8 +3,10 @@
 namespace Carcass\Field;
 
 use Carcass\Corelib;
+use Carcass\Rule;
+use Carcass\Filter;
 
-interface FieldInterface extends Corelib\ExportableInterface {
+interface FieldInterface extends Corelib\ExportableInterface, Corelib\RenderableInterface {
 
     public function setValue($value);
 
@@ -12,6 +14,14 @@ interface FieldInterface extends Corelib\ExportableInterface {
 
     public function __toString();
 
-    public function exportRenderArray();
+    public function addRule($rule);
+
+    public function setRules(array $rules);
+
+    public function addFilter($filter);
+
+    public function setFilters(array $filters);
+
+    public function getRenderArray();
 
 }

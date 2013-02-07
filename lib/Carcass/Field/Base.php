@@ -2,14 +2,26 @@
 
 namespace Carcass\Field;
 
+use Carcass\Corelib;
+
 abstract class Base implements FieldInterface {
+    use Corelib\RenderableTrait, RuleTrait, FilterTrait;
 
     const
-        INVALID_VALUE = NAN;
+        INVALID_VALUE = INF;
 
     protected
         $value,
-        $attributes = array();
+        $attributes = [];
+
+    public static function factory(array $args) {
+        $type = (string)array_shift($args);
+        if (!$type) {
+            throw new \InvalidArgumentException("Missing field type");
+        }
+        $class = substr($type, 0, 1) == '\\' ? $type : __NAMESPACE__ . '\\' . ucfirst($type);
+        return Corelib\ObjectTools::construct($class, $args);
+    }
 
     public function __construct($default_value = null) {
         $this->setValue($default_value);
@@ -21,11 +33,13 @@ abstract class Base implements FieldInterface {
 
     public function clear() {
         $this->value = null;
+        $this->clearRules();
+        $this->clearFilters();
         return $this;
     }
 
     public function setValue($value) {
-        $this->value = $value;
+        $this->value = $this->filterValue($value);
         return $this;
     }
 
@@ -54,13 +68,14 @@ abstract class Base implements FieldInterface {
     public function exportArray() {
         $result = [
             'value' => $this->getValue(),
+            'error' => $this->getError(),
             'Attributes' => $this->attributes,
         ];
 
         return $result;
     }
 
-    public function exportRenderArray() {
+    public function getRenderArray() {
         return $this->exportArray();
     }
 

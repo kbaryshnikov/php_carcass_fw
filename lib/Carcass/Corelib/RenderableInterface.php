@@ -4,6 +4,6 @@ namespace Carcass\Corelib;
 
 interface RenderableInterface {
 
-    public function renderTo(ViewInterface $View);
+    public function renderTo(ResultInterface $View);
 
 }
