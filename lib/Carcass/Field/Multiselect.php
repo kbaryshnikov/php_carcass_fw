@@ -2,13 +2,13 @@
 
 namespace Carcass\Field;
 
-class Set extends Base {
+class Multiselect extends Base {
 
     protected $values;
 
     public function __construct(array $values = [], array $default_values = null) {
         parent::__construct($default_values);
-        $this->setSetValues($values);
+        $this->setMulttselectValues($values);
     }
 
     public function clear() {
@@ -16,12 +16,12 @@ class Set extends Base {
         return $this;
     }
 
-    public function setSetValues(array $values = []) {
+    public function setMultiselectValues(array $values = []) {
         $this->values = $values;
         return $this;
     }
 
-    public function getSetValues() {
+    public function getMultiselectValues() {
         return $this->values;
     }
 

@@ -4,12 +4,12 @@ use Carcass\Field;
 use Carcass\Rule;
 use Carcass\Filter;
 
-class FieldsCollectionTest extends PHPUnit_Framework_TestCase {
+class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
 
-    public function testCollectionBaseGetSet() {
+    public function testFieldsBaseGetSet() {
         $Id = new Field\Id(1);
         $Text = new Field\Scalar('test');
-        $C = new Field\Collection([
+        $C = new Field\Fields([
             'id'   => $Id,
             'text' => $Text,
         ]);
@@ -37,8 +37,8 @@ class FieldsCollectionTest extends PHPUnit_Framework_TestCase {
         $C->null;
     }
 
-    public function testCollectionAddFieldsFactory() {
-        $C = new Field\Collection([
+    public function testFieldsAddFieldsFactory() {
+        $C = new Field\Fields([
             'id'    => 'id',
             'id2'   => ['id', 2],
         ]);
@@ -51,12 +51,12 @@ class FieldsCollectionTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(3, $C->id3);
     }
 
-    public function testInnerCollections() {
+    public function testInnerFieldss() {
         $Id = new Field\Id(1);
         $Text = new Field\Scalar('test');
-        $C = new Field\Collection([
+        $C = new Field\Fields([
             'id'   => $Id,
-            'inner' => $Inner = new Field\Collection([
+            'inner' => $Inner = new Field\Fields([
                 'text' => $Text
             ]),
         ]);
@@ -73,7 +73,7 @@ class FieldsCollectionTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testFilters() {
-        $C = new Field\Collection;
+        $C = new Field\Fields;
         $C->addFields([
             'i'    => 'scalar',
             's'    => 'scalar',
@@ -93,7 +93,7 @@ class FieldsCollectionTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testRules() {
-        $C = new Field\Collection([
+        $C = new Field\Fields([
             'i' => ['scalar', 1],
             'x' => ['scalar', -1],
             's' => ['scalar', ''],
