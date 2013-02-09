@@ -82,4 +82,33 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
         $this->assertNull($M->getErrors());
     }
 
+    public function testModelFetchExport() {
+        $Request = new \Carcass\Corelib\Request;
+        $Request->import([
+            'Post' => [
+                'email' => 'some@mail.com',
+            ]
+        ]);
+        $M = new TestBaseModel;
+        $M->fetchFrom($Request->Post);
+        $this->assertEquals(1, $M->insert());
+        $this->assertTrue($M->loadById(1));
+        $this->assertEquals($Request->Post->email, $M->email);
+        $this->assertEquals($Request->Post->email, $M->exportArray()['email']);
+    }
+
+    public function testModelRender() {
+        $Result = new \Carcass\Corelib\Result;
+
+        $M = new TestBaseModel;
+        $M->email = 'test@test.com';
+        $M->loadById($M->insert());
+
+        $M->renderTo($Result->Test);
+
+        $result_array = $Result->exportArray();
+        $this->assertEquals(1, $result_array['Test']['id']);
+        $this->assertEquals('test@test.com', $result_array['Test']['email']);
+    }
+
 }
