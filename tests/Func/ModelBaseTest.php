@@ -71,4 +71,15 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
         $this->assertFalse($M->loadById(1));
     }
 
+    public function testModelValidation() {
+        $M = new TestBaseModel;
+        $M->email = 'wrong';
+        $this->assertFalse($M->insert());
+        $errors = $M->getErrors();
+        $this->assertArrayHasKey('email', $errors);
+        $M->email = 'correct@email.com';
+        $this->assertEquals(1, $M->insert());
+        $this->assertNull($M->getErrors());
+    }
+
 }
