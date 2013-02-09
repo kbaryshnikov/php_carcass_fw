@@ -75,6 +75,7 @@ class Set extends Corelib\Hash implements FieldInterface {
             }
         }
         $this->merge($fields);
+        return $this;
     }
 
     public function setValue($value) {
@@ -101,6 +102,13 @@ class Set extends Corelib\Hash implements FieldInterface {
         $this->rules = [];
         $this->filters = [];
         return parent::clear();
+    }
+
+    public function clean() {
+        foreach ($this as $Field) {
+            $Field->setValue(null);
+        }
+        return $this;
     }
 
     public function getField($name, $throw_exception_on_missing_field = true) {
@@ -153,6 +161,7 @@ class Set extends Corelib\Hash implements FieldInterface {
         foreach ($rules_map as $name => $rules) {
             $this->getField($name)->setRules(is_array($rules) ? $rules : [$rules]);
         }
+        $this->taint();
         return $this;
     }
 
@@ -160,6 +169,7 @@ class Set extends Corelib\Hash implements FieldInterface {
         foreach ($filters_map as $name => $filters) {
             $this->getField($name)->setFilters(is_array($filters) ? $filters : [$filters]);
         }
+        $this->taint();
         return $this;
     }
 
@@ -184,6 +194,13 @@ class Set extends Corelib\Hash implements FieldInterface {
     }
 
     public function validate() {
+        if ($this->isTainted()) {
+            $this->doValidate();
+        }
+        return $this->error === null;
+    }
+
+    protected function doValidate() {
         $this->error = null;
         $this->validateOwnRules();
         if ($this->error !== null && !is_array($this->error)) {
@@ -194,7 +211,6 @@ class Set extends Corelib\Hash implements FieldInterface {
                 $this->error[$name] = $Field->getError();
             }
         }
-        return $this->error === null;
     }
 
 }

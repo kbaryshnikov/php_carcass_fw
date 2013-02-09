@@ -20,6 +20,14 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         $this->initFieldset();
     }
 
+    public function validate() {
+        return $this->Fieldset->validate();
+    }
+
+    public function getErrors() {
+        return $this->Fieldset->getError();
+    }
+
     protected function initFieldset() {
         $this->Fieldset = clone static::getModelFieldset();
     }
@@ -34,8 +42,8 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
     protected static function assembleModelFieldset() {
         return Field\Set::constructDynamic()
             ->addFields(static::getModelFields())
-            ->addRules(static::getModelRules())
-            ->addFilters(static::getModelFilters())
+            ->setRules(static::getModelRules())
+            ->setFilters(static::getModelFilters())
             ->setDynamic(false);
     }
 
@@ -51,14 +59,34 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         return [];
     }
 
-    protected function execute(array $args = []) {
-        $this->Query->execute($args);
+    protected function doFetch($query, array $args) {
+        $this->getQuery()->fetchRow($query);
+        $this->executeQuery($args);
+    }
+
+    protected function doInsert($query, array $args = []) {
+        if (!$this->validate()) {
+            return false;
+        }
+        return $this->getQuery()->insert($query, $args + $this->exportArray());
+    }
+
+    protected function doModify($query, array $args = []) {
+        if (!$this->validate()) {
+            return false;
+        }
+        return $this->getQuery()->modify($query, $args + $this->exportArray());
+    }
+
+    protected function executeQuery(array $args = []) {
+        $this->getQuery()->execute($args);
         $this->fetchResults();
     }
 
     protected function fetchResults() {
         $this->Fieldset->dynamic(function() {
-            $this->Query->execute($args)->sendTo($this->Fieldset);
+            $this->Fieldset->clean();
+            $this->Query->sendTo($this->Fieldset);
         });
     }
 
@@ -82,7 +110,7 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
     }
 
     public function __set($key, $value) {
-        $this->Fieldset->$key = $value;
+        $this->Fieldset->set($key, $value);
     }
 
     public function fetchFrom(\Traversable $Source) {
