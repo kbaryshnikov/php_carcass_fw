@@ -112,6 +112,9 @@ class Instance {
 
         $this->Injector->dep_map = $dep_map;
         $this->Injector->app_env = $this->app_env;
+
+        $this->Injector->Namespace = isset($this->app_env['namespace']) ? $this->app_env['namespace'] : '\\';
+
         $this->Injector->ConfigReader = $this->ConfigReader;
         $this->Injector->PathManager  = $this->PathManager;
         $this->Injector->Debugger     = $this->Debugger;

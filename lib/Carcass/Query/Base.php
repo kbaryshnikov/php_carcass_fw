@@ -12,24 +12,25 @@ class Base {
         $FetchFn = null,
         $Db = null,
         $DbConn = null,
+        $db_dsn = null,
         $last_insert_id = null,
         $last_result = [];
 
     public function fetchRow($sql_query_template) {
         return $this->setFetchWith(function($Db, array $args) use ($sql_query_template) {
-            return $Db->getRow($sql_query_template, $args);
+            return $Db->getRow($sql_query_template, $this->getArgs($args));
         });
     }
 
     public function fetchAll($sql_query_template, array $keys = []) {
         return $this->setFetchWith(function($Db, array $args) use ($sql_query_template, $keys) {
-            return $Db->getAll($sql_query_template, $args, $keys);
+            return $Db->getAll($sql_query_template, $this->getArgs($args), $keys);
         });
     }
 
     public function fetchCol($sql_query_template, $col = null, $valcol = null) {
         return $this->setFetchWith(function($Db, array $args) use ($sql_query_template, $col, $valcol) {
-            return $Db->getCol($sql_query_template, $args, $col, $valcol);
+            return $Db->getCol($sql_query_template, $this->getArgs($args), $col, $valcol);
         });
     }
 
@@ -40,8 +41,12 @@ class Base {
     }
 
     public function execute(array $args = []) {
-        $this->last_result = $this->doFetch($args);
+        $this->last_result = $this->doFetch($this->getArgs($args));
         return $this;
+    }
+
+    protected function getArgs(array $args) {
+        return $args;
     }
 
     protected function doFetch(array $args) {
@@ -54,7 +59,7 @@ class Base {
 
     public function insert($sql_query_template, array $args = array()) {
         $this->doModify(function($Db, $args) use ($sql_query_template) {
-            $affected_rows = $Db->query($sql_query_template, $args);
+            $affected_rows = $Db->query($sql_query_template, $this->getArgs($args));
             $this->last_insert_id = $affected_rows ? $Db->getLastInsertId() : null;
             return $affected_rows;
         }, $args, false);
@@ -63,7 +68,7 @@ class Base {
 
     public function modify($sql_query_template, array $args = array()) {
         return $this->doModify(function($Db, $args) use ($sql_query_template) {
-            return $Db->query($sql_query_template, $args);
+            return $Db->query($sql_query_template, $this->getArgs($args));
         }, $args, false);
     }
 
@@ -77,9 +82,9 @@ class Base {
 
     protected function doModify(Callable $fn, array $args, $in_transaction, Callable $finally_fn = null) {
         if ($in_transaction) {
-            $result = $this->doInTransaction($fn, $args, $finally_fn);
+            $result = $this->doInTransaction($fn, $this->getArgs($args), $finally_fn);
         } else {
-            $result = call_user_func_array($fn, $this->getCallbackArgs($args));
+            $result = call_user_func_array($fn, $this->getCallbackArgs($this->getArgs($args)));
         }
         return $result;
     }
@@ -132,7 +137,12 @@ class Base {
     }
 
     protected function getDatabaseDsn() {
-        return Injector::getConfigReader()->getPath('application.connections.database');
+        return $this->db_dsn ?: Injector::getConfigReader()->getPath('application.connections.database');
+    }
+
+    public function setDatabaseDsn($dsn) {
+        $this->db_dsn = $dsn;
+        return $this;
     }
 
 }

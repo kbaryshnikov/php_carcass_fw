@@ -12,9 +12,16 @@ class Memcached extends Base {
     protected
         $key = null,
         $tags = [],
+        $key_options = [],
+        $mc_dsn = null,
         $MemcachedConnection = null,
         $last_insert_id_field_name = null,
         $TaggedCache = null;
+
+    public function setKeyOptions(array $key_options = []) {
+        $this->key_options = $key_options;
+        return $this;
+    }
 
     public function setTags(array $tags) {
         $this->tags = $tags;
@@ -112,7 +119,12 @@ class Memcached extends Base {
     }
 
     protected function getMemcachedDsn() {
-        return Injector::getConfigReader()->getPath('application.connections.memcached');
+        return $this->mc_dsn ?: Injector::getConfigReader()->getPath('application.connections.memcached');
+    }
+
+    public function setMemcachedDsn($mc_dsn) {
+        $this->mc_dsn = $mc_dsn;
+        return $this;
     }
 
 }

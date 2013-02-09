@@ -15,13 +15,13 @@ class TaggedCache {
 
     protected
         $tags = [self::TAG_HARD => [], self::TAG_SOFT => []],
-        $key_config = [],
+        $key_options = [],
         $expiration = null,
         $Connection;
 
-    public function __construct(Connection $Connection, array $tags = null, array $key_config = []) {
+    public function __construct(Connection $Connection, array $tags = null, array $key_options = []) {
         $this->setConnection($Connection);
-        $tags and $this->setTags($tags, $key_config);
+        $tags and $this->setTags($tags, $key_options);
     }
 
     public function getConnection() {
@@ -43,17 +43,17 @@ class TaggedCache {
      * To specify multiple hard tags, use arrag as the first item.
      * 
      * @param array $tags 
-     * @param array $key_config
+     * @param array $key_options
      * @return self
      */
-    public function setTags(array $tags, array $key_config = []) {
+    public function setTags(array $tags, array $key_options = []) {
         $hard_tags = array_shift($tags);
         if (empty($hard_tags)) {
             $hard_tags = [];
         } elseif (!is_array($hard_tags)) {
             $hard_tags = [$hard_tags];
         }
-        $this->key_config = $key_config;
+        $this->key_options = $key_options;
         $this->tags = $this->createKeys([
             self::TAG_HARD     => $hard_tags,
             self::TAG_SOFT   => $tags,
@@ -235,11 +235,11 @@ class TaggedCache {
     }
 
     protected function createKeys(array $key_templates) {
-        return Key::createMulti($key_templates, $this->key_config);
+        return Key::createMulti($key_templates, $this->key_options);
     }
 
     protected function createKey($key_template) {
-        return Key::create($key_template, $this->key_config);
+        return Key::create($key_template, $this->key_options);
     }
 
 }

@@ -51,7 +51,7 @@ class TestMemcachedModel extends Model\Memcached {
 
 }
 
-class ModelBaseTest extends PHPUnit_Framework_TestCase {
+class ModelMemcachedTest extends PHPUnit_Framework_TestCase {
 
     protected $Db;
 

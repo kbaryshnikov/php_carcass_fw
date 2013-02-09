@@ -8,4 +8,6 @@ interface UnitInterface {
 
     public function getShardId();
 
+    public function getKey();
+
 }

@@ -150,9 +150,13 @@ class QueryParser extends StringTemplate {
     }
 
     public function parse($args = null) {
-        $this->clean();
+        $this->cleanAll();
         if ($args instanceof Corelib\ExportableInterface) {
             $args = $args->exportArray();
+        }
+        $globals = array_filter($args, 'is_scalar');
+        if ($globals) {
+            $this->setGlobals($globals);
         }
         return parent::parse($args);
     }

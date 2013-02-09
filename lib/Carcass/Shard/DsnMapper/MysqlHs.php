@@ -56,12 +56,14 @@ class DsnMapper_MysqlHs implements DsnMapperInterface {
                 'database_shard_id' => $shard_result['database_shard_id'],
                 'database_server_id' => $server_result['database_server_id'],
                 'hostname' => long2ip($server_result['ip_address']),
+                'type' => 'mysqls',
             ];
             foreach (['port', 'username', 'password'] as $key) {
                 if (!empty($server_result[$key])) {
                     $result[$key] = $server_result[$key];
                 }
             }
+            $result['args']['shard_id'] = $shard_result['database_shard_id'];
             $this->server_cache[$shard_result['database_server_id']] = $result;
         }
         return $this->server_cache[$shard_result['database_server_id']];
