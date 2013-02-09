@@ -4,8 +4,10 @@ namespace Carcass\Model;
 
 use Carcass\Query;
 use Carcass\Field;
+use Carcass\Corelib;
 
-abstract class Base {
+abstract class Base implements Corelib\DataReceiverInterface, Corelib\ExportableInterface, Corelib\RenderableInterface {
+    use Corelib\RenderableTrait;
 
     protected static
         $ModelFieldset = null;
@@ -81,6 +83,24 @@ abstract class Base {
 
     public function __set($key, $value) {
         $this->Fieldset->$key = $value;
+    }
+
+    public function fetchFrom(\Traversable $Source) {
+        $this->Fieldset->fetchFrom($Source);
+        return $this;
+    }
+
+    public function fetchFromArray(array $source) {
+        $this->Fieldset->fetchFromArray($source);
+        return $this;
+    }
+
+    public function exportArray() {
+        return $this->Fieldset->exportArray();
+    }
+
+    public function getRenderArray() {
+        return $this->Fieldset->exportArray();
     }
 
 }
