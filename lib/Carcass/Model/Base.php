@@ -2,5 +2,85 @@
 
 namespace Carcass\Model;
 
-class Base {
+use Carcass\Query;
+use Carcass\Field;
+
+abstract class Base {
+
+    protected static
+        $ModelFieldset = null;
+
+    protected
+        $Fieldset = null,
+        $Query = null;
+
+    public function __construct() {
+        $this->initFieldset();
+    }
+
+    protected function initFieldset() {
+        $this->Fieldset = clone static::getModelFieldset();
+    }
+
+    protected static function getModelFieldset() {
+        if (null === static::$ModelFieldset) {
+            static::$ModelFieldset = static::assembleModelFieldset();
+        }
+        return static::$ModelFieldset;
+    }
+
+    protected static function assembleModelFieldset() {
+        return Field\Set::constructDynamic()
+            ->addFields(static::getModelFields())
+            ->addRules(static::getModelRules())
+            ->addFilters(static::getModelFilters());
+    }
+
+    protected static function getModelFields() {
+        return [];
+    }
+
+    protected static function getModelRules() {
+        return [];
+    }
+
+    protected static function getModelFilters() {
+        return [];
+    }
+
+    protected function execute(array $args = []) {
+        $this->Query->execute($args)->sendTo($this->Fieldset);
+    }
+
+    protected function getQuery() {
+        if (null === $this->Query) {
+            $this->Query = $this->assembleQuery();
+        }
+        return $this->Query;
+    }
+
+    protected function assembleQuery() {
+        return new Query\Base;
+    }
+
+    protected function ensureHasField($key) {
+        if (!$this->Fieldset->has($key)) {
+            throw new \InvalidArgumentException("No field '$key'");
+        }
+    }
+
+    public function getFieldset() {
+        return $this->Fieldset;
+    }
+
+    public function __get($key) {
+        $this->ensureHasField($key);
+        return $this->Fieldset->$key;
+    }
+
+    public function __set($key, $value) {
+        $this->ensureHasField($key);
+        $this->Fieldset->$key = $value;
+    }
+
 }

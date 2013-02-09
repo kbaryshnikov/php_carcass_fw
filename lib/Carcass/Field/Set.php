@@ -11,8 +11,35 @@ class Set extends Corelib\Hash implements FieldInterface {
         RuleTrait::validate as validateOwnRules;
     }
 
+    protected $is_dynamic = false;
+
     public function __construct($value = null) {
         $value and $this->addFields($value);
+    }
+
+    public static function constructDynamic($value = null) {
+        $self = new static($value);
+        return $self->setDynamic();
+    }
+
+    public function setDynamic($bool = true) {
+        $this->is_dynamic = (bool)$bool;
+        return $this;
+    }
+
+    public function castMulti(array $name_type_map) {
+        foreach ($name_type_map as $name => $type) {
+            $this->cast($name, $type);
+        }
+        return $this;
+    }
+
+    public function cast($name, $type) {
+        $value = $this->$name;
+        $Field = $type instanceof FieldInterface ? $type : Base::factory($type);
+        $Field->setValue($value);
+        $this->doSet($name, $Field);
+        return $this;
     }
 
     public function addFields($fields) {
@@ -63,7 +90,9 @@ class Set extends Corelib\Hash implements FieldInterface {
     public function getField($name, $throw_exception_on_missing_field = true) {
         $Field = $this->get($name);
         if (null === $Field) {
-            if ($throw_exception_on_missing_field) {
+            if ($this->is_dynamic) {
+                $Field = $this->autoCreateField($name);
+            } elseif ($throw_exception_on_missing_field) {
                 throw new \InvalidArgumentException("No '$name' field is registered");
             } else {
                 return null;
@@ -86,6 +115,9 @@ class Set extends Corelib\Hash implements FieldInterface {
     }
 
     protected function doSet($name, $value) {
+        if ($this->is_dynamic && !$this->has($name)) {
+            $this->autoCreateField($name);
+        }
         if ($value instanceof FieldInterface) {
             return parent::doSet($name, $value);
         } elseif ($this->has($name)) {
@@ -93,6 +125,12 @@ class Set extends Corelib\Hash implements FieldInterface {
             return true;
         }
         return false;
+    }
+
+    protected function autoCreateField($name, $value = null) {
+        $Field = new Variant($value);
+        parent::doSet($name, $Field);
+        return $Field;
     }
 
     public function setRules(array $rules_map) {

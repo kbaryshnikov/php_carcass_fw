@@ -119,4 +119,61 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals((new Rule\IsValidEmail)->getErrorName(), $errors['e']);
     }
 
+    public function testNonDynamicFormDisallowsUndefinedAccess() {
+        $C = new Field\Set;
+        $this->setExpectedException('LogicException');
+        $C->x;
+    }
+
+    public function testNonDynamicFormDisallowsRulesForUndefinedFields() {
+        $C = new Field\Set;
+        $this->setExpectedException('LogicException');
+        $C->setRules(['x' => 'isNotEmpty']);
+    }
+
+    public function testNonDynamicFormDisallowsFiltersForUndefinedFields() {
+        $C = new Field\Set;
+        $this->setExpectedException('LogicException');
+        $C->setFilters(['x' => 'isNotEmpty']);
+    }
+
+    public function testDynamicForm() {
+        $C = Field\Set::constructDynamic();
+        $C->setRules(['x' => 'isNotEmpty']);
+        $C->setFilters(['y' => 'nullifyEmpty']);
+        $C->z = 1;
+        $C->import(['a' => 1]);
+        $this->assertTrue($C->has('x'));
+        $this->assertTrue($C->has('y'));
+        $this->assertTrue($C->has('z'));
+        $this->assertTrue($C->has('a'));
+        $this->assertFalse($C->has('nope'));
+        foreach ($C as $Field) {
+            $this->assertInstanceOf('\Carcass\Field\Variant', $Field);
+        }
+    }
+
+    public function testCast() {
+        $C = new Field\Set([
+            'i' => ['scalar', 1],
+        ]);
+        $C->cast('i', 'variant');
+        $this->assertInstanceOf('\Carcass\Field\Variant', $C->getField('i'));
+        $C->cast('i', new Field\Id);
+        $this->assertInstanceOf('\Carcass\Field\Id', $C->getField('i'));
+    }
+
+    public function testCastMulti() {
+        $C = new Field\Set([
+            'i' => ['scalar', 1],
+            'j' => ['scalar', 1],
+        ]);
+        $C->castMulti([
+            'i' => 'variant',
+            'j' => new Field\Id
+        ]);
+        $this->assertInstanceOf('\Carcass\Field\Variant', $C->getField('i'));
+        $this->assertInstanceOf('\Carcass\Field\Id', $C->getField('j'));
+    }
+
 }

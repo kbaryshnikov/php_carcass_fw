@@ -14,7 +14,10 @@ abstract class Base implements FieldInterface {
         $value,
         $attributes = [];
 
-    public static function factory(array $args) {
+    public static function factory($args) {
+        if (!is_array($args)) {
+            $args = [$args];
+        }
         $type = (string)array_shift($args);
         if (!$type) {
             throw new \InvalidArgumentException("Missing field type");
