@@ -4,13 +4,21 @@ use Carcass\Model;
 
 use Carcass\Application\Injector;
 
-class TestBaseModel extends Model\Base {
+class TestMemcachedModel extends Model\Memcached {
+
+    protected static
+        $cache_key = 'test_{{ i(id) }}',
+        $cache_tags = [ 'Test_{{ i(id) }}' ];
 
     public static function getModelRules() {
         return [
             'id'        => [ 'isValidId' ],
             'email'     => [ 'isNotEmpty', 'isValidEmail' ]
         ];
+    }
+
+    public function getMct() {
+        return $this->getQuery()->getMct();
     }
 
     public function isLoaded() {
@@ -30,7 +38,7 @@ class TestBaseModel extends Model\Base {
     }
 
     public function insert() {
-        return $this->doInsert('INSERT INTO t SET email = {{ s(email) }}');
+        return $this->doInsert('INSERT INTO t SET email = {{ s(email) }}', [], 'id');
     }
 
     public function update() {
@@ -55,20 +63,41 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testModel() {
-        $M = new TestBaseModel;
-        $M->email = 'test@test.com';
+        $M = new TestMemcachedModel;
+        $MCT = $M->getMct();
+
+        $cache_key = 'test_{{ i(id) }}';
+        $cache_args = ['id' => 1];
+
+        $MCT->flush($cache_args, [$cache_key]);
+        $this->assertFalse($MCT->get($cache_key, $cache_args));
+
+        $M->email = 'mail@test.com';
         $id = $M->insert();
+
         $this->assertEquals(1, $id);
+        $this->assertFalse($MCT->get($cache_key, $cache_args));
+
         $this->assertTrue($M->loadById(1));
         $this->assertEquals(1, $M->id);
-        $this->assertEquals('test@test.com', $M->email);
+        $this->assertEquals('mail@test.com', $M->email);
+
+        $this->assertEquals('mail@test.com', $MCT->get($cache_key, $cache_args)['email']);
+
         $M->email = 'new@test.com';
         $this->assertEquals(1, $M->update());
+
+        $this->assertFalse($MCT->get($cache_key, $cache_args));
+
         $M->reload();
         $this->assertEquals('new@test.com', $M->email);
+        $this->assertEquals('new@test.com', $MCT->get($cache_key, $cache_args)['email']);
+
         $this->assertEquals(1, $M->delete());
         $this->assertFalse($M->reload());
         $this->assertFalse($M->loadById(1));
+
+        $this->assertEquals([], $MCT->get($cache_key, $cache_args));
     }
 
 }

@@ -30,7 +30,7 @@ class Memcached extends Base {
     }
 
     protected function assembleCacheKey($key) {
-        return MemcachedKey::create($key);
+        return $key instanceof \Closure ? $key : MemcachedKey::create($key);
     }
 
     public function insert($sql_query_template, array $args = array(), $last_insert_id_field_name = false) {
