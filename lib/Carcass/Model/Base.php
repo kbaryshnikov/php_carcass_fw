@@ -33,7 +33,8 @@ abstract class Base {
         return Field\Set::constructDynamic()
             ->addFields(static::getModelFields())
             ->addRules(static::getModelRules())
-            ->addFilters(static::getModelFilters());
+            ->addFilters(static::getModelFilters())
+            ->setDynamic(false);
     }
 
     protected static function getModelFields() {
@@ -49,7 +50,14 @@ abstract class Base {
     }
 
     protected function execute(array $args = []) {
-        $this->Query->execute($args)->sendTo($this->Fieldset);
+        $this->Query->execute($args);
+        $this->fetchResults();
+    }
+
+    protected function fetchResults() {
+        $this->Fieldset->dynamic(function() {
+            $this->Query->execute($args)->sendTo($this->Fieldset);
+        });
     }
 
     protected function getQuery() {
@@ -63,23 +71,15 @@ abstract class Base {
         return new Query\Base;
     }
 
-    protected function ensureHasField($key) {
-        if (!$this->Fieldset->has($key)) {
-            throw new \InvalidArgumentException("No field '$key'");
-        }
-    }
-
     public function getFieldset() {
         return $this->Fieldset;
     }
 
     public function __get($key) {
-        $this->ensureHasField($key);
         return $this->Fieldset->$key;
     }
 
     public function __set($key, $value) {
-        $this->ensureHasField($key);
         $this->Fieldset->$key = $value;
     }
 

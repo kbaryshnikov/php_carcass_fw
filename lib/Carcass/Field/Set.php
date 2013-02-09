@@ -34,6 +34,22 @@ class Set extends Corelib\Hash implements FieldInterface {
         return $this;
     }
 
+    public function dynamic(Callable $fn) {
+        $old_dynamic = $this->is_dynamic;
+        $this->is_dynamic = true;
+        try {
+            $fn($this);
+        } catch (Exception $e) {
+            // pass
+        }
+        // finally:
+        $this->is_dynamic = $old_dynamic;
+        if (isset($e)) {
+            throw $e;
+        }
+        return $this;
+    }
+
     public function cast($name, $type) {
         $value = $this->$name;
         $Field = $type instanceof FieldInterface ? $type : Base::factory($type);

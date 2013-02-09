@@ -153,6 +153,16 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
         }
     }
 
+    public function testFormTemporaryDynamicFn() {
+        $C = new Field\Set;
+        $C->dynamic(function($C) {
+            $C->x = 1;
+        });
+        $this->assertTrue($C->has('x'));
+        $this->setExpectedException('LogicException');
+        $C->y;
+    }
+
     public function testCast() {
         $C = new Field\Set([
             'i' => ['scalar', 1],
