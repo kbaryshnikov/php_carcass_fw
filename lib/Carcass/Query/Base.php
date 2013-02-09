@@ -12,6 +12,7 @@ class Base {
         $FetchFn = null,
         $Db = null,
         $DbConn = null,
+        $last_insert_id = null,
         $last_result = [];
 
     public function fetchRow($sql_query_template) {
@@ -52,9 +53,12 @@ class Base {
     }
 
     public function insert($sql_query_template, array $args = array()) {
-        return $this->modify($sql_query_template, $args)
-            ? $this->getDatabase()->getLastInsertId()
-            : null;
+        $this->doModify(function($Db, $args) use ($sql_query_template) {
+            $affected_rows = $Db->query($sql_query_template, $args);
+            $this->last_insert_id = $affected_rows ? $Db->getLastInsertId() : null;
+            return $affected_rows;
+        }, $args, false);
+        return $this->last_insert_id;
     }
 
     public function modify($sql_query_template, array $args = array()) {

@@ -20,80 +20,92 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $cached = $this->Mc->get('id_1');
         $this->assertFalse($cached);
-        $result = $Query->useCache('id_{{ i(id) }}')->fetchRow('select 1 as id')->execute(['id' => 1])->getLastResult();
+        $result = $Query->useCache('id_{{ i(id) }}')
+            ->fetchRow('select 1 as id')
+            ->execute(['id' => 1])
+            ->getLastResult();
         $this->assertEquals(1, $result['id']);
+
+        $this->assertEquals(['id' => 1], $this->Mc->get('id_1')['d']);
+    }
+
+    public function testQueryFetchRowDoesNotTouchDatabaseOnCacheHit() {
+        $this->testQueryFetchRow();
+        $Query = new Query\Memcached;
+        $Query->setTags(['tag_id_{{ i(id) }}']);
+        $result = $Query->useCache('id_{{ i(id) }}')
+            ->fetchRow('select 2 as id')
+            ->execute(['id' => 1])
+            ->getLastResult();
+        $this->assertEquals(1, $result['id']);
+    }
+
+    public function testQueryFetchAll() {
+        $Query = new Query\Memcached;
+        $Query->setTags(['tag_id_{{ i(id) }}']);
         $cached = $this->Mc->get('id_1');
-        var_dump($cached);
+        $this->assertFalse($cached);
+        $result = $Query->useCache('id_{{ i(id) }}')
+            ->fetchAll('select 1 as x, 2 as y union select 3, 4')
+            ->execute(['id' => 1])
+            ->getLastResult();
+        $this->assertEquals(1, $result[0]['x']);
+        $this->assertEquals(2, $result[0]['y']);
+        $this->assertEquals(3, $result[1]['x']);
+        $this->assertEquals(4, $result[1]['y']);
+        $this->assertEquals([
+            ['x' => 1, 'y' => 2],
+            ['x' => 3, 'y' => 4],
+        ], $this->Mc->get('id_1')['d']);
     }
 
-    public function _testQueryFetchAll() {
-        $Query = new Query\Base;
-        $result = $Query->fetchAll('select 1 as id union select 2 as id')->execute()->getLastResult();
-        $this->assertEquals(1, $result[0]['id']);
-        $this->assertEquals(2, $result[1]['id']);
-
-        $result = $Query->fetchAll('select 1 as id, \'foo\' as s union select 2 as id, \'bar\' as s', ['id' => 1])
-            ->execute()->getLastResult();
-        $this->assertEquals('foo', $result[1]['s']);
-        $this->assertEquals('bar', $result[2]['s']);
-
-        $result = $Query->fetchAll('select 1 as id, \'foo\' as s union select 1 as id, \'bar\' as s', ['id' => INF])
-            ->execute()->getLastResult();
-        $this->assertEquals('foo', $result[1][0]['s']);
-        $this->assertEquals('bar', $result[1][1]['s']);
-    }
-
-    public function _testQueryFetchWithCallback() {
-        $Query = new Query\Base;
-        $result = $Query->fetchWith(function($Db, array $args) {
-            return [ $Db->getCell('select ' . $args[0]), $result[1] = $Db->getCell('select ' . $args[1]) ];
-        })->execute([1, 2])->getLastResult();
+    public function testQueryFetchWithCallback() {
+        $Query = new Query\Memcached;
+        $Query->setTags(['tag_id_{{ i(id) }}']);
+        $result = $Query->useCache('id_{{ i(id) }}')
+            ->fetchWith(function($Db, array $args) {
+                return [1, $Db->getCell('SELECT 2')];
+            })->execute(['id' => 1])->getLastResult();
         $this->assertEquals([1, 2], $result);
+        $this->assertEquals([1, 2], $this->Mc->get('id_1')['d']);
     }
 
-    public function _testQueryUID() {
-        $Query = new Query\Base;
-        $Query->modify('drop table if exists t');
-        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
-        $id = $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'foo']);
+    public function testQueryInsertSelectUpdateDelete() {
+        $Query = new Query\Memcached;
+        $Query->setTags(['tag_id_{{ i(id) }}']);
+        $Query->useCache('id_{{ i(id) }}');
+
+        $this->Db->executeQuery('drop table if exists t');
+        $this->Db->executeQuery('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+
+        $this->Mc->set('&tag_id_1', 1);
+        $this->Mc->set('id_1', 1);
+
+        $id = $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'foo'], 'id');
+
         $this->assertEquals(1, $id);
+        $this->assertFalse($this->Mc->get('&tag_id_1'));
+        $this->assertFalse($this->Mc->get('id_1'));
+
+        $row = $Query->fetchRow('select id, s from t where id = {{ i(id) }}')->execute(['id' => 1])->getLastResult();
+        $this->assertEquals(1, $row['id']);
+        $this->assertEquals('foo', $row['s']);
+
+        $cached = $this->Mc->get('id_1');
+        $this->assertEquals(1, $cached['d']['id']);
+        $this->assertEquals('foo', $cached['d']['s']);
+
         $affected_rows = $Query->modify('update t set s = {{ s(s) }} where id = {{ i(id) }}', ['s' => 'bar', 'id' => 1]);
         $this->assertEquals(1, $affected_rows);
-        $affected_rows = $Query->modify('delete from t');
+        $this->assertFalse($Query->getMct()->get('id_{{ i(id) }}', ['id' => 1]));
+
+        $row = $Query->fetchRow('select id, s from t where id = {{ i(id) }}')->execute(['id' => 1])->getLastResult();
+        $this->assertEquals('bar', $row['s']);
+        $this->assertEquals('bar', $Query->getMct()->get('id_{{ i(id) }}', ['id' => 1])['s']);
+
+        $affected_rows = $Query->modify('delete from t where id = {{ i(id) }}', ['id' => 1]);
         $this->assertEquals(1, $affected_rows);
-    }
-
-    public function _testQueryUIDCallback() {
-        $Query = new Query\Base;
-        $Query->modify('drop table if exists t');
-        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
-        $id = $Query->insertWith(function($Db, $args) {
-            $Db->query('insert into t (s) values ({{ s(s) }})', $args);
-            $Db->query('insert into t (s) values ({{ s(s) }})', $args);
-            return $Db->getLastInsertId();
-        }, ['s' => 'foo']);
-        $this->assertEquals(2, $id);
-        $affected_rows = $Query->modifyWith(function($Db, $args) {
-            $Db->query('update t set s = {{ s(s) }} where id = {{ i(id) }}', $args);
-            return $Db->getAffectedRows();
-        }, ['id' => 2, 's' => 'bar']);
-        $this->assertEquals(1, $affected_rows);
-    }
-
-    public function _testQuerySendTo() {
-        $Query = new Query\Base;
-        $Query->modify('drop table if exists t');
-        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
-        $Query->modify('insert into t (s) values (\'foo\'), (\'bar\')');
-
-        $Result = new \Carcass\Corelib\Hash;
-        $Query->fetchRow('select id, s from t order by id limit 1')->execute()->sendTo($Result);
-        $this->assertEquals('foo', $Result->s);
-
-        $Result = new \Carcass\Corelib\Hash;
-        $Query->fetchAll('select id, s from t order by id')->execute()->sendTo($Result);
-        $this->assertEquals('foo', $Result[0]->s);
-        $this->assertEquals('bar', $Result[1]->s);
+        $this->assertFalse($Query->getMct()->get('id_{{ i(id) }}', ['id' => 1]));
     }
 
 }

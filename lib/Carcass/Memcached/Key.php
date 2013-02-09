@@ -17,14 +17,6 @@ class Key {
         $this->Builder = $Builder;
     }
 
-    public function getClone(array $opts = null) {
-        $that = clone $this;
-        if (null !== $opts) {
-            $that->setOptions($opts);
-        }
-        return $that;
-    }
-
     public function parse($args, array $opts = []) {
         $this->Builder->cleanAll();
         $opts += $this->opts;
@@ -51,7 +43,8 @@ class Key {
         $result = [];
         foreach ($templates as $key => $template) {
             if ($template instanceof \Closure) {
-                $result[$key] = $template('getClone', $opts);
+                $result[$key] = clone $template;
+                $result[$key]('setOptions', $opts);
             } elseif (is_array($template)) {
                 $result[$key] = static::createMulti($template, $opts);
             } else {

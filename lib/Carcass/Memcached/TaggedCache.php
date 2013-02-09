@@ -113,16 +113,21 @@ class TaggedCache {
         return $this;
     }
 
-    public function flush(array $args) {
+    public function flush(array $args, array $keys = []) {
         foreach ($this->getAllTagKeys($args, true) as $tag) {
             $this->Connection->delete($tag);
+        }
+        if ($keys) {
+            foreach ($this->buildKeys($this->createKeys($keys), $args) as $Key) {
+                $this->Connection->delete($Key);
+            }
         }
         return $this;
     }
 
     protected function dispatchGet(array $Keys, array $args) {
         $tag_keys  = $this->getHardTagKeys($args);
-        $data_keys = $this->parseKeys($Keys, $args);
+        $data_keys = $this->buildKeys($Keys, $args);
 
         $mc_result = $this->Connection->get(array_merge(array_values($tag_keys), array_values($data_keys)));
 
@@ -179,7 +184,7 @@ class TaggedCache {
             }
         }
 
-        foreach ($this->parseKeys($Keys, $args) as $idx => $key) {
+        foreach ($this->buildKeys($Keys, $args) as $idx => $key) {
             $mc_set[$key] = [
                 self::SUBKEY_DATA => $values[$idx],
                 self::SUBKEY_TAGS => $tags,
@@ -221,7 +226,7 @@ class TaggedCache {
         return $result;
     }
 
-    protected function parseKeys(array $Keys, array $args) {
+    protected function buildKeys(array $Keys, array $args) {
         $result = [];
         foreach ($Keys as $idx => $Key) {
             $result[$idx] = $Key($args);
