@@ -9,14 +9,14 @@ spl_autoload_register(function($class) {
     return false;
 });
 
-function test_mysql_get_dsn() {
-    return 'mysql://test:test@localhost/test';
-}
+function init_app($run_mode = 'cli') {
 
-function test_hs_get_dsn() {
-    return 'handlersocket://localhost/test';
-}
+    \Carcass\Application\Instance::destroy();
+    return \Carcass\Application\Instance::init(__DIR__, [
+        'env_data' => [
+            'run_mode' => $run_mode,
+            'configuration_name' => 'test',
+        ],
+    ]);
 
-function test_mysql_get_connection() {
-    return new mysqli('localhost', 'test', 'test', 'test');
 }

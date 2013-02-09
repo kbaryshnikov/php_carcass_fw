@@ -2,7 +2,7 @@
 
 namespace Carcass\Corelib;
 
-class Hash implements \Iterator, \ArrayAccess, \Countable, DatasourceRefInterface, DataReceiverInterface, ExportableInterface {
+class Hash implements \Iterator, \ArrayAccess, \Countable, DatasourceRefInterface, DataReceiverInterface, ExportableInterface, ImportableInterface {
     use HashTrait;
 
     public function __construct($init_with = null) {

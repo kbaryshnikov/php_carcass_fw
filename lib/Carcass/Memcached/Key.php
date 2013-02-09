@@ -17,10 +17,24 @@ class Key {
         $this->Builder = $Builder;
     }
 
+    public function getClone(array $opts = null) {
+        $that = clone $this;
+        if (null !== $opts) {
+            $that->setOptions($opts);
+        }
+        return $that;
+    }
+
     public function parse($args, array $opts = []) {
         $this->Builder->cleanAll();
         $opts += $this->opts;
         return $opts['prefix'] . $this->Builder->parse($args) . $opts['suffix'];
+    }
+
+    public function setOptions(array $opts) {
+        $this->setPrefix(isset($opts['prefix']) ? $opts['prefix'] : '');
+        $this->setSuffix(isset($opts['suffix']) ? $opts['suffix'] : '');
+        return $this;
     }
 
     public function setPrefix($prefix) {
@@ -33,8 +47,22 @@ class Key {
         return $this;
     }
 
-    public static function create($template, array $config = []) {
-        $Key = new self(new KeyBuilder($template, $config));
+    public static function createMulti(array $templates, array $opts = []) {
+        $result = [];
+        foreach ($templates as $key => $template) {
+            if ($template instanceof \Closure) {
+                $result[$key] = $template('getClone', $opts);
+            } elseif (is_array($template)) {
+                $result[$key] = static::createMulti($template, $opts);
+            } else {
+                $result[$template] = static::create($template, $opts);
+            }
+        }
+        return $result;
+    }
+
+    public static function create($template, array $opts = []) {
+        $Key = new self(new KeyBuilder($template, $opts));
         return function() use ($Key) {
             $args = func_get_args();
             if (empty($args)) {

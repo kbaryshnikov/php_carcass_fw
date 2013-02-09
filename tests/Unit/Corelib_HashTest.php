@@ -34,6 +34,21 @@ class Corelib_HashTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $Hash[0]);
     }
 
+    public function testImportArrayObjectAccess() {
+        $Hash = new Hash;
+        $Hash->import([
+            ['a' => 1],
+            ['a' => 2],
+            'x' => 3
+        ]);
+        $this->assertEquals(3, $Hash['x']);
+        $this->assertEquals(3, $Hash->x);
+        $this->assertEquals(1, $Hash[0]->a);
+        $this->assertEquals(1, $Hash[0]['a']);
+        $this->assertEquals(2, $Hash->{1}['a']);
+        $this->assertEquals(2, $Hash[1]->a);
+    }
+
     public function testArrayAccessModification() {
         $Hash = new Hash(['a' => 1]);
         $Hash['a']++;

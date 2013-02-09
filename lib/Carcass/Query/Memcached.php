@@ -37,27 +37,31 @@ class Memcached extends Base {
             return parent::execute($args);
         }
 
-        $this->doInTransaction(function() use($args) {
-            $key = $this->key->__invoke($args);
-            $result = $this->getMct()->get($key);
-            if (false === $cache_result) {
-                $result = parent::execute($args);
-                $this->getMct()->set($key, $result);
+        $this->doInTransaction(function($Db, $args) {
+            $result = $this->getMct()->getKey($this->key, $args);
+            if (false === $result) {
+                $result = $this->doFetch($args);
+                $this->getMct()->setKey($this->key, $args, $result);
             }
             $this->last_result = $result;
-        });
+        }, $args);
 
         return $this;
     }
 
-    public function modify($sql_query_template, array $args = array()) {
-        return $this->doInTransaction(function() use ($sql_query_template, $args) {
-            $affected_rows = parent::modify($sql_query_template, $args);
+    protected function doModify(Callable $fn, array $args, $in_transaction, Callable $finally_fn = null) {
+        if (null === $this->key) {
+            return parent::doModify($fn, $args, $in_transaction, $finally_fn);
+        }
+
+        $cache_fn = function($Db, array $args) use ($fn) {
+            $affected_rows = $fn($Db, $args);
             if ($affected_rows) {
                 $this->getMct()->flush();
             }
             return $affected_rows;
-        });
+        };
+        parent::doModify($cache_fn, $args, true, $finally_fn);
     }
 
     protected function getMct() {

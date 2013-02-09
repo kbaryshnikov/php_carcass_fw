@@ -44,7 +44,16 @@ class Instance {
     private static $instance = null;
 
     public static function run($app_root, array $overrides = []) {
-        new static($app_root, $overrides);
+        return static::init($app_root, $overrides)->execute();
+    }
+
+    public static function init($app_root, array $overrides = []) {
+        return new static($app_root, $overrides);
+    }
+
+    public function execute() {
+        $this->Injector->FrontController->run();
+        return $this;
     }
 
     public static function getEnv($key, $default_value = null) {
@@ -59,6 +68,14 @@ class Instance {
         return $app_namespace ? "$app_namespace\\$class_name" : "\\$class_name";
     }
 
+    public static function destroy() {
+        if (!static::$instance) {
+            return;
+        }
+        Injector::setInstance(null);
+        self::$instance = null;
+    }
+
     protected function __construct($app_root, array $overrides = []) {
         if (static::$instance) {
             throw new \LogicException('Application already created');
@@ -67,7 +84,6 @@ class Instance {
         $this->app_root = static::fixPath($app_root);
         $this->options = $overrides + static::$opt_defaults;
         $this->bootstrap();
-        $this->executeRunMode();
     }
 
     protected function bootstrap() {
@@ -80,11 +96,6 @@ class Instance {
         $this->setupDebugger();
         $this->setupPathManager();
         $this->setupDependencies();
-    }
-
-
-    protected function executeRunMode() {
-        $this->Injector->FrontController->run();
     }
 
     protected function setupDependencies() {
@@ -105,6 +116,11 @@ class Instance {
         $this->Injector->PathManager  = $this->PathManager;
         $this->Injector->Debugger     = $this->Debugger;
         $this->Injector->Logger       = $this->Logger;
+
+        $this->Injector->ConnectionManager = $this->Injector->reuse(isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function($I) {
+            $class = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
+            return (new $class)->registerTypes($I->ConfigReader->exportArrayFrom('connections', []));
+        });
 
         if (is_callable($setupFn)) {
             $setupFn($this->Injector, $dep_map);
@@ -145,10 +161,6 @@ class Instance {
         $this->Injector->Router = $this->Injector->reuse(isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function($I) {
             return \Carcass\Application\Web_Router_Factory::assembleByConfig($I->ConfigReader->web->router);
         });
-        $this->Injector->ConnectionManager = $this->Injector->reuse(isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function($I) {
-            $class = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
-            return (new $class)->registerTypes($I->ConfigReader->exportArrayFrom('connections', []));
-        });
         $this->Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function($I) {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Web_FrontController');
             return new $class($I->Request, $I->Response, $I->Router, $I->ConfigReader->web);
@@ -176,7 +188,12 @@ class Instance {
 
 
     protected function loadApplicationConfiguration() {
-        $this->app_env = (array)(include $this->app_root . $this->options['env_file']) + static::$env_defaults;
+        if (!empty($this->options['env_data'])) {
+            $env_data = (array)$this->options['env_data'];
+        } else {
+            $env_data = (array)(include $this->app_root . $this->options['env_file']);
+        }
+        $this->app_env = $env_data + static::$env_defaults;
         $this->app_env['app_root'] = &$this->app_root;
         if (!isset($this->app_env['configuration_name'])) {
             $this->app_env['configuration_name'] = null;

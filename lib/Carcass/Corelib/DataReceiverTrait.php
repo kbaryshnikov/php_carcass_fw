@@ -7,6 +7,19 @@ trait DataReceiverTrait {
     protected $is_locked = false;
     protected $is_tainted = false;
 
+    public function import(/* Traversable */ $data) {
+        if (!ArrayTools::isTraversable($data)) {
+            throw new \InvalidArgumentException('Argument is not traversable');
+        }
+        foreach ($data as $key => $value) {
+            if (ArrayTools::isTraversable($value) && !static::instanceOfSelf($value)) {
+                $value = static::newSelf($value);
+            }
+            $this->set($key, $value);
+        }
+        return $this;
+    }
+
     public function fetchFrom(\Traversable $Source) {
         foreach ($Source as $key => $value) {
             $this->set($key, $value);

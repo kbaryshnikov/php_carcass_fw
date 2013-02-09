@@ -2,6 +2,8 @@
 
 namespace Carcass\Connection;
 
+use Carcass\Corelib\UniqueId;
+
 trait TransactionalConnectionTrait {
 
     protected static
@@ -11,6 +13,7 @@ trait TransactionalConnectionTrait {
 
     protected
         $ConnectionManager = null,
+        $transaction_id = null,
         $transaction_status = 0,
         $transaction_counter = 0;
 
@@ -24,9 +27,28 @@ trait TransactionalConnectionTrait {
         return $this;
     }
 
+    public function getTransactionId() {
+        if ($this->transaction_status == self::$TRANSACTION_NONE) {
+            return null;
+        }
+        if (null === $this->transaction_id) {
+            if ($this->ConnectionManager) {
+                $this->transaction_id = $this->ConnectionManager->getTransactionId('T');
+            }
+            if (null === $this->transaction_id) {
+                $this->transaction_id = UniqueId::generate();
+                if ($this->ConnectionManager) {
+                    $this->ConnectionManager->setTransactionId($this->transaction_id);
+                }
+            }
+        }
+        return $this->transaction_id;
+    }
+
     public function begin($local = false) {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_NONE:
+                $this->transaction_id = null;
                 $this->transaction_status = self::$TRANSACTION_SCHEDULED;
                 $this->transaction_counter = 1;
                 break;
@@ -84,7 +106,6 @@ trait TransactionalConnectionTrait {
         $e = null;
         try {
             $this->begin();
-            array_unshift($args, $this);
             $result = call_user_func_array($fn, $args);
             $this->commit();
         } catch (\Exception $e) {

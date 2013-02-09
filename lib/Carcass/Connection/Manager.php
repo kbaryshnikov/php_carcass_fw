@@ -2,6 +2,8 @@
 
 namespace Carcass\Connection;
 
+use Carcass\Corelib\UniqueId;
+
 class Manager {
 
     protected $dsn_type_map = [
@@ -11,6 +13,17 @@ class Manager {
     ];
 
     protected $registry = [];
+
+    protected $transaction_id = null;
+
+    public function getTransactionId() {
+        return $this->transaction_id;
+    }
+
+    public function setTransactionId($transaction_id) {
+        $this->transaction_id = $transaction_id;
+        return $this;
+    }
 
     public function registerType($name, $class) {
         $this->dsn_type_map[$name] = $class;
@@ -64,14 +77,13 @@ class Manager {
         $e = null;
         try {
             $this->begin();
-            array_unshift($args, $this);
             $result = call_user_func_array($fn, $args);
             $this->commit();
         } catch (\Exception $e) {
             $this->rollback();
         }
         if (null !== $finally_fn) {
-            $finally_fn();
+            $finally_fn($result);
         }
         if (null !== $e) {
             throw $e;

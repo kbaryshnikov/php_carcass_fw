@@ -134,6 +134,10 @@ class TestTransactionalConnection extends TestConnection implements Connection\T
     public function setManager(Connection\Manager $Manager) {
         $this->Manager = $Manager;
     }
+
+    public function getTransactionId() {
+        return null;
+    }
     
     public function begin($local = false) {
         if (!$local) throw new Exception("Call must be local");

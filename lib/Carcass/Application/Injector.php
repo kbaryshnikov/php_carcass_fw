@@ -19,7 +19,7 @@ class Injector {
         return self::$instance;
     }
 
-    public static function setInstance(Corelib\Injector $Injector) {
+    public static function setInstance(Corelib\Injector $Injector = null) {
         return self::$instance = $Injector;
     }
 

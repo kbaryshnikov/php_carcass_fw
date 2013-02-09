@@ -86,7 +86,7 @@ class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
         $Conn->executeQuery("SELECT * FROM test ORDER BY id");
         $row = $Conn->fetch();
         $this->assertEquals(['id' => '1', 's' => '1'], $row);
-        $Conn->doInTransaction(function($Conn) {
+        $Conn->doInTransaction(function() use ($Conn) {
             $Conn->executeQuery("UPDATE test SET s = 'new' WHERE id = 1");
         });
         $Conn->executeQuery("SELECT * FROM test ORDER BY id");

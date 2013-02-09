@@ -25,6 +25,12 @@ class Corelib_DataReceiverTraitTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($array, $DataReceiver->data);
         $DataReceiver->fetchFromArray($new_array = ['a' => 'new value']);
         $this->assertEquals($new_array + $array, $DataReceiver->data);
+        $array = [
+            ['a' => 1, 'b' => 2],
+            ['a' => 11, 'b' => 12],
+        ];
+        $DataReceiver = (new DataReceiverTraitUser)->fetchFromArray($array);
+        $this->assertEquals($array, $DataReceiver->data);
     }
 
     public function testFetchFrom() {

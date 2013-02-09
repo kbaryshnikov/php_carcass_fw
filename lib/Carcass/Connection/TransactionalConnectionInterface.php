@@ -12,4 +12,6 @@ interface TransactionalConnectionInterface {
 
     public function rollback($local = false);
 
+    public function getTransactionId();
+
 }
