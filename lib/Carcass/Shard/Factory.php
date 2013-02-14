@@ -44,10 +44,6 @@ class Factory {
         return $this->getItemByType('allocators', $connection_type);
     }
 
-    public function getSequencer($connection_type) {
-        return $this->getItemByType('sequencers', $connection_type);
-    }
-
     public function getMapper($connection_type) {
         return $this->getItemByType('mappers', $connection_type);
     }

@@ -27,12 +27,6 @@ return [
                         },
     ],
 
-    'sequencers' => [
-        'mysql'     =>  function($Injector, $Config) {
-                            return new \Carcass\Shard\Sequencer_MysqlTable;
-                        },
-    ],
-
     'allocators' => [
         'mysql'     =>  function($Injector, $Config) {
                             return new \Carcass\Shard\Allocator_MysqlMap(

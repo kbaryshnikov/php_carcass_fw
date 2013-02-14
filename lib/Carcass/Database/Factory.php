@@ -6,6 +6,7 @@ class Factory {
 
     protected static $map = [
         'mysql' => '\Carcass\Mysql\Database',
+        'mysqls' => '\Carcass\Shard\Mysql_Database',
     ];
 
     public static function register($protocol, $implementation) {
