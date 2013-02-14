@@ -4,6 +4,7 @@ namespace Carcass\Shard;
 
 use Carcass\Config;
 use Carcass\Application\Injector;
+use Carcass\Corelib;
 
 class Factory {
 

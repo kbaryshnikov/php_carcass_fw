@@ -6,9 +6,11 @@ use Carcass\Mysql;
 
 class Mysql_Connection extends Mysql\Connection {
 
+    const DSN_TYPE = 'mysqls';
+
     protected $Unit = null;
 
-    public function setShardUnit(Unit $Unit) {
+    public function setShardUnit(UnitInterface $Unit) {
         $this->Unit = $Unit;
         return $this;
     }

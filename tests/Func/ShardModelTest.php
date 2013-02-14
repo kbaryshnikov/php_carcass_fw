@@ -6,17 +6,22 @@ use Carcass\Application\Injector;
 
 use Carcass\Shard;
 
+
 class TestShardModel extends Shard\Model {
-/*
+
     protected static
-        $cache_key = 'test_{{ i(id) }}',
-        $cache_tags = [ 'Test_{{ i(id) }}' ];
+        $cache_key = 'foo_{{ i(foo_id) }}',
+        $cache_tags = [ 'Foo_{{ i(foo_id) }}' ];
 
     public static function getModelRules() {
         return [
             'id'        => [ 'isValidId' ],
             'email'     => [ 'isNotEmpty', 'isValidEmail' ]
         ];
+    }
+
+    public function getDb() {
+        return $this->getQuery()->getDatabase();
     }
 
     public function getMct() {
@@ -34,23 +39,34 @@ class TestShardModel extends Shard\Model {
         return $this->loadById($this->id);
     }
 
+    public function createTable() {
+        $this->doModify("
+            CREATE TABLE {{ t('t') }} (
+                {{ name(_unit_key) }} integer unsigned NOT NULL,
+                id integer unsigned NOT NULL,
+                email varchar(255),
+                PRIMARY KEY ({{ name(_unit_key) }}, id)
+            ) ENGINE=InnoDB
+        ");
+    }
+
     public function loadById($id) {
-        $this->doFetch('SELECT id, email FROM t WHERE id = {{ i(id) }}', compact('id'));
+        $this->doFetch('SELECT id, email FROM {{ table("t") }} {{ where() }} id = {{ i(id) }}', compact('id'));
         return $this->isLoaded();
     }
 
     public function insert() {
-        return $this->doInsert('INSERT INTO t SET email = {{ s(email) }}', [], 'id');
+        return $this->doInsert('INSERT INTO {{ table("t") }} {{ set() }} email = {{ s(email) }}', [], 'id');
     }
 
     public function update() {
-        return $this->doModify('UPDATE t SET email = {{ s(email) }} WHERE id = {{ i(id) }}');
+        return $this->doModify('UPDATE {{ table("t") }} SET email = {{ s(email) }} {{ where() }} id = {{ i(id) }}');
     }
 
     public function delete() {
-        return $this->doModify('DELETE FROM t WHERE id = {{ i(id) }}');
+        return $this->doModify('DELETE FROM {{ table("t") }} {{ where() }} id = {{ i(id) }}');
     }
-*/
+
 }
 
 class TestShardUnit implements Shard\UnitInterface {
@@ -62,8 +78,8 @@ class TestShardUnit implements Shard\UnitInterface {
     public $id = null;
     public $shard_id = null;
 
-    public function __construct($id) {
-        $this->loadById($id);
+    public function __construct($id = null) {
+        $id and $this->loadById($id);
     }
 
     public function loadById($id) {
@@ -90,6 +106,10 @@ class TestShardUnit implements Shard\UnitInterface {
         return self::SHARD_KEY;
     }
 
+    public function getDatabaseName() {
+        return 'TestShardDatabase';
+    }
+
 }
 
 class ShardModelTest extends PHPUnit_Framework_TestCase {
@@ -105,6 +125,7 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
     public function testWorkflow() {
         $this->allocateShards();
         $this->tstDsnMaps();
+        $this->tstUnitModel();
     }
 
     protected function allocateShards() {
@@ -115,27 +136,38 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
             'username' => 'test',
             'password' => 'test',
             'units_per_shard' => 2,
-        ]);
+            'management_username' => 'root',
+            'management_password' => '890p',
+            'user_host' => 'localhost',
+        ], new TestShardUnit);
         $this->assertEquals(1, $server_id);
 
         $Unit = new TestShardUnit(1);
-        $Allocator->allocate($Unit);
+        $must_init_shard = $Allocator->allocate($Unit);
         $this->assertEquals(1, $Unit->shard_id);
+        $this->assertTrue($must_init_shard);
 
         $Unit = new TestShardUnit(2);
-        $Allocator->allocate($Unit);
+        $must_init_shard = $Allocator->allocate($Unit);
         $this->assertEquals(1, $Unit->shard_id);
+        $this->assertFalse($must_init_shard);
 
         $Unit = new TestShardUnit(3);
-        $Allocator->allocate($Unit);
+        $must_init_shard = $Allocator->allocate($Unit);
         $this->assertEquals(2, $Unit->shard_id);
+        $this->assertTrue($must_init_shard);
     }
 
     protected function tstDsnMaps() {
         $Mapper = $this->Factory->getMapper('mysql');
-        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(1)));
-        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(2)));
-        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/?shard_id=2', (string)$Mapper->getDsn(new TestShardUnit(3)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(1)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(2)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase?shard_id=2', (string)$Mapper->getDsn(new TestShardUnit(3)));
+    }
+
+    protected function tstUnitModel() {
+        $Model = $this->Factory->getModel('TestShardModel', new TestShardUnit(1));
+        $Model->createTable();
     }
 
 }

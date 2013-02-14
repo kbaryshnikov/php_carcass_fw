@@ -13,7 +13,7 @@ class Mysql_QueryParser extends Mysql\QueryParser {
         $unit_key,
         $unit_id;
 
-    public function __construct(Connection $Connection, $template) {
+    public function __construct(Mysql_Connection $Connection, $template) {
         parent::__construct($Connection, $template);
 
         $shard_id = $Connection->getDsn()->args->get('shard_id');

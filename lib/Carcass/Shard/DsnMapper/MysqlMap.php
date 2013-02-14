@@ -43,6 +43,7 @@ class DsnMapper_MysqlMap implements DsnMapperInterface {
             }
             $Tokens = clone $this->ShardDefaults;
             $Tokens->merge($shard_connection_params);
+            $Tokens->path = $Unit->getDatabaseName();
             $this->dsn_cache[$shard_id] = Connection\Dsn::constructByTokens($Tokens);
         }
         return $this->dsn_cache[$shard_id];

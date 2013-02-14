@@ -2,7 +2,9 @@
 
 namespace Carcass\Shard;
 
-class Model extends \Carcass\Model\Memcached {
+use \Carcass\Model\Memcached as MemcachedModel;
+
+class Model extends MemcachedModel {
 
     protected
         $ShardFactory,

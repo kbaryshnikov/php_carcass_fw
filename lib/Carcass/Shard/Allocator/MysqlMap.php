@@ -24,16 +24,18 @@ class Allocator_MysqlMap implements AllocatorInterface {
 
     public function allocate(UnitInterface $Unit) {
         return $this->Db->doInTransaction(function() use ($Unit) {
+            $is_new_shard = false;
             $shard_id = $this->getMostFreeShard();
             if (!$shard_id) {
                 $shard_id = $this->allocateNewShard();
+                $is_new_shard = true;
             }
             if (!$shard_id) {
                 throw new \RuntimeException('Failed to allocate shard');
             }
             $this->allocateUnitInShard($shard_id);
             $Unit->setShardId($shard_id);
-            return $shard_id;
+            return $is_new_shard;
         });
     }
 
@@ -154,7 +156,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
         return $this;
     }
 
-    public function addServer(/* ArrayAccess */$server) {
+    public function addServer(/* ArrayAccess */$server, UnitInterface $Unit) {
         if (!Corelib\ArrayTools::isArrayAccessable($server)) {
             throw new \InvalidArgumentException('Argument must be array or ArrayAccess instance');
         }
@@ -166,6 +168,8 @@ class Allocator_MysqlMap implements AllocatorInterface {
         foreach (['port', 'username', 'password', 'capacity', 'units_per_shard'] as $key) {
             if (isset($server[$key])) {
                 $args[$key] = $server[$key];
+            } else {
+                $args[$key] = null;
             }
         }
         $result = $this->Db->query(
@@ -185,7 +189,26 @@ class Allocator_MysqlMap implements AllocatorInterface {
         if (!$result) {
             throw new \LogicException('Failed to add server to the database');
         }
-        return $this->Db->getLastInsertId();
+        $id = $this->Db->getLastInsertId();
+        $NewServerConn = Database\Factory::assemble(new Mysql\Connection(Connection\Dsn::constructByTokens(new Corelib\Hash([
+            'scheme'    => 'mysql',
+            'host'      => $args['ip_address'],
+            'port'      => $args['port'],
+            'user'      => isset($server['management_username']) ? $server['management_username'] : 'root',
+            'pass'      => isset($server['management_password']) ? $server['management_password'] : '',
+        ]))));
+        $NewServerConn->query("CREATE DATABASE IF NOT EXISTS {{ name(database) }}", ['database' => $Unit->getDatabaseName()]);
+        $NewServerConn->query("
+            GRANT ALL PRIVILEGES ON {{ name(database) }}.*
+            TO {{ s(user) }}@{{ s(user_host) }} 
+            IDENTIFIED BY {{ s(password) }}
+        ", [
+            'database' => $Unit->getDatabaseName(),
+            'user'     => $args['username'] ?: '',
+            'password' => $args['password'] ?: '',
+            'user_host'=> isset($server['user_host']) ? $server['user_host'] : '%',
+        ]);
+        return $id;
     }
 
     protected function getFqTable($table) {

@@ -17,7 +17,7 @@ class ObjectTools {
             $name = $_prefix . substr($name, 1);
         }
         if ($namespace && substr($name, 0, 1) !== '\\') {
-            $name = $namespace . '\\' . $name;
+            $name = rtrim($namespace, '\\') . '\\' . $name;
         }
         if (substr($name, 0, 1) != '\\') {
             $name = '\\' . $name;

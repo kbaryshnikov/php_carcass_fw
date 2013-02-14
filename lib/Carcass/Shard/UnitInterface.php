@@ -14,4 +14,6 @@ interface UnitInterface {
 
     public function setShardId($shard_id);
 
+    public function getDatabaseName();
+
 }

@@ -11,6 +11,8 @@ use \Carcass\Corelib;
 class Connection implements ConnectionInterface, TransactionalConnectionInterface {
     use TransactionalConnectionTrait;
 
+    const DSN_TYPE = 'mysql';
+
     protected
         $Dsn,
         $QueryParser = null,
@@ -30,7 +32,7 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
     }
 
     public function __construct(Dsn $Dsn) {
-        Corelib\Assert::onFailureThrow('mysql dsn is required')->is('mysql', $Dsn->getType());
+        Corelib\Assert::onFailureThrow(static::DSN_TYPE . ' dsn is required')->is(static::DSN_TYPE, $Dsn->getType());
 
         static $reporting_was_setup = false;
         if (!$reporting_was_setup) {

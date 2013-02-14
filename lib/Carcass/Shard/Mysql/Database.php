@@ -4,7 +4,7 @@ namespace Carcass\Shard;
 
 use Carcass\Mysql;
 
-class Database extends Mysql\Database {
+class Mysql_Database extends Mysql\Database {
 
     const
         DEFAULT_SEQUENCE_TABLE_NAME = 'Sequences';
