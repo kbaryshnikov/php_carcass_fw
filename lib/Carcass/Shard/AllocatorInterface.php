@@ -4,7 +4,7 @@ namespace Carcass\Shard;
 
 interface AllocatorInterface {
 
-    /// @return int $shard_id
+    // sets $Unit->setShardId()
     public function allocate(UnitInterface $Unit);
 
 }

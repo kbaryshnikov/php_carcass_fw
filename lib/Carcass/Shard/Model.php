@@ -2,25 +2,20 @@
 
 namespace Carcass\Shard;
 
-use Carcass\Model;
-
-class Model extends Model\Memcached {
+class Model extends \Carcass\Model\Memcached {
 
     protected
-        $DsnMapper,
+        $ShardFactory,
         $Unit;
 
-    public function __construct(DsnMapper $DsnMapper, UnitInterface $Unit) {
+    public function __construct(UnitInterface $Unit, Factory $ShardFactory) {
         $this->Unit = $Unit;
+        $this->ShardFactory = $ShardFactory;
         parent::__construct();
     }
 
     protected function createQueryInstance() {
-        return parent::createQueryInstance()->setOptions(['prefix' => $this->getMemcachedKeysPrefix()]);
-    }
-
-    protected function getMemcachedKeysPrefix() {
-        return sprintf('%s=%d:', $this->Unit->getKey(), $this->Unit->getId());
+        return new Query($this->Unit, $this->ShardFactory);
     }
 
 }

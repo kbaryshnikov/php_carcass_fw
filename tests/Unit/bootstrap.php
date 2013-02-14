@@ -14,7 +14,7 @@ function test_mysql_get_dsn() {
 }
 
 function test_hs_get_dsn() {
-    return 'handlersocket://localhost/test';
+    return 'hs://localhost/test';
 }
 
 function test_mysql_get_connection() {

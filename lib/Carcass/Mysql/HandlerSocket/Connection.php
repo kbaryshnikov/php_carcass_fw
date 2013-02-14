@@ -29,7 +29,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
     }
 
     public function __construct(Dsn $Dsn) {
-        Corelib\Assert::onFailureThrow('handlersocket dsn is required')->is('handlersocket', $Dsn->getType());
+        Corelib\Assert::onFailureThrow('hs dsn is required')->is('hs', $Dsn->getType());
         $this->Dsn = $Dsn;
     }
 

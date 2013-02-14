@@ -10,4 +10,6 @@ interface UnitInterface {
 
     public function getKey();
 
+    public function setShardId($shard_id);
+
 }

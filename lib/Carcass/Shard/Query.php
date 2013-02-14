@@ -8,17 +8,23 @@ class Query extends Carcass\Query\Memcached {
 
     protected
         $Unit,
-        $unit_args,
-        $DsnMapperFactory;
+        $ShardFactory;
 
-    public function __construct(Unit $Unit, DsnMapperFactory $DsnMapperFactory) {
+    public function __construct(Unit $Unit, Factory $ShardFactory) {
         $this->Unit = $Unit;
-        $this->unit_args = [$Unit->getKey() => $Unit->getId()];
         $this->DsnMapperFactory = $DsnMapperFactory;
     }
 
-    protected function getArgs(array $args) {
-        return $this->unit_args + $args;
+    protected function assembleMct() {
+        return parent::assembleMct()->setOptions(['prefix' => $this->getMemcachedKeysPrefix()]);
+    }
+
+    protected function getMemcachedKeysPrefix() {
+        return sprintf('%s=%d:', $this->Unit->getKey(), $this->Unit->getId());
+    }
+
+    protected function assembleDatabaseConnection() {
+        return parent::assembleDatabaseConnection()->setShardUnit($this->Unit);
     }
 
     protected function getDatabaseDsn() {

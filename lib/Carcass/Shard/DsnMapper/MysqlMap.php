@@ -21,11 +21,11 @@ class DsnMapper_MysqlHs implements DsnMapperInterface {
     protected $dsn_cache = [];
     protected $server_cache = [];
 
-    public function __construct(Mysql\HsConnection $HsConn) {
+    public function __construct(Mysql\HandlerSocket_Connection $HsConn, array $shard_defaults = [], array $opts = []) {
         $this->HsConn = $HsConn;
-        $this->shard_table_name = $this->HsConn->getDsn()->args->get('shard_table', static::DEFAULT_TABLE_NAME);
-        $this->shard_index_name = $this->HsConn->getDsn()->args->get('shard_index', static::DEFAULT_INDEX_NAME);
-        $this->ShardDefaults    = $this->HsConn->getDsn()->args->get('defaults') ?: new Corelib\Hash;
+        $this->shard_table_name = isset($opts['shard_table']) ? $opts['shard_table'] : static::DEFAULT_TABLE_NAME;
+        $this->shard_index_name = isset($opts['shard_index']) ? $opts['shard_index'] : static::DEFAULT_INDEX_NAME;
+        $this->ShardDefaults    = new Corelib\Hash($shard_defaults);
     }
 
     public function getDsn(UnitInterface $Unit) {
