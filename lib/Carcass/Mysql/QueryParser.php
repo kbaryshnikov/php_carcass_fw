@@ -12,6 +12,7 @@ class QueryParser extends StringTemplate {
 
     protected
         $Connection,
+        $globals = [],
         $date_format     = 'Y-m-d',
         $time_format     = 'H:i:s',
         $datetime_format = 'Y-m-d H:i:s';
@@ -20,6 +21,11 @@ class QueryParser extends StringTemplate {
         parent::__construct();
         $this->load($template);
         $this->Connection = $Connection;
+    }
+
+    public function registerGlobals(array $globals) {
+        $this->globals = $globals;
+        return $this;
     }
 
     public function i($int) {
@@ -154,7 +160,7 @@ class QueryParser extends StringTemplate {
         if ($args instanceof Corelib\ExportableInterface) {
             $args = $args->exportArray();
         }
-        $globals = array_filter($args, 'is_scalar');
+        $globals = $this->globals + array_filter($args, 'is_scalar');
         if ($globals) {
             $this->setGlobals($globals);
         }

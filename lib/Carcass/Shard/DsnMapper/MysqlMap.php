@@ -70,7 +70,7 @@ class DsnMapper_MysqlMap implements DsnMapperInterface {
             }
             $this->server_cache[$shard_result['database_server_id']] = $result;
         }
-        return ['query' => http_build_query(['shard_id' => $shard_id])] + $this->server_cache[$shard_result['database_server_id']];
+        return $this->server_cache[$shard_result['database_server_id']];
     }
 
     protected function getShardIndex() {

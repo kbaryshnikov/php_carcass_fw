@@ -67,7 +67,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
                 SRV.units_per_shard
             FROM
                 {{ name(table_DatabaseServers) }} SRV
-            WHERE 
+            WHERE
                 is_available = TRUE
                 AND NOT EXISTS (
                     SELECT 1 FROM {{ name(table_DatabaseShards) }} DSH
@@ -197,10 +197,13 @@ class Allocator_MysqlMap implements AllocatorInterface {
             'user'      => isset($server['management_username']) ? $server['management_username'] : 'root',
             'pass'      => isset($server['management_password']) ? $server['management_password'] : '',
         ]))));
+        if (!empty($server['drop_database_if_exists'])) {
+            $NewServerConn->query("DROP DATABASE IF EXISTS {{ name(database) }}", ['database' => $Unit->getDatabaseName()]);
+        }
         $NewServerConn->query("CREATE DATABASE IF NOT EXISTS {{ name(database) }}", ['database' => $Unit->getDatabaseName()]);
         $NewServerConn->query("
             GRANT ALL PRIVILEGES ON {{ name(database) }}.*
-            TO {{ s(user) }}@{{ s(user_host) }} 
+            TO {{ s(user) }}@{{ s(user_host) }}
             IDENTIFIED BY {{ s(password) }}
         ", [
             'database' => $Unit->getDatabaseName(),

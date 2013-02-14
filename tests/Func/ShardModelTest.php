@@ -139,6 +139,7 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
             'management_username' => 'root',
             'management_password' => '890p',
             'user_host' => 'localhost',
+            'drop_database_if_exists' => true,
         ], new TestShardUnit);
         $this->assertEquals(1, $server_id);
 
@@ -160,9 +161,9 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
 
     protected function tstDsnMaps() {
         $Mapper = $this->Factory->getMapper('mysql');
-        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(1)));
-        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(2)));
-        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase?shard_id=2', (string)$Mapper->getDsn(new TestShardUnit(3)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase', (string)$Mapper->getDsn(new TestShardUnit(1)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase', (string)$Mapper->getDsn(new TestShardUnit(2)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/TestShardDatabase', (string)$Mapper->getDsn(new TestShardUnit(3)));
     }
 
     protected function tstUnitModel() {

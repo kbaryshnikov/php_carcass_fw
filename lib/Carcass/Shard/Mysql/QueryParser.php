@@ -16,14 +16,12 @@ class Mysql_QueryParser extends Mysql\QueryParser {
     public function __construct(Mysql_Connection $Connection, $template) {
         parent::__construct($Connection, $template);
 
-        $shard_id = $Connection->getDsn()->args->get('shard_id');
-        Corelib\Assert::isValidId($shard_id);
-        $this->shard_id = $shard_id;
-        
         $Unit = $Connection->getShardUnit();
+        $this->shard_id = $Unit->getShardId();
+        Corelib\Assert::isValidId($this->shard_id);
         $this->unit_key = $Unit->getKey();
         $this->unit_id = $Unit->getId();
-        $this->setGlobals([
+        $this->registerGlobals([
             $this->unit_key => $this->unit_id,
             '_unit_key' => $this->unit_key,
             '_unit_id'  => $this->unit_id,
