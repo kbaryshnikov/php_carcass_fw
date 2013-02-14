@@ -14,14 +14,15 @@ class Dsn extends Corelib\Hash {
         }
     }
 
-    public function __construct($dsn_str) {
+    public function __construct($dsn_str = null) {
         parent::__construct();
-        $this->parseDsn($dsn_str);
+        $dsn_str and $this->parseDsn($dsn_str);
     }
 
     public static function constructByTokens(Corelib\Hash $Tokens) {
-        parent::__construct();
-        $this->parseDsnTokens($Tokens);
+        $self = new static;
+        $self->parseDsnTokens($Tokens);
+        return $self;
     }
 
     public function getType() {

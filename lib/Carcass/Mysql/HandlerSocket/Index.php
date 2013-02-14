@@ -28,7 +28,7 @@ class HandlerSocket_Index {
     }
 
     /**
-     * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='.
+     * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='. Additionally, '==' means 'fetch one'.
      * @param array  $qargs     index column values to fetch
      * @param array  $extras    array of extra options:
                                 limit => array(int limit, int offset)

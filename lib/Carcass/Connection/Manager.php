@@ -9,7 +9,7 @@ class Manager {
     protected $dsn_type_map = [
         'memcached' => '\Carcass\Memcached\Connection',
         'mysql'     => '\Carcass\Mysql\Connection',
-        'hs'        => '\Carcass\HandlerSocket\Connection',
+        'hs'        => '\Carcass\Mysql\HandlerSocket_Connection',
         'mysqls'    => '\Carcass\Shard\Mysql_Connection',
     ];
 

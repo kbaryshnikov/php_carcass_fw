@@ -5,16 +5,18 @@ namespace Carcass\Shard;
 use Carcass\Config;
 use Carcass\Connection;
 use Carcass\Mysql;
+use Carcass\Corelib;
 
-class DsnMapper_MysqlHs implements DsnMapperInterface {
+class DsnMapper_MysqlMap implements DsnMapperInterface {
 
-    const 
+    const
         DEFAULT_TABLE_NAME = 'DatabaseShards',
-        DEFAULT_INDEX_NAME = 'idx_shard_id';
+        DEFAULT_SERVERS_TABLE_NAME = 'DatabaseServers';
 
     protected $HsConn;
+    protected $shard_database;
     protected $shard_table_name;
-    protected $shard_index_name;
+    protected $servers_table_name;
     protected $ShardDefaults;
     protected $HsShardIndex = null;
     protected $HsServerIndex = null;
@@ -23,9 +25,10 @@ class DsnMapper_MysqlHs implements DsnMapperInterface {
 
     public function __construct(Mysql\HandlerSocket_Connection $HsConn, array $shard_defaults = [], array $opts = []) {
         $this->HsConn = $HsConn;
+        $this->shard_database = isset($opts['shard_database']) ? $opts['shard_database'] : Allocator_MysqlMap::DEFAULT_SHARDING_DBNAME;
         $this->shard_table_name = isset($opts['shard_table']) ? $opts['shard_table'] : static::DEFAULT_TABLE_NAME;
-        $this->shard_index_name = isset($opts['shard_index']) ? $opts['shard_index'] : static::DEFAULT_INDEX_NAME;
-        $this->ShardDefaults    = new Corelib\Hash($shard_defaults);
+        $this->servers_table_name = isset($opts['servers_table']) ? $opts['servers_table'] : static::DEFAULT_SERVERS_TABLE_NAME;
+        $this->ShardDefaults = new Corelib\Hash($shard_defaults);
     }
 
     public function getDsn(UnitInterface $Unit) {
@@ -38,45 +41,42 @@ class DsnMapper_MysqlHs implements DsnMapperInterface {
             if (!$shard_connection_params) {
                 throw new \RuntimeException("Shard connection parameters not found for shard id '$shard_id'");
             }
-            $this->dsn_cache[$shard_id] = Connection\Dsn::constructByTokens(
-                $this->ShardDefaults->deepClone()->merge($shard_connection_params)
-            );
+            $Tokens = clone $this->ShardDefaults;
+            $Tokens->merge($shard_connection_params);
+            $this->dsn_cache[$shard_id] = Connection\Dsn::constructByTokens($Tokens);
         }
         return $this->dsn_cache[$shard_id];
     }
 
     protected function getShardConnectionParams($shard_id) {
-        $shard_result = $this->getShardIndex()->find('=', ['database_shard_id' => $shard_id]);
+        $shard_result = $this->getShardIndex()->find('==', ['database_shard_id' => $shard_id]);
         if (!$shard_result) {
             return null;
         }
         if (!isset($this->server_cache[$shard_result['database_server_id']])) {
-            $server_result = $this->getServerIndex()->find('=', ['database_server_id' => $shard_result['database_server_id']]);
+            $server_result = $this->getServerIndex()->find('==', ['database_server_id' => $shard_result['database_server_id']]);
             if (!$server_result) {
                 return null;
             }
             $result = [
-                'database_shard_id' => $shard_result['database_shard_id'],
-                'database_server_id' => $server_result['database_server_id'],
-                'hostname' => long2ip($server_result['ip_address']),
-                'type' => 'mysqls',
+                'host' => long2ip($server_result['ip_address']),
+                'scheme' => 'mysqls',
             ];
-            foreach (['port', 'username', 'password'] as $key) {
+            foreach (['port' => 'port', 'username' => 'user', 'password' => 'pass'] as $key => $result_key) {
                 if (!empty($server_result[$key])) {
-                    $result[$key] = $server_result[$key];
+                    $result[$result_key] = $server_result[$key];
                 }
             }
-            $result['args']['shard_id'] = $shard_result['database_shard_id'];
             $this->server_cache[$shard_result['database_server_id']] = $result;
         }
-        return $this->server_cache[$shard_result['database_server_id']];
+        return ['query' => http_build_query(['shard_id' => $shard_id])] + $this->server_cache[$shard_result['database_server_id']];
     }
 
     protected function getShardIndex() {
         if (null === $this->HsShardIndex) {
-            $this->HsShardIndex = $this->HsConn->openIndex(
+            $this->HsShardIndex = $this->HsConn->useDb($this->shard_database)->openIndex(
                 $this->shard_table_name,
-                $this->shard_index_name,
+                'PRIMARY',
                 ['database_shard_id', 'database_server_id']
             );
         }
@@ -85,13 +85,13 @@ class DsnMapper_MysqlHs implements DsnMapperInterface {
 
     protected function getServerIndex() {
         if (null === $this->HsServerIndex) {
-            $this->HsServerIndex = $this->HsConn->openIndex(
-                $this->server_table_name,
-                $this->server_index_name,
+            $this->HsServerIndex = $this->HsConn->useDb($this->shard_database)->openIndex(
+                $this->servers_table_name,
+                'PRIMARY',
                 ['database_server_id', 'ip_address', 'port', 'username', 'password']
             );
         }
-        return $this->HsShardIndex;
+        return $this->HsServerIndex;
     }
 
 }

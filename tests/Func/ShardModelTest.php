@@ -82,8 +82,8 @@ class TestShardUnit implements Shard\UnitInterface {
     }
 
     public function setShardId($shard_id) {
-        $this->shard_id = $shard_id;
-        self::$map[$this->id] = $shard_id;
+        $this->shard_id = (int)$shard_id;
+        self::$map[$this->id] = $this->shard_id;
     }
 
     public function getKey() {
@@ -104,6 +104,7 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
 
     public function testWorkflow() {
         $this->allocateShards();
+        $this->tstDsnMaps();
     }
 
     protected function allocateShards() {
@@ -120,6 +121,21 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
         $Unit = new TestShardUnit(1);
         $Allocator->allocate($Unit);
         $this->assertEquals(1, $Unit->shard_id);
+
+        $Unit = new TestShardUnit(2);
+        $Allocator->allocate($Unit);
+        $this->assertEquals(1, $Unit->shard_id);
+
+        $Unit = new TestShardUnit(3);
+        $Allocator->allocate($Unit);
+        $this->assertEquals(2, $Unit->shard_id);
+    }
+
+    protected function tstDsnMaps() {
+        $Mapper = $this->Factory->getMapper('mysql');
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(1)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/?shard_id=1', (string)$Mapper->getDsn(new TestShardUnit(2)));
+        $this->assertEquals('mysqls://test:test@127.0.0.1:3306/?shard_id=2', (string)$Mapper->getDsn(new TestShardUnit(3)));
     }
 
 }

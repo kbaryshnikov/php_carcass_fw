@@ -14,11 +14,12 @@ return [
 
     'mappers' => [
         'mysql'     =>  function($Injector, $Config) {
-                            return new \Carcass\Shard\DsnMapper_MysqlHs(
+                            return new \Carcass\Shard\DsnMapper_MysqlMap(
                                 $Injector->ConnectionManager->getConnection(
                                     $Config->connections->central->hs
                                 ),
-                                [ 'shard_table' => 'ShardingTest' ]
+                                [],
+                                [ 'shard_database' => 'ShardingTest' ]
                             );
                         },
         'memcached' =>  function($Injector, $Config) {
