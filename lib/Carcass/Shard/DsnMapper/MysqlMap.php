@@ -30,6 +30,9 @@ class DsnMapper_MysqlHs implements DsnMapperInterface {
 
     public function getDsn(UnitInterface $Unit) {
         $shard_id = $Unit->getShardId();
+        if (!$shard_id) {
+            throw new \LogicException("Unit has no shard id defined");
+        }
         if (!isset($this->dsn_cache[$shard_id])) {
             $shard_connection_params = $this->getShardConnectionParams($shard_id);
             if (!$shard_connection_params) {

@@ -4,6 +4,8 @@ namespace Carcass\Shard;
 
 interface UnitInterface {
 
+    public function loadById($id);
+
     public function getId();
 
     public function getShardId();

@@ -17,7 +17,8 @@ return [
                             return new \Carcass\Shard\DsnMapper_MysqlHs(
                                 $Injector->ConnectionManager->getConnection(
                                     $Config->connections->central->hs
-                                )
+                                ),
+                                [ 'shard_table' => 'ShardingTest' ]
                             );
                         },
         'memcached' =>  function($Injector, $Config) {
@@ -32,7 +33,8 @@ return [
                             return new \Carcass\Shard\Allocator_MysqlMap(
                                 $Injector->ConnectionManager->getConnection(
                                     $Config->connections->central->mysql
-                                );
+                                ),
+                                'ShardingTest'
                             );
                         },
     ],

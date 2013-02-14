@@ -6,16 +6,18 @@ use Carcass\Connection;
 use Carcass\Mysql;
 use Carcass\Config;
 use Carcass\Database;
+use Carcass\Corelib;
 
 class Allocator_MysqlMap implements AllocatorInterface {
 
-    const DEFAULT_SHARDING_DBNAME = 'Sharding';
+    const
+        DEFAULT_SHARDING_DBNAME = 'Sharding';
 
     protected
         $db_name,
         $Db;
 
-    public function __construct(Mysql\Connection $DbConnection, Mysql\HandlerSocket_Connection $HsConnection, $db_name = null) {
+    public function __construct(Mysql\Connection $DbConnection, $db_name = null) {
         $this->Db = Database\Factory::assemble($DbConnection);
         $this->db_name = $db_name ?: static::DEFAULT_SHARDING_DBNAME;
     }
@@ -57,28 +59,52 @@ class Allocator_MysqlMap implements AllocatorInterface {
     }
 
     protected function allocateNewShard() {
-        $least_busy_server = $this->Db->getCell(
+        $least_busy_server = $this->Db->getRow(
             "SELECT
                 SRV.database_server_id,
-                SRV.units_per_shard,
-                X.c / SRV.capacity AS usage_ratio
+                SRV.units_per_shard
             FROM
-                {{ name(table_DatabaseServers) }} SRV,
-                (
-                    SELECT COUNT(database_shard_id) AS c, database_server_id
-                    FROM {{ name(table_DatabaseShards) }}
-                    GROUP BY database_server_id
-                ) X
-            WHERE
-                SRV.database_server_id = X.database_server_id
-                AND SRV.is_available = TRUE
-            ORDER BY usage_ratio
+                {{ name(table_DatabaseServers) }} SRV
+            WHERE 
+                is_available = TRUE
+                AND NOT EXISTS (
+                    SELECT 1 FROM {{ name(table_DatabaseShards) }} DSH
+                    WHERE DSH.database_server_id = SRV.database_server_id
+                )
+            ORDER BY SRV.capacity DESC
             LIMIT 1",
             [
                 'table_DatabaseServers' => $this->getFqTable('DatabaseServers'),
                 'table_DatabaseShards'  => $this->getFqTable('DatabaseShards'),
             ]
         );
+        if (!$least_busy_server) {
+            $least_busy_server = $this->Db->getRow(
+                "SELECT
+                    SRV.database_server_id,
+                    SRV.units_per_shard,
+                    X.c / SRV.capacity AS usage_ratio
+                FROM
+                    {{ name(table_DatabaseServers) }} SRV,
+                    (
+                        SELECT COUNT(database_shard_id) AS c, database_server_id
+                        FROM {{ name(table_DatabaseShards) }}
+                        GROUP BY database_server_id
+                    ) X
+                WHERE
+                    SRV.database_server_id = X.database_server_id
+                    AND SRV.is_available = TRUE
+                ORDER BY usage_ratio
+                LIMIT 1",
+                [
+                    'table_DatabaseServers' => $this->getFqTable('DatabaseServers'),
+                    'table_DatabaseShards'  => $this->getFqTable('DatabaseShards'),
+                ]
+            );
+        }
+        if (!$least_busy_server) {
+            throw new \LogicException("Could not find a server");
+        }
         $result = $this->Db->query(
             "INSERT INTO
                 {{ name(table_DatabaseShards) }}
@@ -90,17 +116,13 @@ class Allocator_MysqlMap implements AllocatorInterface {
             [
                 'table_DatabaseShards'  => $this->getFqTable('DatabaseShards'),
                 'database_server_id'    => $least_busy_server['database_server_id'],
-                'units_free'            => $least_busy_server['units_per_shard'],
+                'units_per_shard'       => $least_busy_server['units_per_shard'],
             ]
         );
         if (!$result) {
             throw new \LogicException('Adding a shard failed');
         }
-        $shard_id = $this->Db->getLastInsertId();
-        if (!$shard_id) {
-            throw new \LogicException('Getting ID of just inserted shard failed');
-        }
-        return $shard_id;
+        return $this->Db->getLastInsertId();
     }
 
     protected function getMostFreeShard() {
@@ -130,6 +152,40 @@ class Allocator_MysqlMap implements AllocatorInterface {
             $this->Db->query($create_sql, $tables);
         }
         return $this;
+    }
+
+    public function addServer(/* ArrayAccess */$server) {
+        if (!Corelib\ArrayTools::isArrayAccessable($server)) {
+            throw new \InvalidArgumentException('Argument must be array or ArrayAccess instance');
+        }
+        $args = [
+            'table_DatabaseServers' => $this->getFqTable('DatabaseServers'),
+            'ip_address' => $server['ip_address'],
+            'is_available' => isset($server['is_available']) ? (bool)$server['is_available'] : true,
+        ];
+        foreach (['port', 'username', 'password', 'capacity', 'units_per_shard'] as $key) {
+            if (isset($server[$key])) {
+                $args[$key] = $server[$key];
+            }
+        }
+        $result = $this->Db->query(
+            "INSERT INTO
+                {{ name(table_DatabaseServers) }}
+            SET
+                ip_address = INET_ATON({{ s(ip_address) }}),
+                {{ IF port }} port = {{ i(port) }}, {{ END }}
+                {{ IF username }} username = {{ s(username) }}, {{ END }}
+                {{ IF password }} password = {{ s(password) }}, {{ END }}
+                {{ IF capacity }} capacity = {{ i(capacity) }}, {{ END }}
+                {{ IF units_per_shard }} units_per_shard = {{ i(units_per_shard) }}, {{ END }}
+                is_available = {{ b(is_available) }},
+                created_ts = NOW()",
+            $args
+        );
+        if (!$result) {
+            throw new \LogicException('Failed to add server to the database');
+        }
+        return $this->Db->getLastInsertId();
     }
 
     protected function getFqTable($table) {

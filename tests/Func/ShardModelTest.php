@@ -7,7 +7,7 @@ use Carcass\Application\Injector;
 use Carcass\Shard;
 
 class TestShardModel extends Shard\Model {
-
+/*
     protected static
         $cache_key = 'test_{{ i(id) }}',
         $cache_tags = [ 'Test_{{ i(id) }}' ];
@@ -50,6 +50,45 @@ class TestShardModel extends Shard\Model {
     public function delete() {
         return $this->doModify('DELETE FROM t WHERE id = {{ i(id) }}');
     }
+*/
+}
+
+class TestShardUnit implements Shard\UnitInterface {
+
+    public static $map = [];
+
+    const SHARD_KEY = 'test_id';
+
+    public $id = null;
+    public $shard_id = null;
+
+    public function __construct($id) {
+        $this->loadById($id);
+    }
+
+    public function loadById($id) {
+        $this->id = $id;
+        if (isset(self::$map[$id])) {
+            $this->shard_id = self::$map[$id];
+        }
+    }
+
+    public function getId() {
+        return $this->id;
+    }
+
+    public function getShardId() {
+        return $this->shard_id;
+    }
+
+    public function setShardId($shard_id) {
+        $this->shard_id = $shard_id;
+        self::$map[$this->id] = $shard_id;
+    }
+
+    public function getKey() {
+        return self::SHARD_KEY;
+    }
 
 }
 
@@ -63,7 +102,24 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
         $this->Factory = new Shard\Factory;
     }
 
-    public function testShardAllocator() {
+    public function testWorkflow() {
+        $this->allocateShards();
+    }
+
+    protected function allocateShards() {
+        $Allocator = $this->Factory->getAllocator('mysql');
+        $Allocator->initShardingTables();
+        $server_id = $Allocator->addServer([
+            'ip_address' => '127.0.0.1',
+            'username' => 'test',
+            'password' => 'test',
+            'units_per_shard' => 2,
+        ]);
+        $this->assertEquals(1, $server_id);
+
+        $Unit = new TestShardUnit(1);
+        $Allocator->allocate($Unit);
+        $this->assertEquals(1, $Unit->shard_id);
     }
 
 }
