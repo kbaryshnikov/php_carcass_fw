@@ -29,7 +29,7 @@ class Mysql_ShardManager {
 
     public function getShardDbNameByIndex($db_index) {
         Carcass_Assert::isValidId($db_index);
-        return 'Db' . $index;
+        return $this->Config->get('shard_dbname_prefix', 'Db') . $index;
     }
 
     public function getShardingDb() {
@@ -66,11 +66,11 @@ class Mysql_ShardManager {
     }
 
     protected function getShardingDbConnectionDsn() {
-        return $this->Config->mysql_dsn;
+        return $this->Config->sharding_database->mysql_dsn;
     }
 
     protected function getShardingHsDsn() {
-        return $this->Config->hs_dsn;
+        return $this->Config->sharding_database->hs_dsn;
     }
 
 }

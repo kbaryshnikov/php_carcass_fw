@@ -2,40 +2,49 @@
 
 namespace Carcass\Shard;
 
+use Carcass\Application\Injector;
+
 trait UnitTrait {
 
     protected
-        $shard_id = null,
         $Shard = null,
-        $MemcacheConnection = null;
-
-    // must implement:
-    // static::getShardManager()
-    // $this->assembleMemcacheConnection()
-
-    public function getShardId() {
-        return $this->shard_id;
-    }
+        $Database = null,
+        $MemcachedConnection = null;
 
     public function getShard() {
         if (null === $this->Shard) {
-            $this->Shard = $this->assembleShard();
+            $this->Shard = $this->getShardManager()->getShardById($this->getShardId());
         }
         return $this->Shard;
     }
 
-    public function getMemcacheConnection() {
-        if (null === $this->MemcacheConnection) {
-            $this->MemcacheConnection = $this->assembleMemcacheConnection();
-        }
-        return $this->MemcacheConnection;
+    public function setShard(ShardInterface $Shard) {
+        $OldShard = $this->Shard;
+        $this->Shard = $Shard;
+        return $this->updateShard($OldShard);
     }
 
-    protected function assembleShard() {
-        if (null === $this->shard_id) {
-            throw new \LogicException('shard id is undefined');
+    public function getDatabase() {
+        if (null === $this->Database) {
+            $this->Database = new Mysql_Client($this);
         }
-        return static::getShardManager()->getShardById($this->shard_id);
+        return $this->Database;
+    }
+
+    public function getShardManager() {
+        static $ShardManager = null;
+        if (null === $ShardManager) {
+            $ShardManager = new Mysql_ShardManager(Injector::getConfigReader()->sharding);
+        }
+        return $ShardManager;
+    }
+
+    public function getMemcachedConnection() {
+        if (null === $this->MemcachedConnection) {
+            $this->MemcachedConnection = Injector::getConnectionManager()
+                ->getConnection(Injector::getConfigReader()->memcached->pool);
+        }
+        return $this->MemcachedConnection;
     }
 
 }

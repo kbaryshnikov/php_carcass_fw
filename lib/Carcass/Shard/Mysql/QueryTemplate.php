@@ -9,16 +9,19 @@ use Carcass\Corelib;
 class Mysql_QueryTemplate extends Mysql\QueryParser {
 
     protected
+        $db_name,
         $shard_id,
         $unit_key,
         $unit_id;
 
     public function __construct($QueryParser, $template) {
         $Unit = $QueryParser->getClient()->getUnit();
-        $this->shard_id = $Unit->getShardId();
-        Corelib\Assert::isValidId($this->shard_id);
         $this->unit_key = $Unit->getKey();
         $this->unit_id = $Unit->getId();
+
+        $Shard = $Unit->getShard();
+        $this->shard_id = $Shard->getId();
+        $this->db_name = $Shard->getDatabaseName();
 
         parent::__construct($QueryParser, $template);
 
@@ -40,7 +43,7 @@ class Mysql_QueryTemplate extends Mysql\QueryParser {
     }
 
     public function t($table_name) {
-        return $table_name . $this->shard_id;
+        return $this->name($this->db_name . '.' . $table_name . $this->shard_id);
     }
 
     protected function buildUnitCond(array $table_aliases = []) {

@@ -18,10 +18,11 @@ class Mysql_ShardingModel {
 
     public function allocateShard(UnitInterface $Unit) {
         $Shard = $this->findBestShardForNewUnit();
-        if (!$Shard) {
-            $Shard = $this->allocateNewShard($Unit);
+        if ($Shard) {
+            $Unit->setShard($Shard);
+        } else {
+            $this->allocateNewShard($Unit);
         }
-        return $Shard;
     }
 
     protected function findBestShardForNewUnit() {
@@ -131,7 +132,10 @@ class Mysql_ShardingModel {
         });
 
         $Shard = $this->getShardById($shard_id);
-        $Unit->initializeShard($Shard);
+        $Unit->setShard($Shard);
+
+        $Unit->initializeShard();
+
         return $Shard;
     }
 
@@ -160,7 +164,7 @@ class Mysql_ShardingModel {
     }
 
     public function addServer(Mysql_Server $Server) {
-        if ($Server->get('ip_address')) {
+        if (!$Server->get('ip_address')) {
             throw new \InvalidArgumentException('Server has no ip address');
         }
         if (null === $Server->get('is_available')) {
@@ -168,7 +172,7 @@ class Mysql_ShardingModel {
         }
         $ServerDefaultsConfig = $this->Manager->getConfig()->get('server_defaults');
         foreach (['port', 'username', 'password', 'super_username', 'super_password', 'capacity', 'units_per_shard'] as $key) {
-            if (null === $Server->get($Key)) {
+            if (null === $Server->get($key)) {
                 if ($ServerDefaultsConfig && $ServerDefaultsConfig->has($key)) {
                     $Server->set($key, $ServerDefaultsConfig->get($key));
                 }
@@ -194,7 +198,7 @@ class Mysql_ShardingModel {
         if (!$result) {
             throw new \LogicException('Failed to add server to the database');
         }
-        $server_id = $this->Db->getLastInsertId();
+        $server_id = $this->getDb()->getLastInsertId();
         return $this->getServerById($server_id, true);
     }
 
@@ -241,7 +245,7 @@ class Mysql_ShardingModel {
         return $result;
     }
 
-    public function initializeDatabase($drop_existing_tables = false) {
+    public function initializeShardingDatabase($drop_existing_tables = false) {
         $Db = $this->getDb();
         if ($drop_existing_tables) {
             $Db->query('DROP TABLE IF EXISTS DatabaseShards');

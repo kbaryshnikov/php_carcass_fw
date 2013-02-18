@@ -2,14 +2,11 @@
 
 return [
 
-    'connections' => [
-        'central' => [
-            'mysql'     => 'mysql://test:test@localhost/',
-            'hs'        => 'hs://localhost/',
-        ],
-        'memcached_pool' => [
-            'memcached://127.0.0.1/',
-        ],
+    'sharding_database' => [
+        'mysql_dsn' => 'mysql://test:test@localhost/TestSharding',
+        'hs_dsn'    => 'hs://localhost/TestSharding',
     ],
+
+    'shard_dbname_prefix' => 'TestShardDb',
 
 ];

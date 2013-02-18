@@ -3,25 +3,23 @@
 namespace Carcass\Shard;
 
 use Carcass\Mysql;
+use Carcass\Application\Injector;
 
 class Mysql_ShardClient extends Mysql\Client {
 
     const
-        DEFAULT_SEQUENCE_TABLE_NAME = 'Sequences';
+        DEFAULT_SEQUENCE_TABLE_NAME = 'Seq';
 
     protected
-        $MysqlConnection,
         $Unit = null,
         $sequence_table_name = self::DEFAULT_SEQUENCE_TABLE_NAME;
 
-    public function __construct(Mysql\Connection $MysqlConnection, UnitInterface $Unit = null, QueryParser $QueryParser = null) {
-        parent::__construct($this->MysqlConnection, $QueryParser);
-        $this->setUnit($Unit);
-    }
-
-    public function setUnit(UnitInterface $Unit) {
+    public function __construct(UnitInterface $Unit, QueryParser $QueryParser = null) {
         $this->Unit = $Unit;
-        return $this;
+        parent::__construct(
+            Injector::getConnectionManager()->getConnection($Unit->getShard()->getDsn()),
+            $QueryParser
+        );
     }
 
     public function getUnit() {
@@ -89,17 +87,18 @@ class Mysql_ShardClient extends Mysql\Client {
         return $this;
     }
 
-    public function createSequenceTable() {
+    public function createSequenceTable($drop_existing = false) {
         $args = ['table_name' => $this->sequence_table_name];
-        $queries = [
-            "DROP TABLE IF EXISTS {{ t(table_name) }}",
+        if ($drop_existing) {
+            $queries[] = "DROP TABLE IF EXISTS {{ t(table_name) }}";
+        }
+        $queries[] =
             "CREATE TABLE {{ t(table_name) }} (
                 {{ name(_unit_key) }} integer unsigned NOT NULL,
                 name varchar(64) NOT NULL,
                 value integer unsigned NOT NULL DEFAULT 0,
                 PRIMARY KEY ({{ name(_unit_key) }}, name)
-            ) Engine=InnoDB",
-        ];
+            ) Engine=InnoDB";
         foreach ($queries as $query) {
             $this->query($query, $args);
         }

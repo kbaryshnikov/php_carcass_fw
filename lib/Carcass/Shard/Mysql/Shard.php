@@ -9,12 +9,19 @@ class Mysql_Shard implements ShardInterface {
 
     protected
         $Server = null,
-        $MysqlConnection = null,
         $ShardManager;
 
     public function __construct(Mysql_ShardManager $ShardManager, array $shard_data = []) {
         $this->ShardManager = $ShardManager;
         parent::__construct($shard_data);
+    }
+
+    public function getId() {
+        $shard_id = $this->get('database_shard_id');
+        if (!$shard_id) {
+            throw new \LogicException('database_shard_id is undefined');
+        }
+        return $shard_id;
     }
 
     public function getServer() {
@@ -28,13 +35,12 @@ class Mysql_Shard implements ShardInterface {
         return $this->Server;
     }
 
-    public function getDatabaseConnection() {
-        if (null === $this->MysqlConnection) {
-            $this->MysqlConnection = Injector::getConnectionManager()->getConnectionByDsn(
-                $this->getServer()->getDsn()
-            );
-        }
-        return $this->MysqlConnection;
+    public function getDsn() {
+        return $this->getServer()->getDsn();
+    }
+
+    public function getDatabaseName() {
+        return $this->ShardManager->getShardDbNameByIndex($this->database_idx);
     }
 
 }

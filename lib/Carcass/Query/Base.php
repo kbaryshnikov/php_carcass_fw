@@ -103,13 +103,17 @@ class Base {
 
     public function getDatabase() {
         if (null === $this->Db) {
-            $this->Db = $this->assembleDatabaseClient($this->assembleDatabaseConnection());
+            $this->Db = $this->assembleDatabaseClient();
         }
         return $this->Db;
     }
 
-    protected function assembleDatabaseClient($Connection) {
-        return new Mysql\Client($Connection);
+    protected function assembleDatabaseClient() {
+        return new Mysql\Client(
+            Injector::getConnectionManager()->getConnection(
+                Injector::getConfigReader()->getPath('application.connections.database')
+            )
+        );
     }
 
     protected function getCallbackArgs(array $args) {
@@ -121,19 +125,6 @@ class Base {
 
     protected function setFetchWith(Callable $fn) {
         $this->FetchFn = $fn;
-        return $this;
-    }
-
-    protected function assembleDatabaseConnection() {
-        return Injector::getConnectionManager()->getConnection($this->getDatabaseDsn());
-    }
-
-    protected function getDatabaseDsn() {
-        return $this->db_dsn ?: Injector::getConfigReader()->getPath('application.connections.database');
-    }
-
-    public function setDatabaseDsn($dsn) {
-        $this->db_dsn = $dsn;
         return $this;
     }
 

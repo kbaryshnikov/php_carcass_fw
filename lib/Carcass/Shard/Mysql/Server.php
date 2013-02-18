@@ -3,13 +3,14 @@
 namespace Carcass\Shard;
 
 use Carcass\Connection;
+use Carcass\Corelib;
 
 class Mysql_Server extends Corelib\Hash {
 
     protected
         $cache = [];
 
-    public function getDsn($super = false) {
+    public function getDsn($super = false, $dbname = null) {
         $super = (bool)$super;
         $this->untaint();
 
@@ -26,7 +27,13 @@ class Mysql_Server extends Corelib\Hash {
             ]));
         }
 
-        return $this->cache[$super];
+        $Dsn = $this->cache[$super];
+
+        if ($dbname) {
+            $Dsn->name = $dbname;
+        }
+
+        return $Dsn;
     }
 
     public function getSuperDsn() {

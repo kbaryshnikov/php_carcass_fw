@@ -2,38 +2,29 @@
 
 namespace Carcass\Shard;
 
-use Carcass\Connection;
 use Carcass\Query\Memcached as MemcachedQuery;
 
 class Query extends MemcachedQuery {
 
     protected
-        $Unit,
-        $ShardFactory;
+        $Unit;
 
-    public function __construct(UnitInterface $Unit, Factory $ShardFactory) {
+    public function __construct(UnitInterface $Unit) {
         $this->Unit = $Unit;
-        $this->ShardFactory = $ShardFactory;
     }
 
     protected function assembleMct() {
-        return parent::assembleMct()->setOptions(['prefix' => $this->getMemcachedKeysPrefix()]);
+        return parent::assembleMct()->setOptions([
+            'prefix' => $this->Unit->getKey() . '_' . $this->Unit->getId() . '|',
+        ]);
     }
 
-    protected function getMemcachedKeysPrefix() {
-        return sprintf('%s=%d:', $this->Unit->getKey(), $this->Unit->getId());
+    protected function assembleDatabaseClient() {
+        return $this->Unit->getDatabase();
     }
 
-    protected function assembleDatabaseConnection() {
-        return parent::assembleDatabaseConnection()->setShardUnit($this->Unit);
-    }
-
-    protected function getDatabaseDsn() {
-        return $this->ShardFactory->getMapper('mysql')->getDsn($this->Unit);
-    }
-
-    protected function getMemcachedDsn() {
-        return $this->ShardFactory->getMapper('memcached')->getDsn($this->Unit);
+    protected function assembleMemcachedConnection() {
+        return $this->Unit->getMemcachedConnection();
     }
 
 }
