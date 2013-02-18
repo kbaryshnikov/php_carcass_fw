@@ -218,7 +218,7 @@ class Mysql_ShardingModel {
     }
 
     protected function getDb() {
-        return $this->Manager->getShardingDbConnection();
+        return $this->Manager->getShardingDb();
     }
 
     protected function getHsConn() {

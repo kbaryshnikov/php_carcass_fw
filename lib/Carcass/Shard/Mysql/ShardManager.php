@@ -5,12 +5,12 @@ namespace Carcass\Shard;
 use Carcass\Corelib;
 use Carcass\Connection;
 use Carcass\Application\Injector;
-use Carcass\Database\Factory as DatabaseFactory;
+use Carcass\Mysql;
 
 class Mysql_ShardManager {
 
     protected
-        $ShardingDbConnection = null,
+        $ShardingDb = null,
         $ShardingHsConnection = null,
         $Model = null,
         $Config = null;
@@ -32,11 +32,11 @@ class Mysql_ShardManager {
         return 'Db' . $index;
     }
 
-    public function getShardingDbConnection() {
-        if (null === $this->ShardingDbConnection) {
-            $this->ShardingDbConnection = $this->assembleShardingDbConnection();
+    public function getShardingDb() {
+        if (null === $this->ShardingDb) {
+            $this->ShardingDb = new Mysql\Client($this->assembleShardingDbConnection());
         }
-        return $this->ShardingDbConnection;
+        return $this->ShardingDb;
     }
 
     public function getShardingHsConnection() {
