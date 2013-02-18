@@ -4,16 +4,20 @@ namespace Carcass\Shard;
 
 interface UnitInterface {
 
+    public function initialize($Shard);
+
     public function loadById($id);
 
     public function getId();
 
-    public function getShardId();
-
     public function getKey();
 
-    public function setShardId($shard_id);
+    public function getShard();
 
-    public function getDatabaseName();
+    public function setShard($Shard);
+
+    public function getMemcacheConnection();
+
+    public static function getShardManager();
 
 }

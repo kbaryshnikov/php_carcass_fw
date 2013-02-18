@@ -4,13 +4,32 @@ namespace Carcass\Shard;
 
 use Carcass\Mysql;
 
-class Mysql_Database extends Mysql\Database {
+class Mysql_ShardClient extends Mysql\Client {
 
     const
         DEFAULT_SEQUENCE_TABLE_NAME = 'Sequences';
 
     protected
+        $MysqlConnection,
+        $Unit = null,
         $sequence_table_name = self::DEFAULT_SEQUENCE_TABLE_NAME;
+
+    public function __construct(Mysql\Connection $MysqlConnection, UnitInterface $Unit = null, QueryParser $QueryParser = null) {
+        parent::__construct($this->MysqlConnection, $QueryParser);
+        $this->setUnit($Unit);
+    }
+
+    public function setUnit(UnitInterface $Unit) {
+        $this->Unit = $Unit;
+        return $this;
+    }
+
+    public function getUnit() {
+        if (null === $this->Unit) {
+            throw new \LogicException('Shard unit is undefined');
+        }
+        return $this->Unit;
+    }
 
     public function setSequenceTableName($sequence_table_name) {
         $this->sequence_table_name = $sequence_table_name;
@@ -85,6 +104,10 @@ class Mysql_Database extends Mysql\Database {
             $this->query($query, $args);
         }
         return $this;
+    }
+
+    protected function assembleDefaultQueryParser() {
+        return new Mysql_QueryParser($this);
     }
 
 }

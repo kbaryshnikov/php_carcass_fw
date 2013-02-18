@@ -122,7 +122,7 @@ class Instance {
 
         $this->Injector->ConnectionManager = $this->Injector->reuse(isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function($I) {
             $class = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
-            return (new $class)->registerTypes($I->ConfigReader->exportArrayFrom('connections', []));
+            return (new $class)->registerTypes($I->ConfigReader->exportArrayFrom('connections.types', []));
         });
 
         if (is_callable($setupFn)) {

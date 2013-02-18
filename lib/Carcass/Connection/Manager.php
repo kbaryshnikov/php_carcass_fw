@@ -10,7 +10,6 @@ class Manager {
         'memcached' => '\Carcass\Memcached\Connection',
         'mysql'     => '\Carcass\Mysql\Connection',
         'hs'        => '\Carcass\Mysql\HandlerSocket_Connection',
-        'mysqls'    => '\Carcass\Shard\Mysql_Connection',
     ];
 
     protected $registry = [];

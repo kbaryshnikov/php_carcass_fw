@@ -3,15 +3,14 @@
 namespace Carcass\Query;
 
 use Carcass\Corelib;
-use Carcass\Database;
 use Carcass\Application\Injector;
+use Carcass\Mysql;
 
 class Base {
 
     protected
         $FetchFn = null,
         $Db = null,
-        $DbConn = null,
         $db_dsn = null,
         $last_insert_id = null,
         $last_result = [];
@@ -104,9 +103,13 @@ class Base {
 
     public function getDatabase() {
         if (null === $this->Db) {
-            $this->Db = $this->assembleDatabase();
+            $this->Db = $this->assembleDatabaseClient($this->assembleDatabaseConnection());
         }
         return $this->Db;
+    }
+
+    protected function assembleDatabaseClient($Connection) {
+        return new Mysql\Client($Connection);
     }
 
     protected function getCallbackArgs(array $args) {
@@ -119,17 +122,6 @@ class Base {
     protected function setFetchWith(Callable $fn) {
         $this->FetchFn = $fn;
         return $this;
-    }
-
-    protected function assembleDatabase() {
-        return Database\Factory::assemble($this->getDatabaseConnection());
-    }
-
-    protected function getDatabaseConnection() {
-        if (null === $this->DbConn) {
-            $this->DbConn = $this->assembleDatabaseConnection();
-        }
-        return $this->DbConn;
     }
 
     protected function assembleDatabaseConnection() {

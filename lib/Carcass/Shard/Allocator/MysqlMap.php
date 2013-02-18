@@ -14,7 +14,6 @@ class Allocator_MysqlMap implements AllocatorInterface {
         DEFAULT_SHARDING_DBNAME = 'Sharding';
 
     protected
-        $db_name,
         $Db;
 
     public function __construct(Mysql\Connection $DbConnection, $db_name = null) {
@@ -23,7 +22,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
     }
 
     public function allocate(UnitInterface $Unit) {
-        return $this->Db->doInTransaction(function() use ($Unit) {
+        $must_init = $this->Db->doInTransaction(function() use ($Unit) {
             $is_new_shard = false;
             $shard_id = $this->getMostFreeShard();
             if (!$shard_id) {
@@ -37,6 +36,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
             $Unit->setShardId($shard_id);
             return $is_new_shard;
         });
+        return $must_init;
     }
 
     protected function allocateUnitInShard($shard_id) {
@@ -156,7 +156,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
         return $this;
     }
 
-    public function addServer(/* ArrayAccess */$server, UnitInterface $Unit) {
+    public function addServer(/* ArrayAccess */$server) {
         if (!Corelib\ArrayTools::isArrayAccessable($server)) {
             throw new \InvalidArgumentException('Argument must be array or ArrayAccess instance');
         }
@@ -165,7 +165,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
             'ip_address' => $server['ip_address'],
             'is_available' => isset($server['is_available']) ? (bool)$server['is_available'] : true,
         ];
-        foreach (['port', 'username', 'password', 'capacity', 'units_per_shard'] as $key) {
+        foreach (['port', 'username', 'password', 'super_username', 'super_password', 'capacity', 'units_per_shard'] as $key) {
             if (isset($server[$key])) {
                 $args[$key] = $server[$key];
             } else {
@@ -180,8 +180,11 @@ class Allocator_MysqlMap implements AllocatorInterface {
                 {{ IF port }} port = {{ i(port) }}, {{ END }}
                 {{ IF username }} username = {{ s(username) }}, {{ END }}
                 {{ IF password }} password = {{ s(password) }}, {{ END }}
+                {{ IF super_username }} super_username = {{ s(super_username) }}, {{ END }}
+                {{ IF super_password }} super_password = {{ s(super_password) }}, {{ END }}
                 {{ IF capacity }} capacity = {{ i(capacity) }}, {{ END }}
                 {{ IF units_per_shard }} units_per_shard = {{ i(units_per_shard) }}, {{ END }}
+                {{ IF units_per_shard }} databases_count = {{ i(databases_count) }}, {{ END }}
                 is_available = {{ b(is_available) }},
                 created_ts = NOW()",
             $args
@@ -189,29 +192,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
         if (!$result) {
             throw new \LogicException('Failed to add server to the database');
         }
-        $id = $this->Db->getLastInsertId();
-        $NewServerConn = Database\Factory::assemble(new Mysql\Connection(Connection\Dsn::constructByTokens(new Corelib\Hash([
-            'scheme'    => 'mysql',
-            'host'      => $args['ip_address'],
-            'port'      => $args['port'],
-            'user'      => isset($server['management_username']) ? $server['management_username'] : 'root',
-            'pass'      => isset($server['management_password']) ? $server['management_password'] : '',
-        ]))));
-        if (!empty($server['drop_database_if_exists'])) {
-            $NewServerConn->query("DROP DATABASE IF EXISTS {{ name(database) }}", ['database' => $Unit->getDatabaseName()]);
-        }
-        $NewServerConn->query("CREATE DATABASE IF NOT EXISTS {{ name(database) }}", ['database' => $Unit->getDatabaseName()]);
-        $NewServerConn->query("
-            GRANT ALL PRIVILEGES ON {{ name(database) }}.*
-            TO {{ s(user) }}@{{ s(user_host) }}
-            IDENTIFIED BY {{ s(password) }}
-        ", [
-            'database' => $Unit->getDatabaseName(),
-            'user'     => $args['username'] ?: '',
-            'password' => $args['password'] ?: '',
-            'user_host'=> isset($server['user_host']) ? $server['user_host'] : '%',
-        ]);
-        return $id;
+        return $this->Db->getLastInsertId();
     }
 
     protected function getFqTable($table) {
@@ -226,8 +207,11 @@ class Allocator_MysqlMap implements AllocatorInterface {
                 port smallint(5) unsigned NOT NULL DEFAULT '3306',
                 username varchar(32) NOT NULL DEFAULT '',
                 password varchar(32) NOT NULL DEFAULT '',
+                super_username varchar(32) NOT NULL DEFAULT 'root',
+                super_password varchar(32) NOT NULL DEFAULT '',
                 capacity int(10) unsigned NOT NULL DEFAULT '100' COMMENT 'Relative, measured in parrots',
                 units_per_shard int(10) unsigned NOT NULL DEFAULT '1000',
+                databases_count tinyint unsigned NOT NULL DEFAULT '10',
                 is_available boolean NOT NULL DEFAULT TRUE,
                 created_ts timestamp NOT NULL DEFAULT '1970-01-01 00:00:01',
                 updated_ts timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -237,6 +221,7 @@ class Allocator_MysqlMap implements AllocatorInterface {
             "CREATE TABLE {{ name(table_DatabaseShards) }} (
                 database_shard_id int(10) unsigned NOT NULL AUTO_INCREMENT,
                 database_server_id int(10) unsigned NOT NULL,
+                database_idx tinyint unsigned NOT NULL,
                 units_allocated int(10) unsigned NOT NULL DEFAULT '0',
                 units_free int(10) unsigned NOT NULL,
                 is_available boolean NOT NULL DEFAULT TRUE,

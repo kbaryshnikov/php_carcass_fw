@@ -1,11 +1,12 @@
 <?php
 
+/*
+
 use Carcass\Model;
 
 use Carcass\Application\Injector;
 
 use Carcass\Shard;
-
 
 class TestShardModel extends Shard\Model {
 
@@ -172,3 +173,5 @@ class ShardModelTest extends PHPUnit_Framework_TestCase {
     }
 
 }
+
+*/
