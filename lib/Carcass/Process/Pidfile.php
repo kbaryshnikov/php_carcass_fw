@@ -1,10 +1,20 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Process;
 
 use Carcass\Application\Injector;
 use Carcass\Fs;
 
+/**
+ * Pidfile manager
+ * @package Carcass\Process
+ */
 class Pidfile {
 
     const
@@ -13,6 +23,7 @@ class Pidfile {
         ERR_ESRCH = 3; // No such process
 
     protected
+        $pid = null,
         $folder = null,
         $basename = null,
         $pidfile = null,
@@ -40,7 +51,7 @@ class Pidfile {
     /**
      * Checks pidfile and process extistance
      * @param int $pid pid number, null for current pid, false to skip check
-     * @return pid|null
+     * @return int|null
      */
     public function check($pid = null) {
         if (!file_exists($this->pidfile)) {
@@ -79,6 +90,9 @@ class Pidfile {
         }
     }
 
+    /**
+     * @return $this
+     */
     public function writePidfile() {
         $this->pid = $this->getCurrentPid();
         Fs\Directory::mkdirIfNotExists(dirname($this->pidfile));
@@ -98,18 +112,30 @@ class Pidfile {
         return $this;
     }
 
+    /**
+     * return bool
+     */
     protected function unlink() {
-        file_exists($this->pidfile) and unlink($this->pidfile);
+        return file_exists($this->pidfile) and unlink($this->pidfile);
     }
 
+    /**
+     * @return bool
+     */
     protected function pidChanged() {
         return isset($this->pid) && $this->pid != $this->getCurrentPid();
     }
 
+    /**
+     * @param $name
+     */
     protected function setFilename($name) {
         $this->pidfile = $this->getPidFileRealpath($name);
     }
 
+    /**
+     * @return int
+     */
     protected function getCurrentPid() {
         return (int)posix_getpid();
     }

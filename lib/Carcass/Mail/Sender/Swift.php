@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Mail;
 
@@ -6,18 +12,33 @@ use Carcass\Corelib;
 
 require_once 'Swift/lib/swift_required.php';
 
+/**
+ * Mail sender via the Swift Mailer library
+ * @package Carcass\Mail
+ */
 class Sender_Swift implements Sender_Interface {
 
-    protected
-        $SwiftTransport,
-        $method,
-        $params;
+    /** @var \Swift_Transport */
+    protected $SwiftTransport;
+    protected $method;
+    protected $params;
 
+    /**
+     * @param string $method
+     * @param array $params
+     */
     public function __construct($method, array $params = array()) {
         $this->method = $method;
         $this->params = $params;
     }
 
+    /**
+     * @param Message $Message
+     * @param array|string $to
+     * @return bool
+     * @throws \LogicException
+     * @throws \Exception
+     */
     public function send(Message $Message, $to) {
         if (!is_array($to)) {
             $to = $to instanceof Corelib\ExportableInterface ? $to->exportArray() : array($to);
@@ -29,7 +50,7 @@ class Sender_Swift implements Sender_Interface {
             ->setTo(is_array($to) ? $to : array($to))
             ->setBody($Message->body);
 
-        if ($Message->attachments) {
+        if ($Message->has('attachments')) {
             foreach ($Message->attachments as $attachment) {
                 if (isset($attachment->contents)) {
                     $SwiftAttachment = \Swift_Attachment::newInstance()->setBody($attachment->contents);
@@ -43,19 +64,16 @@ class Sender_Swift implements Sender_Interface {
             }
         }
 
-        if ($Message->encoding) {
+        if ($Message->has('encoding')) {
             $SwiftMessage->setCharset($Message->encoding);
         }
 
         $SwiftTransport = $this->getSwiftTransport();
         $SwiftTransport->start();
 
+        $result = false;
         try {
-            if (count($to) == 1) {
-                $result = $SwiftTransport->send($SwiftMessage);
-            } else {
-                $result = $SwiftTransport->batchSend($SwiftMessage);
-            }
+            $result = $SwiftTransport->send($SwiftMessage);
         } catch (\Exception $e) {
             // pass
         }
@@ -69,6 +87,9 @@ class Sender_Swift implements Sender_Interface {
         return (bool)$result;
     }
 
+    /**
+     * @return \Swift_Transport
+     */
     protected function getSwiftTransport() {
         if (!isset($this->SwiftTransport)) {
             $this->SwiftTransport = $this->assembleSwiftTransport();
@@ -76,6 +97,10 @@ class Sender_Swift implements Sender_Interface {
         return $this->SwiftTransport;
     }
 
+    /**
+     * @return \Swift_Transport
+     * @throws \LogicException
+     */
     protected function assembleSwiftTransport() {
         switch ($this->method) {
             case 'mail':
