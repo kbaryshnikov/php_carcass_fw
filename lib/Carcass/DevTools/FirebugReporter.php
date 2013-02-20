@@ -1,9 +1,24 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\DevTools;
 
+use \FireLogger;
+
+/**
+ * FirebugReporter
+ * @package Carcass\DevTools
+ */
 class FirebugReporter extends BaseReporter {
 
+    /**
+     * @var FireLogger
+     */
     protected $FireLogger;
 
     protected static $markers = [
@@ -22,21 +37,33 @@ class FirebugReporter extends BaseReporter {
         'i' => 'info',
     ];
 
+    /**
+     * @param FireLogger|null $FireLogger
+     */
     public function __construct($FireLogger = null) {
         if (null !== $FireLogger) {
             $this->setFireLogger($FireLogger);
         } else {
-            $this->ensureStandardFireLoggerIsLoaded();
+            self::ensureFireLoggerLibraryIsLoaded();
             $this->setFireLogger(new FireLogger);
             FireLogger::$enabled = true;
         }
     }
 
-    public function setFireLogger($FireLogger) {
+    /**
+     * @param FireLogger $FireLogger
+     * @return $this
+     */
+    public function setFireLogger(FireLogger $FireLogger) {
         $this->FireLogger = $FireLogger;
         return $this;
     }
 
+    /**
+     * @param mixed $value
+     * @param $severity
+     * @return $this
+     */
     public function dump($value, $severity = null) {
         if (isset($severity) || $severity = $this->detectSeverity($value)) {
             $this->FireLogger->log($severity, $value);
@@ -46,6 +73,10 @@ class FirebugReporter extends BaseReporter {
         return $this;
     }
 
+    /**
+     * @param $value
+     * @return bool
+     */
     protected function detectSeverity($value) {
         $txt = strtolower(serialize($value));
         foreach (self::$markers as $substring => $severity) {
@@ -56,23 +87,34 @@ class FirebugReporter extends BaseReporter {
         return false;
     }
 
-    public function dumpException(Exception $Exception) {
+    /**
+     * @param \Exception $Exception
+     * @return $this
+     */
+    public function dumpException(\Exception $Exception) {
         $this->FireLogger->log('critical', $Exception);
         return $this;
     }
 
-    public function ensureStandardFireLoggerIsLoaded() {
+    public static function ensureFireLoggerLibraryIsLoaded() {
         if (class_exists('\FireLogger', false)) {
             return;
         }
 
+        foreach (self::$firelogger_definitions as $name => $value) {
+            if (!defined($name)) {
+                define($name, $value);
+            }
+        }
+
         require_once __DIR__ . '/firelogger.php';
-
-        \FireLogger::$NO_EXCEPTION_HANDLER = true;
-        \FireLogger::$NO_ERROR_HANDLER = true;
-        \FireLogger::$NO_DEFAULT_LOGGER = true;
-
-        \FireLoggerInitializer::init();
     }
+
+    private static $firelogger_definitions = [
+        'FIRELOGGER_NO_EXCEPTION_HANDLER' => true,
+        'FIRELOGGER_NO_ERROR_HANDLER' => true,
+        'FIRELOGGER_NO_DEFAULT_LOGGER' => true,
+        'FIRELOGGER_NO_CONFLICT' => true,
+    ];
 
 }

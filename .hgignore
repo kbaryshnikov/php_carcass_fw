@@ -8,3 +8,4 @@ syntax: glob
 */.~*
 tags
 vendor/
+.idea

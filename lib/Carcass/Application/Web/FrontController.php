@@ -1,34 +1,54 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
 use Carcass\Corelib;
 use Carcass\Config;
 
+/**
+ * Web front controller implementation
+ *
+ * @package Carcass\Application
+ */
 class Web_FrontController implements ControllerInterface {
 
-    protected
-        $Request,
-        $Response,
-        $Router,
-        $Config;
+    /** @var \Carcass\Corelib\Request */
+    protected $Request;
+    /** @var Web_Response */
+    protected $Response;
+    /** @var Web_Router_Interface */
+    protected $Router;
+    /** @var \Carcass\Config\ItemInterface */
+    protected $Config;
 
-    public function __construct(Corelib\Request $Request, Corelib\Response $Response, RouterInterface $Router, Config\Item $WebConfig = null) {
-        $this->Request = $Request;
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_Response $Response
+     * @param Web_Router_Interface $Router
+     * @param \Carcass\Config\ItemInterface $WebConfig
+     */
+    public function __construct(Corelib\Request $Request, Web_Response $Response, Web_Router_Interface $Router, Config\ItemInterface $WebConfig = null) {
+        $this->Request  = $Request;
         $this->Response = $Response;
-        $this->Router = $Router;
-        $this->Config = $WebConfig;
+        $this->Router   = $Router;
+        $this->Config   = $WebConfig;
     }
 
     public function run() {
         $debugger_is_enabled = Injector::getDebugger()->isEnabled();
         register_shutdown_function(function() use ($debugger_is_enabled) {
             if ($e = error_get_last()) {
-                $this->showInternalError( $debugger_is_enabled ? "$e[message] in $e[file] line $e[line]" : null );
+                $this->showInternalError($debugger_is_enabled ? "$e[message] in $e[file] line $e[line]" : null);
             }
         });
         try {
-            $this->getRouter()->route($this->Request, $this);
+            $this->Router->route($this->Request, $this);
         } catch (\Exception $e) {
             Injector::getLogger()->logException($e);
             if ($debugger_is_enabled) {
@@ -38,9 +58,14 @@ class Web_FrontController implements ControllerInterface {
                 $this->showInternalError();
             }
         }
-        $this->getResponse()->isBuffering() and $this->getResponse()->commit();
+        $this->Response->isBuffering() and $this->Response->commit();
     }
 
+    /**
+     * @param $fq_action
+     * @param \Carcass\Corelib\Hash $Args
+     * @return void
+     */
     public function dispatch($fq_action, Corelib\Hash $Args) {
         list ($controller, $action) = Corelib\StringTools::split($fq_action, '.', [null, 'Default']);
 
@@ -50,32 +75,42 @@ class Web_FrontController implements ControllerInterface {
 
         $page_fq_class = Instance::getFqClassName($page_class);
 
-        $Page = new $page_fq_class($this->Request, $this->getResponse(), $this->getRouter());
+        /** @var ControllerInterface $Page */
+        $Page = new $page_fq_class($this->Request, $this->Response, $this->Router);
         $this->displayResult($Page->dispatch($action, $Args));
     }
 
+    /**
+     * @param $result
+     */
     protected function displayResult($result) {
         if ($result instanceof Web_Renderer_Interface) {
-            $result->displayTo($this->getResponse());
+            $result->displayTo($this->Response);
         } elseif (is_string($result)) {
-            $this->getResponse()->write($result);
+            $this->Response->write($result);
         } elseif (is_int($result)) {
-            $this->getResponse()->writeHttpError($result);
+            $this->Response->writeHttpError($result);
         } else {
             $this->showInternalError("No result");
         }
     }
 
+    /**
+     * @param $error_message
+     */
     public function dispatchNotFound($error_message) {
-        $this->getResponse()->writeHttpError(404, null, $error_message);
+        $this->Response->writeHttpError(404, null, $error_message);
     }
 
+    /**
+     * @param null $message
+     */
     protected function showInternalError($message = null) {
-        if (null === $message && $this->Config->has('unhandled_exception_stub_file')) {
-            $this->getResponse()->setStatus(500);
+        if (null === $message && $stub_file = $this->Config->get('unhandled_exception_stub_file')) {
+            $this->Response->setStatus(500);
             try {
-                $this->getResponse()->write(
-                    file_get_contents(Injector::getPathManager()->getPath('var', $this->Config->unhandled_exception_stub_file))
+                $this->Response->write(
+                    file_get_contents(Injector::getPathManager()->getPathTo('var', $stub_file))
                 );
                 return;
             } catch (\Exception $e) {
@@ -83,19 +118,7 @@ class Web_FrontController implements ControllerInterface {
                 Injector::getDebugger()->dumpException($e);
             }
         }
-        $this->getResponse()->writeHttpError(500, null, $message);
-    }
-
-    protected function getResponse() {
-        return null !== $this->Response
-            ? $this->Response
-            : $this->Response = $this->assembleDependency('response_class', [$this->Request]);
-    }
-
-    protected function getRouter() {
-        return null !== $this->Router
-            ? $this->Router
-            : $this->Router = $this->assembleDependency('router_class', [$this->Config]);
+        $this->Response->writeHttpError(500, null, $message);
     }
 
 }

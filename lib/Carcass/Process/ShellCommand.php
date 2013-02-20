@@ -1,9 +1,19 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Process;
 
 use Carcass\Corelib;
 
+/**
+ * Shell command executor
+ * @package Carcass\Process
+ */
 class ShellCommand {
 
     const
@@ -19,25 +29,50 @@ class ShellCommand {
         $input = null,
         $env = null;
 
+    /**
+     * @param string $cmd command name
+     * @param null $args_template
+     */
     public function __construct($cmd, $args_template = null) {
         $this->cmd = $cmd;
         $this->args_template = $args_template;
     }
 
+    /**
+     * @param string $cmd command name
+     * @param string $args_template
+     * @param array $args
+     * @param string|null $stdout returned by ref
+     * @param string|null $stderr returned by ref
+     * @return int
+     */
     public static function run($cmd, $args_template = null, array $args = [], &$stdout = null, &$stderr = null) {
         return (new static($cmd, $args_template))->prepare($args)->execute($stdout, $stderr);
     }
 
+    /**
+     * @param array $env
+     * @return $this
+     */
     public function setEnv(array $env = null) {
         $this->env = $env;
         return $this;
     }
 
+    /**
+     * @param string|null $cwd
+     * @return $this
+     */
     public function setCwd($cwd = null) {
         $this->cwd = $cwd;
         return $this;
     }
 
+    /**
+     * @param $input
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
     public function setInputSource($input = null) {
         if (null !== $input && !Corelib\ArrayTools::isTraversable($input)) {
             throw new \InvalidArgumentException("Argument is expected to be typeof null|array|Traversable");
@@ -46,6 +81,10 @@ class ShellCommand {
         return $this;
     }
 
+    /**
+     * @param array $args
+     * @return $this
+     */
     public function prepare(array $args = []) {
         $this->args = [];
         foreach ($args as $k => $v) {
@@ -54,6 +93,12 @@ class ShellCommand {
         return $this;
     }
 
+    /**
+     * @param $stdout
+     * @param $stderr
+     * @return int
+     * @throws \RuntimeException
+     */
     public function execute(&$stdout = null, &$stderr = null) {
         $args = Corelib\StringTools::parseTemplate($this->args_template, $this->args);
         $command = escapeshellcmd($this->cmd) . ' ' . $args;

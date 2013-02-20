@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Memcached;
 
@@ -11,17 +17,28 @@ class VersionedCache {
         VERSION_SUFFIX  = ':version';
     
     protected
-        $Connection,
         $namespace,
         $key_opts,
         $version_key,
         $last_version = null;
 
+    /**
+     * @var Connection
+     */
+    protected $Connection;
+
+    /**
+     * @param Connection $Connection
+     */
     public function __construct(Connection $Connection) {
         $this->Connection = $Connection;
         $this->setNamespace('');
     }
 
+    /**
+     * @param $namespace
+     * @return $this
+     */
     public function setNamespace($namespace) {
         $this->namespace   = $namespace;
         $this->key_opts    = ['prefix' => $namespace . self::SEPARATOR];
@@ -29,6 +46,11 @@ class VersionedCache {
         return $this;
     }
 
+    /**
+     * @param callable $NsKey
+     * @param array $args
+     * @return $this
+     */
     public function setNamespaceByKey(\Closure $NsKey, array $args = []) {
         return $this->setNamespace($NsKey($args));
     }
@@ -36,7 +58,7 @@ class VersionedCache {
     /**
      * Get value with version check
      * 
-     * @param Closure $Key      key template function
+     * @param \Closure $Key      key template function
      * @param array $args       key template arguments
      * @return mixed            false if not found or expired
      */
@@ -57,11 +79,12 @@ class VersionedCache {
 
     /**
      * Get values with version check
-     * 
+     *
      * @param array $get_keys array of ( Closure $Key [, array $args] ), identical to get() arguments
      * @param bool $truncate_namespace_prefix_from_result_keys  default true
-     * @return array of ( key => value ), missing or expired keys are absent; namespace prefix is not included 
-     *               unless false===$truncate_namespace_prefix_from_result_keys 
+     * @throws \InvalidArgumentException
+     * @return array of ( key => value ), missing or expired keys are absent; namespace prefix is not included
+     *               unless false===$truncate_namespace_prefix_from_result_keys
      */
     public function getMulti(array $get_keys, $truncate_namespace_prefix_from_result_keys = true) {
         $keys = [];
@@ -105,7 +128,7 @@ class VersionedCache {
     /**
      * set value; update version
      * 
-     * @param Closure $Key     key template function
+     * @param \Closure $Key     key template function
      * @param array $args      key template args
      * @param mixed $value     value
      * @param int|null $expire      expiration, null for connection default
@@ -157,7 +180,7 @@ class VersionedCache {
     /**
      * Deletes version of specified namespace; all items in that namespace become expired
      * 
-     * @param Closure $NsKey 
+     * @param \Closure $NsKey
      * @param array $args 
      * @return self
      */
@@ -166,6 +189,9 @@ class VersionedCache {
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getLastVersion() {
         return $this->last_version;
     }

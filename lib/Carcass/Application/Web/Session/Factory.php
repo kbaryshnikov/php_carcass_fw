@@ -1,8 +1,16 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
 use Carcass\Corelib;
+use Carcass\Memcached;
+use Carcass\Connection;
 
 class Web_Session_Factory {
 
@@ -12,22 +20,16 @@ class Web_Session_Factory {
         $Storage = static::assembleStorageByConfig($Config);
         $Session = new Web_Session($Request, $Response, $Storage);
         if ($Config->has('Cookie')) {
-            static::setupCookieSettings($Session, $Config->Cookie);
+            $cookie = $Config->Cookie;
+            if (is_string($cookie)) {
+                $cookie_name = $cookie;
+            } else {
+                $cookie_name = $cookie->name;
+                $Session->setCookieExpire($cookie->expire);
+            }
+            $Session->setCookieName($cookie_name);
         }
         return $Session;
-    }
-
-    protected static function setupCookieSettings($Session, $Config) {
-        if (is_string($Config)) {
-            $Session->setCookieName($Config);
-            return;
-        }
-        if ($Config->has('name')) {
-            $Session->setCookieName($Config->name);
-        }
-        if ($Config->has('expire')) {
-            $Session->setCookieExpire($Config->expire);
-        }
     }
 
     protected static function assembleStorageByConfig(Corelib\Hash $Config) {
@@ -62,7 +64,7 @@ class Web_Session_Factory {
         if (!$Args->get('dsn')) {
             throw new \LogicException("dsn is not configured for memcached session storage");
         }
-        $MemcachedConnection = new \Carcass\Memcached\Connection(new \Carcass\Connection\Dsn($Args->get('dsn')));
+        $MemcachedConnection = new Memcached\Connection(Connection\Dsn::factory($Args->get('dsn')));
         if ($Args->get('use_cas')) {
             $Storage = new Web_Session_MemcachedCasStorage($MemcachedConnection);
         } else {

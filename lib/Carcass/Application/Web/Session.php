@@ -1,31 +1,75 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
 use Carcass\Corelib;
 
+/**
+ * Web Session implementation.
+ *
+ * @method mixed get($key, $default_value = null)
+ * @method Web_Session set($key, $value)
+ * @method Web_Session delete($key)
+ * @package Carcass\Application
+ */
 class Web_Session {
 
-    const
-        DEFAULT_COOKIE_NAME = 's',
-        DEFAULT_COOKIE_LIFETIME = 0;
+    const DEFAULT_COOKIE_NAME     = 's';
+    const DEFAULT_COOKIE_LIFETIME = 0;
 
-    protected
-        $user_agent_supports_cookies    = null,
-        $PersistentStorage              = null,
-        $cookie_name                    = self::DEFAULT_COOKIE_NAME,
-        $cookie_lifetime                = self::DEFAULT_COOKIE_LIFETIME,
-        $send_ident_to_user_agent       = true,
-        $session_id                     = null,
-        $Request,
-        $Response,
-        $Data;
+    /**
+     * @var bool|null
+     */
+    protected $user_agent_supports_cookies = null;
+    /**
+     * @var Web_Session_StorageInterface|null
+     */
+    protected $PersistentStorage = null;
+    /**
+     * @var string
+     */
+    protected $cookie_name = self::DEFAULT_COOKIE_NAME;
+    /**
+     * @var int
+     */
+    protected $cookie_lifetime = self::DEFAULT_COOKIE_LIFETIME;
+    /**
+     * @var bool
+     */
+    protected $send_ident_to_user_agent = true;
+    /**
+     * @var null
+     */
+    protected $session_id = null;
+    /**
+     * @var \Carcass\Corelib\Request
+     */
+    protected $Request;
+    /**
+     * @var Web_Response
+     */
+    protected $Response;
+    /**
+     * @var \Carcass\Corelib\Hash
+     */
+    protected $Data;
 
-    public function __construct(Corelib\Request $Request, Web_Response $Response, Web_SessionStorage_Interface $PersistentStorage = null) {
-        $this->cookie_name = self::DEFAULT_COOKIE_NAME;
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_Response $Response
+     * @param Web_Session_StorageInterface $PersistentStorage
+     */
+    public function __construct(Corelib\Request $Request, Web_Response $Response, Web_Session_StorageInterface $PersistentStorage = null) {
+        $this->cookie_name     = self::DEFAULT_COOKIE_NAME;
         $this->cookie_lifetime = self::DEFAULT_COOKIE_LIFETIME;
 
-        $this->Request = $Request;
+        $this->Request  = $Request;
         $this->Response = $Response;
 
         $this->Data = new Corelib\Hash;
@@ -33,30 +77,51 @@ class Web_Session {
         $PersistentStorage and $this->setPersistentStorage($PersistentStorage);
     }
 
-    public function setPersistentStorage(Web_SessionStorage_Interface $PersistentStorage) {
+    /**
+     * @param Web_Session_StorageInterface $PersistentStorage
+     * @return $this
+     */
+    public function setPersistentStorage(Web_Session_StorageInterface $PersistentStorage) {
         $this->PersistentStorage = $PersistentStorage;
         return $this;
     }
 
+    /**
+     * @param bool $bool
+     * @return $this
+     */
     public function enableSendingSessionIdentifiersToUserAgent($bool = true) {
         $this->send_ident_to_user_agent = (bool)$bool;
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function disableSendingSessionIdentifiersToUserAgent() {
         return $this->enableSendingSessionIdentifiersToUserAgent(false);
     }
 
+    /**
+     * @param $method
+     * @param array $args
+     * @return mixed
+     * @throws \LogicException
+     */
     public function __call($method, array $args) {
         if (method_exists($this->Data, $method)) {
             $this->ensureSessionIsStarted();
-            return call_user_func_array([$this->Data, $method], $args);
+            $result = call_user_func_array([$this->Data, $method], $args);
+            if ($result === $this->Data) {
+                $result = $this;
+            }
+            return $result;
         }
         throw new \LogicException("Method '$method' is not implemented");
     }
 
     /**
-     * @return void
+     * @return $this
      */
     public function save() {
         $this->ensureSessionIsStarted();
@@ -69,7 +134,7 @@ class Web_Session {
     }
 
     /**
-     * @return void
+     * @return $this
      */
     public function destroy() {
         $this->ensureSessionIsStarted();
@@ -82,13 +147,14 @@ class Web_Session {
     }
 
     /**
-     * @param string $cookie_name
-     * @return Carcass_Session
+     * @param $cookie_name
+     * @return $this
+     * @throws \InvalidArgumentException
      */
     public function setCookieName($cookie_name) {
         $cookie_name = (string)$cookie_name;
         if (empty($cookie_name)) {
-            throw new InvalidArgumentException("Invalid cookie name: '$cookie_name'");
+            throw new \InvalidArgumentException("Invalid cookie name: '$cookie_name'");
         }
         $this->cookie_name = $cookie_name;
         return $this;
@@ -97,8 +163,8 @@ class Web_Session {
     /**
      * Sets the session cookie lifetime.
      *
-     * @param integer|INF $cookie_lifetime Cookie lifetime: 0 for pure session cookie, expiration unix timestamp, or INF for unlimited
-     * @return Carcass_Session
+     * @param integer|float $cookie_lifetime Cookie lifetime: 0 for pure session cookie, expiration unix timestamp, or INF for unlimited
+     * @return $this
      */
     public function setCookieExpire($cookie_lifetime) {
         if ($cookie_lifetime !== INF) {
@@ -123,7 +189,7 @@ class Web_Session {
     }
 
     /**
-     * Returns the current session identifier
+     * Returns the session identifier
      * @return string
      */
     public function getSessionId() {
@@ -132,10 +198,10 @@ class Web_Session {
 
     /**
      * Fills $Receiver with session identifier
-     * 
-     * @param mixed $Receiver 
+     *
+     * @param mixed $Receiver
      * @param bool $force force setting sid parameters even if cookies are supported by user agent
-     * @return void
+     * @return $this
      */
     public function fillSessionIdParametersTo($Receiver, $force = false) {
         $Receiver->setSessionId($this->getIdentifier($force));
@@ -165,8 +231,12 @@ class Web_Session {
         }
     }
 
-    protected function isValidSessionId($session_id_to_check) {
-        return is_string($session_id_to_check) && preg_match('/^[a-zA-Z0-9_-]{22}$/', $session_id_to_check);
+    /**
+     * @param $session_id
+     * @return bool
+     */
+    protected function isValidSessionId($session_id) {
+        return is_string($session_id) && preg_match('/^[a-zA-Z0-9_-]{22}$/', $session_id);
     }
 
     protected function loadSessionIdFromRequest() {
@@ -175,11 +245,11 @@ class Web_Session {
         $found_in       = null;
 
         foreach ($sources_to_try as $source) {
-            if ($this->Request->has($source) && $this->Request->$source->has($this->cookie_name)) {
-                $value = $this->Request->$source->get($this->cookie_name);
+            if ($this->Request->has($source) && $this->Request->get($source)->has($this->cookie_name)) {
+                $value = $this->Request->get($source)->get($this->cookie_name);
                 if ($this->isValidSessionId($value)) {
                     $found_in = $source;
-                    $result = $value;
+                    $result   = $value;
                     break;
                 }
             }

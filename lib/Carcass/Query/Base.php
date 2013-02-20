@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Query;
 
@@ -6,48 +12,91 @@ use Carcass\Corelib;
 use Carcass\Application\Injector;
 use Carcass\Mysql;
 
+/**
+ * Base Query
+ * @package Carcass\Query
+ */
 class Base {
 
-    protected
-        $FetchFn = null,
-        $Db = null,
-        $db_dsn = null,
-        $last_insert_id = null,
-        $last_result = [];
+    protected $db_dsn = null;
+    protected $last_insert_id = null;
+    protected $last_result = [];
 
+    /**
+     * @var Mysql\Client
+     */
+    protected $Db = null;
+    /**
+     * @var callable|null
+     */
+    protected $FetchFn = null;
+
+    /**
+     * @param string $sql_query_template
+     * @return $this
+     */
     public function fetchRow($sql_query_template) {
-        return $this->setFetchWith(function($Db, array $args) use ($sql_query_template) {
+        return $this->setFetchWith(function(Mysql\Client $Db, array $args) use ($sql_query_template) {
             return $Db->getRow($sql_query_template, $this->getArgs($args));
         });
     }
 
+    /**
+     * @param string $sql_query_template
+     * @param array $keys
+     * @return $this
+     */
     public function fetchAll($sql_query_template, array $keys = []) {
-        return $this->setFetchWith(function($Db, array $args) use ($sql_query_template, $keys) {
+        return $this->setFetchWith(function(Mysql\Client $Db, array $args) use ($sql_query_template, $keys) {
             return $Db->getAll($sql_query_template, $this->getArgs($args), $keys);
         });
     }
 
+    /**
+     * @param string $sql_query_template
+     * @param null $col
+     * @param null $valcol
+     * @return $this
+     */
     public function fetchCol($sql_query_template, $col = null, $valcol = null) {
-        return $this->setFetchWith(function($Db, array $args) use ($sql_query_template, $col, $valcol) {
+        return $this->setFetchWith(function(Mysql\Client $Db, array $args) use ($sql_query_template, $col, $valcol) {
             return $Db->getCol($sql_query_template, $this->getArgs($args), $col, $valcol);
         });
     }
 
+    /**
+     * @param callable $fn
+     * @param callable $finally_fn
+     * @return $this
+     */
     public function fetchWith(Callable $fn, Callable $finally_fn = null) {
         return $this->setFetchWith(function() use ($fn, $finally_fn) {
             return Injector::getConnectionManager()->doInTransaction($fn, func_get_args(), $finally_fn);
         });
     }
 
+    /**
+     * @param array $args
+     * @return $this
+     */
     public function execute(array $args = []) {
         $this->last_result = $this->doFetch($this->getArgs($args));
         return $this;
     }
 
+    /**
+     * @param array $args
+     * @return array
+     */
     protected function getArgs(array $args) {
         return $args;
     }
 
+    /**
+     * @param array $args
+     * @return mixed
+     * @throws \LogicException
+     */
     protected function doFetch(array $args) {
         $result = call_user_func_array($this->FetchFn, $this->getCallbackArgs($args));
         if (false === $result) {
@@ -56,8 +105,13 @@ class Base {
         return $result;
     }
 
+    /**
+     * @param string $sql_query_template
+     * @param array $args
+     * @return null
+     */
     public function insert($sql_query_template, array $args = array()) {
-        $this->doModify(function($Db, $args) use ($sql_query_template) {
+        $this->doModify(function(Mysql\Client $Db, $args) use ($sql_query_template) {
             $affected_rows = $Db->query($sql_query_template, $this->getArgs($args));
             $this->last_insert_id = $affected_rows ? $Db->getLastInsertId() : null;
             return $affected_rows;
@@ -65,20 +119,46 @@ class Base {
         return $this->last_insert_id;
     }
 
+    /**
+     * @param string $sql_query_template
+     * @param array $args
+     * @return mixed
+     */
     public function modify($sql_query_template, array $args = array()) {
-        return $this->doModify(function($Db, $args) use ($sql_query_template) {
+        return $this->doModify(function(Mysql\Client $Db, $args) use ($sql_query_template) {
             return $Db->query($sql_query_template, $this->getArgs($args));
         }, $args, false);
     }
 
+    /**
+     * @param callable $fn
+     * @param array $args
+     * @param bool $in_transaction
+     * @param callable $finally_fn
+     * @return mixed
+     */
     public function insertWith(Callable $fn, array $args, $in_transaction = true, Callable $finally_fn = null) {
         return $this->modifyWith($fn, $args, $in_transaction, $finally_fn);
     }
 
+    /**
+     * @param callable $fn
+     * @param array $args
+     * @param bool $in_transaction
+     * @param callable $finally_fn
+     * @return mixed
+     */
     public function modifyWith(Callable $fn, array $args, $in_transaction = true, Callable $finally_fn = null) {
         return $this->doModify($fn, $args, $in_transaction, $finally_fn);
     }
 
+    /**
+     * @param callable $fn
+     * @param array $args
+     * @param $in_transaction
+     * @param callable $finally_fn
+     * @return mixed
+     */
     protected function doModify(Callable $fn, array $args, $in_transaction, Callable $finally_fn = null) {
         if ($in_transaction) {
             $result = $this->doInTransaction($fn, $this->getArgs($args), $finally_fn);
@@ -88,19 +168,35 @@ class Base {
         return $result;
     }
 
+    /**
+     * @return array
+     */
     public function getLastResult() {
         return $this->last_result;
     }
 
+    /**
+     * @param callable $fn
+     * @param array $args
+     * @param callable $finally_fn
+     * @return mixed
+     */
     public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
         return Injector::getConnectionManager()->doInTransaction($fn, $this->getCallbackArgs($args), $finally_fn);
     }
 
+    /**
+     * @param \Carcass\Corelib\ImportableInterface $Target
+     * @return $this
+     */
     public function sendTo(Corelib\ImportableInterface $Target) {
         $Target->import($this->getLastResult() ?: []);
         return $this;
     }
 
+    /**
+     * @return \Carcass\Mysql\Client|null
+     */
     public function getDatabase() {
         if (null === $this->Db) {
             $this->Db = $this->assembleDatabaseClient();
@@ -108,14 +204,21 @@ class Base {
         return $this->Db;
     }
 
+    /**
+     * @return \Carcass\Mysql\Client
+     */
     protected function assembleDatabaseClient() {
-        return new Mysql\Client(
-            Injector::getConnectionManager()->getConnection(
-                Injector::getConfigReader()->getPath('application.connections.database')
-            )
+        /** @var Mysql\Connection $Connection */
+        $Connection = Injector::getConnectionManager()->getConnection(
+            Injector::getConfigReader()->getPath('application.connections.database')
         );
+        return new Mysql\Client($Connection);
     }
 
+    /**
+     * @param array $args
+     * @return array
+     */
     protected function getCallbackArgs(array $args) {
         return [
             $this->getDatabase(),
@@ -123,6 +226,10 @@ class Base {
         ];
     }
 
+    /**
+     * @param callable $fn
+     * @return $this
+     */
     protected function setFetchWith(Callable $fn) {
         $this->FetchFn = $fn;
         return $this;

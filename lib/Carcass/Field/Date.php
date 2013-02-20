@@ -1,7 +1,18 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Field;
 
+/**
+ * Date field
+ *
+ * @package Carcass\Field
+ */
 class Date extends Base {
 
     protected $min_date;
@@ -14,6 +25,12 @@ class Date extends Base {
     const NUMBER_OF_MONTHS = 12;
     const NUMBER_OF_DAYS = 31;
 
+    /**
+     * @param int $min_date
+     * @param int $max_date
+     * @param $default_value
+     * @param bool $allow_empty
+     */
     public function __construct($min_date = 0, $max_date = 2147483647, $default_value = null, $allow_empty = false) {
         parent::__construct($default_value);
         foreach (['min_date', 'max_date'] as $d) {
@@ -26,19 +43,33 @@ class Date extends Base {
         $this->allow_empty = (bool)$allow_empty;
     }
 
+    /**
+     * @return mixed
+     */
     public function getMinValue() {
         return $this->min_date;
     }
 
+    /**
+     * @return mixed
+     */
     public function getMaxValue() {
         return $this->max_date;
     }
 
+    /**
+     * @param array $month_names
+     * @return $this
+     */
     public function setMonthNames(array $month_names) {
         $this->month_names = $month_names;
         return $this;
     }
 
+    /**
+     * @param $value
+     * @return $this
+     */
     public function setValue($value) {
         if (is_array($value)) {
             if (array_key_exists('day', $value)
@@ -61,12 +92,18 @@ class Date extends Base {
         return $this;
     }
 
+    /**
+     * @return array
+     */
     protected function getInitialResultArray() {
         return $this->allow_empty
             ? [ ['key' => '', 'value' => ''] ]
             : [];
     }
 
+    /**
+     * @return array
+     */
     protected function getYearSet() {
         $start_year = gmdate('Y', $this->min_date);
         $end_year = gmdate('Y', $this->max_date);
@@ -85,6 +122,9 @@ class Date extends Base {
         return $result;
     }
 
+    /**
+     * @return array
+     */
     protected function getMonthSet() {
         $result = $this->getInitialResultArray();
         $selected_month = null === $this->value ? -1 : gmdate('m', $this->value);
@@ -99,6 +139,9 @@ class Date extends Base {
         return $result;
     }
 
+    /**
+     * @return array
+     */
     protected function getDaySet() {
         $result = $this->getInitialResultArray();
         $selected_day = null === $this->value ? -1 : gmdate('d', $this->value);
@@ -112,6 +155,9 @@ class Date extends Base {
         return $result;
     }
 
+    /**
+     * @return array
+     */
     public function exportArray() {
         $set = parent::exportArray();
 
@@ -122,6 +168,10 @@ class Date extends Base {
         return $set;
     }
 
+    /**
+     * @param $value
+     * @return bool
+     */
     protected function isTimestamp($value) {
         return is_integer($value) || ctype_digit( substr($value, 0, 1) == '-' ? substr($value, 1) : $value );
     }

@@ -1,8 +1,13 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Memcached;
 
-use Carcass\Connection\ConnectionInterface;
 use Carcass\Connection\PoolConnectionInterface;
 use Carcass\Connection\TransactionalConnectionInterface;
 use Carcass\Connection\TransactionalConnectionTrait;
@@ -10,84 +15,152 @@ use Carcass\Connection\Dsn;
 use Carcass\Connection\DsnPool;
 use Carcass\Corelib;
 
+/**
+ * Memcached connection and client.
+ * Uses pecl/memcache.
+ *
+ * @method mixed add()
+ * @method mixed cas()
+ * @method mixed decrement()
+ * @method mixed delete()
+ * @method mixed get()
+ * @method mixed getStats()
+ * @method mixed getVersion()
+ * @method mixed increment()
+ * @method mixed replace()
+ * @method mixed set()
+ * @method mixed getServerStatus()
+ * @method mixed getExtendedStats()
+ *
+ * @package Carcass\Memcached
+ */
 class Connection implements PoolConnectionInterface, TransactionalConnectionInterface {
     use TransactionalConnectionTrait;
 
-    protected static
-        $mc_calls = [
-            // name => delay on transaction
-            'add'       => true,
-            'decrement' => true,
-            'delete'    => true,
-            'flush'     => false,
-            'get'       => false,
-            'getStats'  => false,
-            'getVersion'=> false,
-            'increment' => true,
-            'replace'   => true,
-            'set'       => true,
-            'getServerStatus' => false,
-            'getExtendedStats' => false,
-        ];
+    protected static $mc_calls = [
+        // name            => delay on transaction
+        'add'              => true,
+        'cas'              => true,
+        'decrement'        => true,
+        'delete'           => true,
+        'flush'            => false,
+        'get'              => false,
+        'getStats'         => false,
+        'getVersion'       => false,
+        'increment'        => true,
+        'replace'          => true,
+        'set'              => true,
+        'getServerStatus'  => false,
+        'getExtendedStats' => false,
+    ];
 
-    protected
-        $Pool,
-        $KeyBuilder = null,
-        $MemcachedInstance = null,
-        $delay_mode = false,
-        $delayed_calls = [];
+    /** @var \Carcass\Connection\DsnPool */
+    protected $Pool;
+    /** @var \Carcass\Memcached\KeyBuilder|null */
+    protected $KeyBuilder = null;
+    /** @var \Memcache|null */
+    protected $MemcachedInstance = null;
+    /** @var bool */
+    protected $delay_mode = false;
+    /** @var array */
+    protected $delayed_calls = [];
 
+    /**
+     * @param \Carcass\Connection\Dsn $Dsn
+     * @return static
+     */
     public static function constructWithDsn(Dsn $Dsn) {
         return static::constructWithPool(new DsnPool([$Dsn]));
     }
 
+    /**
+     * @param \Carcass\Connection\DsnPool $Pool
+     * @return static
+     */
     public static function constructWithPool(DsnPool $Pool) {
         return new static($Pool);
     }
 
+    /**
+     * @return \Carcass\Connection\DsnPool
+     */
     public function getDsn() {
         return $this->Pool;
     }
 
+    /**
+     * @param \Carcass\Connection\DsnPool $Pool
+     */
     public function __construct(DsnPool $Pool) {
-        Corelib\Assert::onFailureThrow('memcached dsn is required')->is('memcached', $Pool->getType());
+        Corelib\Assert::that('DSN type is "memcached"')->is('memcached', $Pool->getType());
         $this->Pool = $Pool;
     }
 
+    /**
+     * @param string $template
+     * @param array $args
+     * @return string
+     */
     public function buildKey($template, array $args = []) {
         return $this->getKeyBuilder($template)->parse($args);
     }
 
+    /**
+     * Calls the required $method with varargs. If a method fails, LogicException is thrown.
+     * @param $method
+     * @return bool|mixed
+     * @throw \LogicException
+     */
     public function callRequired($method /* ... */) {
         $args = func_get_args();
         return $this->dispatch(array_shift($args), $args, true);
     }
 
-    public function callRaw($method, $args) {
+    /**
+     * Executes a raw pecl/memcached call
+     *
+     * @param string $method
+     * @return mixed
+     */
+    public function callRaw($method /* ... */) {
         $args = func_get_args();
         return $this->dispatch(array_shift($args), $args, false, true);
     }
 
-    public function callRawRequired($method, $args) {
+    /**
+     * Executes a raw required (see callRequired()) pecl/memcached call
+     *
+     * @param string $method
+     * @return mixed
+     * @throw \LogicException
+     */
+    public function callRawRequired($method /* ... */) {
         $args = func_get_args();
         return $this->dispatch(array_shift($args), $args, true, true);
     }
 
+    /**
+     * @param $method
+     * @param array $args
+     * @return mixed
+     */
     public function __call($method, array $args) {
         return $this->dispatch($method, $args);
     }
 
+    /**
+     * @return void
+     */
     public function close() {
         if (null === $this->MemcachedInstance) {
-            return true;
+            return;
         }
-        $result = $this->MemcachedInstance->close();
+        $this->MemcachedInstance->close();
         $this->MemcachedInstance = null;
-        return $result;
     }
 
     protected function beginTransaction() {
-        $this->delay_mode = true;
+        $this->delay_mode    = true;
         $this->delayed_calls = [];
     }
 
@@ -99,10 +172,19 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     }
 
     protected function rollbackTransaction() {
-        $this->delay_mode = false;
+        $this->delay_mode    = false;
         $this->delayed_calls = [];
     }
 
+    /**
+     * @param $method
+     * @param array $args
+     * @param bool $is_required
+     * @param bool $no_delay
+     * @return mixed
+     * @throws \LogicException
+     * @throws \BadMethodCallException
+     */
     protected function dispatch($method, array $args, $is_required = false, $no_delay = false) {
         if (!isset(static::$mc_calls[$method])) {
             throw new \BadMethodCallException("Invalid method call: '$method'");
@@ -112,7 +194,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         }
         if (!$no_delay && $this->delay_mode && true == static::$mc_calls[$method]) {
             $this->delayed_calls[] = [$method, $args, $is_required];
-            $result = true;
+            $result                = true;
         } else {
             $result = call_user_func_array([$this->getMc(), $method], $args);
             if (false === $result && $is_required) {
@@ -122,6 +204,9 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return $result;
     }
 
+    /**
+     * @return \Memcache
+     */
     protected function getMc() {
         if (null === $this->MemcachedInstance) {
             $this->MemcachedInstance = $this->assembleMemcachedInstance();
@@ -129,6 +214,10 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return $this->MemcachedInstance;
     }
 
+    /**
+     * @param $template
+     * @return KeyBuilder
+     */
     protected function getKeyBuilder($template) {
         if (null === $this->KeyBuilder) {
             $this->KeyBuilder = $this->assembleKeyBuilder();
@@ -139,43 +228,63 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return $this->KeyBuilder;
     }
 
+    /**
+     * @return KeyBuilder
+     */
     protected function assembleKeyBuilder() {
         return new KeyBuilder;
     }
 
+    /**
+     * @param KeyBuilder $KeyBuilder
+     * @return $this
+     */
     public function setKeyBuilder(KeyBuilder $KeyBuilder) {
         $this->KeyBuilder = $KeyBuilder;
         return $this;
     }
 
+    /**
+     * @param $Mc
+     * @return $this
+     */
     public function setMemcacheInstance($Mc) {
         $this->MemcachedInstance = $Mc;
         return $this;
     }
 
+    /**
+     * @return \Memcache
+     */
     protected function constructMemcacheInstance() {
         return new \Memcache;
     }
 
+    /**
+     * @return \Memcache
+     */
     protected function assembleMemcachedInstance() {
         $Mc = $this->constructMemcacheInstance();
-        $compress_threshold = 0;
+
+        $compress_threshold             = 0;
         $compress_threshold_min_savings = -1;
+
         foreach ($this->Pool as $Item) {
+            /** @var Corelib\DatasourceInterface $Item */
             $Mc->addServer(
-                $Item->has('socket') ? ('unix://' . $Item->socket) : $Item->hostname,
-                $Item->has('socket') ? 0 : ($Item->get('port') ?: 11211),
-                $Item->args->get('persistent', true),
-                $Item->args->get('weight', 1),
-                $Item->args->get('timeout', 1),
-                $Item->args->get('retry_interval', 10),
-                $Item->args->get('status', true)
+                $Item->has('socket') ? ('unix://' . $Item->get('socket')) : $Item->get('hostname'),
+                $Item->has('socket') ? 0 : ($Item->get('port') ? : 11211),
+                $Item->get('args')->get('persistent', true),
+                $Item->get('args')->get('weight', 1),
+                $Item->get('args')->get('timeout', 1),
+                $Item->get('args')->get('retry_interval', 10),
+                $Item->get('args')->get('status', true)
             );
-            if ($Item->args->get('compress_threshold')) {
-                $compress_threshold = max($compress_threshold, intval($Item->args->compress_threshold));
+            if ($args_threshold = $Item->get('args')->get('compress_threshold')) {
+                $compress_threshold = max($compress_threshold, intval($args_threshold));
             }
-            if ($Item->args->get('compress_threshold_min_savings')) {
-                $compress_threshold_min_savings = max($compress_threshold_min_savings, floatval($Item->args->compress_threshold_min_savings));
+            if ($args_savings = $Item->get('args')->get('compress_threshold_min_savings')) {
+                $compress_threshold_min_savings = max($compress_threshold_min_savings, floatval($args_savings));
             }
         }
         if ($compress_threshold > 0) {

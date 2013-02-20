@@ -1,33 +1,68 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Less;
 
 use Carcass\Fs;
 
+/**
+ * LESS Dispatcher
+ * @package Carcass\Less
+ */
 class Dispatcher {
 
-    protected
-        $Compiler = null,
-        $Cacher = null,
-        $less_path,
-        $target_path = null;
+    /**
+     * @var Compiler|null
+     */
+    protected $Compiler = null;
+    /**
+     * @var Cacher_Interface|null
+     */
+    protected $Cacher = null;
 
+    protected $less_path;
+    protected $target_path = null;
+
+    /**
+     * @param Cacher_Interface $Cacher
+     * @param string $less_path
+     * @param string|null $target_path
+     */
     public function __construct(Cacher_Interface $Cacher, $less_path, $target_path = null) {
         $this->Cacher = $Cacher;
         $this->setLessPath($less_path);
         $target_path and $this->setTargetPath($target_path);
     }
 
+    /**
+     * @param string $less_path
+     * @return $this
+     */
     public function setLessPath($less_path) {
         $this->less_path = rtrim($less_path, '/');
         return $this;
     }
 
+    /**
+     * @param string $target_path
+     * @return $this
+     */
     public function setTargetPath($target_path) {
         $this->target_path = rtrim($target_path, '/');
         return $this;
     }
 
+    /**
+     * @param string $file
+     * @param int|null $mtime
+     * @return string
+     * @throws \LogicException
+     */
     public function compile($file, &$mtime = null) {
         if (!$this->target_path) {
             throw new \LogicException("target path is undefined");
@@ -42,6 +77,11 @@ class Dispatcher {
         return $target_file_name;
     }
 
+    /**
+     * @param string $file
+     * @param int|null $mtime
+     * @return mixed
+     */
     public function compileFileToLessString($file, &$mtime = null) {
         $file_name = $this->less_path . '/' . ltrim($file, '/');
 
@@ -61,6 +101,9 @@ class Dispatcher {
         return $result['compiled'];
     }
 
+    /**
+     * @return Compiler
+     */
     protected function getCompiler() {
         if (null === $this->Compiler) {
             $this->Compiler = $this->assembleCompiler();
@@ -68,6 +111,9 @@ class Dispatcher {
         return $this->Compiler;
     }
 
+    /**
+     * @return Compiler
+     */
     protected function assembleCompiler() {
         $Compiler = new Compiler;
         $Compiler->setImportDir($this->less_path);

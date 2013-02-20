@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Mysql;
 
@@ -6,39 +12,62 @@ use \Carcass\Connection\ConnectionInterface;
 use \Carcass\Connection\Dsn;
 use \Carcass\Corelib;
 
-// read only implementation
+/**
+ * MySQL HandlerSocket Connection.
+ * Read only implementation.
+ *
+ * @package Carcass\Mysql
+ */
 class HandlerSocket_Connection implements ConnectionInterface {
-    
-    const 
+
+    const
         DEFAULT_PORT = 9998,
         CONN_TIMEOUT = 1,
         SOCK_TIMEOUT = 1,
         SOCK_TIMEOUT_MS = 0;
 
+    /**
+     * @var \Carcass\Connection\Dsn
+     */
+    protected $Dsn;
+
     protected
-        $Dsn,
         $exception_on_errors = false,
         $next_dbname = null,
         $socket = null,
-        $indexes = array(),
+        $indexes = [],
         $index_sequence = 1,
         $last_error = null;
 
+    /**
+     * @param \Carcass\Connection\Dsn $Dsn
+     * @return static
+     */
     public static function constructWithDsn(Dsn $Dsn) {
         return new static($Dsn);
     }
 
+    /**
+     * @param \Carcass\Connection\Dsn $Dsn
+     */
     public function __construct(Dsn $Dsn) {
-        Corelib\Assert::onFailureThrow('hs dsn is required')->is('hs', $Dsn->getType());
+        Corelib\Assert::that('DSN has hs type')->is('hs', $Dsn->getType());
         $this->Dsn = $Dsn;
     }
 
+    /**
+     * @return \Carcass\Connection\Dsn
+     */
     public function getDsn() {
         return $this->Dsn;
     }
 
-    public function throwExceptionOnErrors($bool) {
-        $this->exception_on_errors = (bool)$bool;
+    /**
+     * @param bool $enable
+     * @return $this
+     */
+    public function throwExceptionOnErrors($enable) {
+        $this->exception_on_errors = (bool)$enable;
         return $this;
     }
 
@@ -55,15 +84,32 @@ class HandlerSocket_Connection implements ConnectionInterface {
         $this->disconnect();
     }
 
+    /**
+     * @param $id
+     * @return mixed
+     */
     public function getIndex($id) {
         return isset($this->indexes[$id]) ? $this->indexes[$id] : null;
     }
 
+    /**
+     * @param string $dbname
+     * @return $this
+     */
     public function useDb($dbname) {
         $this->next_dbname = (string)$dbname;
         return $this;
     }
 
+    /**
+     * @param string $tablename
+     * @param string $indexname
+     * @param array $cols
+     * @param array $fcols
+     * @param int|string|null $index_id
+     * @return HandlerSocket_Index
+     * @throws \LogicException
+     */
     public function openIndex($tablename, $indexname, array $cols, array $fcols = null, $index_id = null) {
         if (null === $index_id) {
             $index_id = $this->index_sequence++;
@@ -86,6 +132,13 @@ class HandlerSocket_Connection implements ConnectionInterface {
         return new HandlerSocket_Index($this, $index_id, $cols, $args);
     }
 
+    /**
+     * @param array $tokens
+     * @param HandlerSocket_Index $Index
+     * @return array|bool
+     * @throws \LogicException
+     * @throws \RuntimeException
+     */
     public function query(array $tokens, $Index = null) {
         if ($Index) {
             $this->ensureIndexIsOpened($Index);
@@ -109,11 +162,14 @@ class HandlerSocket_Connection implements ConnectionInterface {
         }
     }
 
+    /**
+     * @return string|null
+     */
     public function getLastError() {
         return $this->last_error;
     }
 
-    protected function ensureIndexIsOpened($Index) {
+    protected function ensureIndexIsOpened(HandlerSocket_Index $Index) {
         if (!isset($this->indexes[$Index->getIndexId()])) {
             $Index->connect();
             $this->indexes[$Index->getIndexId()] = $Index;

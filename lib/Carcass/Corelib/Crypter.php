@@ -1,7 +1,18 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Corelib;
 
+/**
+ * Encryption library
+ *
+ * @package Carcass\Corelib
+ */
 class Crypter {
 
     protected
@@ -28,9 +39,13 @@ class Crypter {
         $this->configure($settings);
     }
 
+    /**
+     * @param array $settings
+     * @return $this
+     */
     public function configure(array $settings) {
         if (isset($settings['secret'])) {
-            $this->setSecret($secret === null ? null : (string)$secret);
+            $this->setSecret($settings['secret'] ?: null);
         }
         if (isset($settings['algo'])) {
             if (is_array($settings['algo'])) {
@@ -45,6 +60,11 @@ class Crypter {
         return $this;
     }
 
+    /**
+     * @param $algo
+     * @param null $mode
+     * @return $this
+     */
     public function setCryptAlgo($algo, $mode = null) {
         $this->crypt_algo = is_string($algo) ? constant('MCRYPT_' . strtoupper($algo)) : $algo;
         $this->crypt_mode = $mode === null ? MCRYPT_MODE_ECB : ( is_string($mode) ? constant('MCRYPT_MODE_' . strtoupper($mode)) : $mode );
@@ -52,6 +72,10 @@ class Crypter {
         return $this;
     }
 
+    /**
+     * @param $secret
+     * @return $this
+     */
     public function setSecret($secret) {
         $this->secret = $secret;
         $this->xor_mask = $secret === null ? null : (crc32($secret) % 256);
@@ -73,7 +97,7 @@ class Crypter {
      * Encodes/decodes the string with offset-modified XOR. The implementation is symmetric.
      *
      * @param string $s source string
-     * @param unsighed byte $xor_with - xor byte value (0..255), defaults to crc32(secret) % 256
+     * @param int $xor_with - xor byte value (0..255), defaults to crc32(secret) % 256
      * @return string
      */
     public function xorString($s, $xor_with = null) {
@@ -109,7 +133,7 @@ class Crypter {
     public function deobfuscate($s) {
         try {
             return StringTools::jsonDecode($this->xorString(StringTools::webSafeBase64Decode($s)), true);
-        } catch (NoticeException $e) {
+        } catch (\Exception $e) {
             return null;
         }
     }
@@ -147,7 +171,7 @@ class Crypter {
                 $this->crypt_mode,
                 $this->getIv()
             ));
-        } catch (NoticeException $e) {
+        } catch (\Exception $e) {
             return null;
         }
     }
@@ -176,7 +200,7 @@ class Crypter {
     /**
      * Decodes data encoded with encrypt()
      *
-     * @param string $s salted encoded string, formed by encryptSalted()
+     * @param string $salted_str salted encoded string, formed by encryptSalted()
      * @param string $secret default self.secret
      * @return mixed
      */
@@ -190,7 +214,7 @@ class Crypter {
                 $this->crypt_mode,
                 $this->getIv()
             ));
-        } catch (NoticeException $e) {
+        } catch (\Exception $e) {
             return null;
         }
     }
@@ -224,11 +248,12 @@ class Crypter {
     }
 
     /**
-     * getRandomString 
-     * 
-     * @param int $min_len 
-     * @param mixed $max_len 
-     * @param string $chars 
+     * getRandomString
+     *
+     * @param int $min_len
+     * @param int|null $max_len
+     * @param string $chars
+     * @throws \InvalidArgumentException
      * @return string
      */
     public static function getRandomString($min_len = 8, $max_len = null, $chars = 'abcdefghijklmnopqrstuvwxyz') {
@@ -248,22 +273,34 @@ class Crypter {
         return $result;
     }
 
+    /**
+     * @throws \RuntimeException
+     */
     protected function ensureSecretIsDefined() {
         if (null === $this->secret) {
             throw new \RuntimeException('Secret is undefined');
         }
     }
 
+    /**
+     * @return string
+     */
     protected function getSecret() {
         $this->ensureSecretIsDefined();
         return $this->secret;
     }
 
+    /**
+     * @return string
+     */
     protected function getXorMask() {
         $this->ensureSecretIsDefined();
         return $this->xor_mask;
     }
 
+    /**
+     * @return string
+     */
     protected function getIv() {
         if (!isset($this->iv)) {
             $this->iv = mcrypt_create_iv(mcrypt_get_iv_size($this->crypt_algo, $this->crypt_mode), MCRYPT_RAND);
@@ -271,6 +308,11 @@ class Crypter {
         return $this->iv;
     }
 
+    /**
+     * @param $secret
+     * @param null $salt
+     * @return string
+     */
     protected function buildCryptKey($secret, $salt = null) {
         if (empty($salt)) {
             $salt = "\x0";

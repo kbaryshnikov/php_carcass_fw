@@ -1,14 +1,23 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
 use Carcass\Corelib;
 
+/**
+ * JSONP renderer. Callback function name is defined by 'callback' item in the render array.
+ * @package Carcass\Application
+ */
 class Web_Renderer_Jsonp extends Web_Renderer_Json {
 
-    const
-        DEFAULT_JSONP_CALLBACK = 'callback',
-        CALLBACK_KEY_IN_RENDER_DATA_ARRAY = 'jsonp_callback';
+    const DEFAULT_JSONP_CALLBACK = 'callback';
+    const CALLBACK_KEY_IN_RENDER_DATA_ARRAY = 'jsonp_callback';
 
     protected function doRender(array $render_data) {
         if (isset($render_data[self::CALLBACK_KEY_IN_RENDER_DATA_ARRAY])) {

@@ -1,17 +1,34 @@
 <?php
 
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
+
 namespace Carcass\Image;
 
+/**
+ * Class Converter
+ * @package Carcass\Image
+ */
 class Converter {
 
     const
         THUMBNAIL_MODE_CROP_CENTERED = 1,
         THUMBNAIL_MODE_FIT_RECTANGLE = 2;
 
-    protected
-        $SourceImage,
-        $ResultImage,
+    /**
+     * @var Image
+     */
+    protected $SourceImage;
+    /**
+     * @var Image
+     */
+    protected $ResultImage;
 
+    protected
         $resize,
         $resize_w = null,
         $resize_h = null,
@@ -39,10 +56,18 @@ class Converter {
         $unsharpmask_amount,
         $unsharpmask_threshold;
 
+    /**
+     * @param Image $Image
+     */
     public function __construct(Image $Image) {
         $this->SourceImage = $Image;
     }
 
+    /**
+     * @param $width
+     * @param $height
+     * @return $this
+     */
     public function setGeometry($width, $height) {
         $this->resize = true;
         $this->resize_w = $width;
@@ -50,21 +75,37 @@ class Converter {
         return $this;
     }
 
+    /**
+     * @param bool $filter
+     * @return $this
+     */
     public function setResizeFilter($filter = false) {
         $this->resize_filter = $filter;
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function setThumbnailCropCentered() {
         $this->thumbnail_mode = self::THUMBNAIL_MODE_CROP_CENTERED;
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function setThumbnailFitRectangle() {
         $this->thumbnail_mode = self::THUMBNAIL_MODE_FIT_RECTANGLE;
         return $this;
     }
 
+    /**
+     * @param Image $Image
+     * @param int|float $gravity
+     * @param int $offset
+     * @return $this
+     */
     public function setWatermark(Image $Image, $gravity, $offset = 0) {
         $this->watermark = true;
         $this->watermark_image = $Image;
@@ -73,11 +114,18 @@ class Converter {
         return $this;
     }
 
+    /**
+     * @param bool $bool_mode
+     * @return $this
+     */
     public function setAutoLevels($bool_mode = true) {
         $this->autolevels = $bool_mode;
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function disableAdaptiveBlur() {
         $this->adaptiveblur = false;
         $this->adaptiveblur_radius = false;
@@ -85,6 +133,11 @@ class Converter {
         return $this;
     }
 
+    /**
+     * @param int|float $radius
+     * @param int|float $sigma
+     * @return $this
+     */
     public function setAdaptiveBlur($radius, $sigma) {
         $this->adaptiveblur = true;
         $this->adaptiveblur_radius = $radius;
@@ -92,6 +145,9 @@ class Converter {
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function disableUnsharpMask() {
         $this->unsharpmask = false;
         $this->unsharpmask_radius = false;
@@ -101,6 +157,13 @@ class Converter {
         return $this;
     }
 
+    /**
+     * @param int|float $radius
+     * @param int|float $sigma
+     * @param int|float $amount
+     * @param int|float $threshold
+     * @return $this
+     */
     public function setUnsharpMask($radius, $sigma, $amount, $threshold) {
         $this->unsharpmask = true;
         $this->unsharpmask_radius = $radius;
@@ -110,6 +173,13 @@ class Converter {
         return $this;
     }
 
+    /**
+     * @param int $source_w
+     * @param int $source_h
+     * @param int $target_w
+     * @param int $target_h
+     * @return array|null
+     */
     protected function calcCropCentered($source_w, $source_h, $target_w, $target_h) {
         $source_ratio = $source_w / $source_h;
         $target_ratio = $target_w / $target_h;
@@ -130,6 +200,12 @@ class Converter {
         return compact('w', 'h', 'x', 'y');
     }
 
+    /**
+     * @param mixed $real_w returned by ref
+     * @param mixed $real_h returned by ref
+     * @return $this
+     * @throws \LogicException
+     */
     public function resize(&$real_w = null, &$real_h = null) {
         if ($this->resize_w === null && $this->resize_h == null) {
             throw new \LogicException("Resize width or height not specified.");
@@ -193,17 +269,30 @@ class Converter {
         return $this;
     }
 
+    /**
+     * @param $format
+     * @param null $quality
+     * @return $this
+     */
     public function setImageFormat($format, $quality = null) {
         $this->result_image_format = $format;
         $this->result_quality = $quality;
         return $this;
     }
 
+    /**
+     * @param $quality
+     * @return $this
+     */
     public function setImageQuality($quality) {
         $this->result_quality = $quality;
         return $this;
     }
 
+    /**
+     * @param $target
+     * @return mixed
+     */
     public function saveTo($target) {
         if (isset($this->result_quality)) {
             $this->ResultImage->setCompressionQuality($this->result_quality);

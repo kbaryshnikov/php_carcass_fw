@@ -1,10 +1,21 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
 use Carcass\Corelib;
 
-class Web_Router_Map implements Web_RouterInterface {
+/**
+ * Map router. Routes by the config-defined route map.
+ *
+ * @package Carcass\Application
+ */
+class Web_Router_Map implements Web_Router_Interface {
     use Web_Router_StaticTrait;
 
     protected static $default_options = [
@@ -13,14 +24,21 @@ class Web_Router_Map implements Web_RouterInterface {
 
     protected $routes = [];
     protected $rev_routes = [];
-
     protected $options = [];
 
+    /**
+     * @param array $map
+     * @param array $options
+     */
     public function __construct(array $map, array $options = []) {
         $this->options = $options + static::$default_options;
         $this->loadMap($map);
     }
 
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param ControllerInterface $Controller
+     */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
         $uri = $Request->Env->has('DOCUMENT_URI') ? $Request->Env->DOCUMENT_URI : strtok($Request->Env->REQUEST_URI, '?');
         $route = $this->findRoute($uri);
@@ -31,14 +49,32 @@ class Web_Router_Map implements Web_RouterInterface {
         }
     }
 
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param string $route
+     * @param array $args
+     * @return string
+     */
     public function getUrl(Corelib\Request $Request, $route, array $args = []) {
         return $this->getUrlInstanceByRoute($route, $args)->getRelative();
     }
 
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param $route
+     * @param array $args
+     * @return string
+     */
     public function getAbsoluteUrl(Corelib\Request $Request, $route, array $args = []) {
         return $this->getUrlInstanceByRoute($route, $args)->getAbsolute($Request->Env->HOST, $Request->Env->get('SCHEME', 'http'));
     }
 
+    /**
+     * @param $route
+     * @param array $args
+     * @return \Carcass\Corelib\Url
+     * @throws \InvalidArgumentException
+     */
     protected function getUrlInstanceByRoute($route, array $args) {
         $url = $this->findUrl($route);
         if (null === $url) {
@@ -47,6 +83,10 @@ class Web_Router_Map implements Web_RouterInterface {
         return new Corelib\Url($url, $args);
     }
 
+    /**
+     * @param $uri
+     * @return array|null
+     */
     protected function findRoute($uri) {
         $uri_len = strlen($uri);
         foreach ($this->routes as $prefix => $variants) {
@@ -76,6 +116,9 @@ class Web_Router_Map implements Web_RouterInterface {
         return null;
     }
 
+    /**
+     * @param array $map
+     */
     protected function loadMap(array $map) {
         $this->rev_routes = Corelib\ArrayTools::mapAssoc($map, function(&$key, $value) {
             $key = static::normalize($key);
@@ -84,6 +127,9 @@ class Web_Router_Map implements Web_RouterInterface {
         $this->routes = $this->compileMap($this->rev_routes);
     }
 
+    /**
+     * @param $route
+     */
     protected function findUrl($route) {
         $route = static::normalize($route);
         if (!isset($this->rev_routes[$route])) {
@@ -92,10 +138,19 @@ class Web_Router_Map implements Web_RouterInterface {
         return $this->rev_routes[$route];
     }
 
+    /**
+     * @param $route
+     * @return string
+     */
     protected static function normalize($route) {
         return ucfirst(strtok($route, '.')) . '.' . ucfirst(strtok(null) ?: 'Default');
     }
 
+    /**
+     * @param array $map
+     * @return array
+     * @throws \RuntimeException
+     */
     protected function compileMap(array $map) {
         $routes = [];
         foreach ($map as $route => $url_template) {

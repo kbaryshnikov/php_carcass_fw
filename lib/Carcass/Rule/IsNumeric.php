@@ -1,16 +1,39 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Rule;
 
+/**
+ * Class IsNumeric
+ * @package Carcass\Rule
+ */
 class IsNumeric extends Base {
 
+    /**
+     * @var string
+     */
     protected $ERROR = 'is_not_numeric';
+    /**
+     * @var bool
+     */
     protected $allow_negative = false;
 
+    /**
+     * @param bool $allow_negative
+     */
     public function __construct($allow_negative = false) {
         $this->allow_negative = (bool)$allow_negative;
     }
 
+    /**
+     * @param $value
+     * @return bool
+     */
     public function validate($value) {
         if (null === $value) {
             return true;

@@ -1,9 +1,19 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Memcached;
 
 use Carcass\Corelib;
 
+/**
+ * Tagged memcached cacher
+ * @package Carcass\Memcached
+ */
 class TaggedCache {
 
     const
@@ -16,18 +26,34 @@ class TaggedCache {
     protected
         $tags = [self::TAG_HARD => [], self::TAG_SOFT => []],
         $key_options = [],
-        $expiration = null,
-        $Connection;
+        $expiration = null;
 
+    /**
+     * @var Connection
+     */
+    protected $Connection;
+
+    /**
+     * @param Connection $Connection
+     * @param array $tags
+     * @param array $key_options
+     */
     public function __construct(Connection $Connection, array $tags = null, array $key_options = []) {
         $this->setConnection($Connection);
         $tags and $this->setTags($tags, $key_options);
     }
 
+    /**
+     * @return Connection
+     */
     public function getConnection() {
         return $this->Connection;
     }
 
+    /**
+     * @param Connection $Connection
+     * @return $this
+     */
     public function setConnection(Connection $Connection) {
         $this->Connection = $Connection;
         return $this;
@@ -74,28 +100,59 @@ class TaggedCache {
         return $this;
     }
 
+    /**
+     * @param $key_template
+     * @param array $args
+     * @return bool|mixed false on miss
+     */
     public function get($key_template, array $args = []) {
         $result = $this->getMulti([$key_template], $args);
         return !empty($result) ? reset($result) : false;
     }
 
+    /**
+     * @param array $key_templates
+     * @param array $args
+     * @return array|bool
+     */
     public function getMulti(array $key_templates, array $args = []) {
         return $this->dispatchGet($this->createKeys($key_templates), $args);
     }
 
+    /**
+     * @param callable $Key
+     * @param array $args
+     * @return bool|mixed false on miss
+     */
     public function getKey(\Closure $Key, array $args = []) {
         $result = $this->dispatchGet([$Key], $args);
         return !empty($result) ? reset($result) : false;
     }
 
+    /**
+     * @param array $Keys
+     * @param array $args
+     * @return array|bool
+     */
     public function getKeys(array $Keys, array $args = []) {
         return $this->dispatchGet($Keys, $args);
     }
 
+    /**
+     * @param $key_template
+     * @param $value
+     * @param array $args
+     * @return $this
+     */
     public function set($key_template, $value, array $args = []) {
         return $this->setKey($this->createKey($key_template), $value, $args);
     }
 
+    /**
+     * @param array $key_template_value_map
+     * @param array $args
+     * @return $this
+     */
     public function setMulti(array $key_template_value_map, array $args) {
         return $this->setKeys(
             $this->createKeys(array_keys($key_template_value_map)),
@@ -104,15 +161,32 @@ class TaggedCache {
         );
     }
 
+    /**
+     * @param callable $Key
+     * @param $value
+     * @param array $args
+     * @return $this
+     */
     public function setKey(\Closure $Key, $value, array $args = []) {
         return $this->setKeys([$Key], [$value], $args);
     }
 
+    /**
+     * @param array $Keys
+     * @param array $values
+     * @param array $args
+     * @return $this
+     */
     public function setKeys(array $Keys, array $values, array $args = []) {
         $this->dispatchSet(array_values($Keys), array_values($values), $args);
         return $this;
     }
 
+    /**
+     * @param array $args
+     * @param array $keys
+     * @return $this
+     */
     public function flush(array $args, array $keys = []) {
         foreach ($this->getAllTagKeys($args, true) as $tag) {
             $this->Connection->delete($tag);
@@ -125,6 +199,11 @@ class TaggedCache {
         return $this;
     }
 
+    /**
+     * @param array $Keys
+     * @param array $args
+     * @return array|bool
+     */
     protected function dispatchGet(array $Keys, array $args) {
         $tag_keys  = $this->getHardTagKeys($args);
         $data_keys = $this->buildKeys($Keys, $args);
@@ -165,6 +244,12 @@ class TaggedCache {
         return $result;
     }
 
+    /**
+     * @param array $Keys
+     * @param array $values
+     * @param array $args
+     * @throws \LogicException
+     */
     protected function dispatchSet(array $Keys, array $values, array $args) {
         if (count($Keys) != count($values)) {
             throw new \LogicException("Keys and values count mismatch");
@@ -196,10 +281,19 @@ class TaggedCache {
         }
     }
 
+    /**
+     * @param array $args
+     * @return mixed
+     */
     protected function getHardTagKeys(array $args) {
         return $this->getTagKeys([self::TAG_HARD], $args)[self::TAG_HARD];
     }
 
+    /**
+     * @param array $args
+     * @param bool $flat
+     * @return array
+     */
     protected function getAllTagKeys(array $args, $flat = false) {
         $result = $this->getTagKeys([self::TAG_HARD, self::TAG_SOFT], $args);
         if ($flat) {
@@ -212,6 +306,11 @@ class TaggedCache {
         return $result;
     }
 
+    /**
+     * @param array $importance_types
+     * @param array $args
+     * @return array
+     */
     protected function getTagKeys(array $importance_types, array $args) {
         $result = [];
         foreach ($importance_types as $importance) {
@@ -226,6 +325,11 @@ class TaggedCache {
         return $result;
     }
 
+    /**
+     * @param array $Keys
+     * @param array $args
+     * @return array
+     */
     protected function buildKeys(array $Keys, array $args) {
         $result = [];
         foreach ($Keys as $idx => $Key) {
@@ -234,10 +338,18 @@ class TaggedCache {
         return $result;
     }
 
+    /**
+     * @param array $key_templates
+     * @return array
+     */
     protected function createKeys(array $key_templates) {
         return Key::createMulti($key_templates, $this->key_options);
     }
 
+    /**
+     * @param $key_template
+     * @return callable
+     */
     protected function createKey($key_template) {
         return Key::create($key_template, $this->key_options);
     }

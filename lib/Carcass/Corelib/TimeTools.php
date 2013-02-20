@@ -1,9 +1,23 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Corelib;
 
+/**
+ * Collection of date/time-related tools
+ *
+ * @package Carcass\Corelib
+ */
 class TimeTools {
 
+    /**
+     * @var int|null offset (for tests)
+     */
     private static $offset = null;
 
     /**
@@ -13,30 +27,51 @@ class TimeTools {
         self::$offset = $offset;
     }
 
+    /**
+     * @return int|null
+     */
     public static function getTimeOffset() {
         return self::$offset;
     }
 
+    /**
+     * @return int
+     */
     public static function getTime() {
         $time = time();
         return isset(self::$offset) ? $time + self::$offset : $time;
     }
 
+    /**
+     * @return float
+     */
     public static function getMicrotime() {
         $time = microtime(true);
         return isset(self::$offset) ? $time + self::$offset : $time;
     }
 
+    /**
+     * @param int $m
+     * @return int
+     */
     public static function minutes($m) {
-        return $m * 60;
+        return intval($m) * 60;
     }
 
+    /**
+     * @param int $h
+     * @return int
+     */
     public static function hours($h) {
-        return $h * 3600;
+        return intval($h) * 3600;
     }
 
+    /**
+     * @param int $h
+     * @return int
+     */
     public static function days($h) {
-        return $h * 3600 * 24;
+        return intval($h) * 3600 * 24;
     }
 
     /**
@@ -61,6 +96,12 @@ class TimeTools {
         return self::_formatTime($format, $time, true);
     }
 
+    /**
+     * @param $format
+     * @param null $time
+     * @param bool $as_local_datetime
+     * @return string
+     */
     private static function _formatTime($format, $time = null, $as_local_datetime = false) {
         if (null === $time) {
             $time = self::getTime();

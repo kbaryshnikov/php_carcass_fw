@@ -4,8 +4,21 @@ namespace Carcass\Application;
 
 use Carcass\Corelib;
 
-class Web_RequestBuilder {
+/**
+ * RequestBuilder for Web Applications.
+ * @package Carcass\Application
+ */
+class Web_RequestBuilder implements RequestBuilderInterface {
 
+    /**
+     * Builds Corelib\Requests with subitems:
+     *  Args    - query string vars;
+     *  Vars    - POST variables and uploaded files;
+     *  Env     - server and application envirionment,
+     *  Cookies - cookie vars.
+     * @param array $app_env
+     * @return \Carcass\Corelib\Request
+     */
     public static function assembleRequest(array $app_env = []) {
         return new Corelib\Request([
             'Args'    => $_GET,
@@ -16,8 +29,8 @@ class Web_RequestBuilder {
     }
 
     protected static function setupWebEnv(array $env) {
-        $env['HOST'] = static::detectHostname($env);
-        $env['SCHEME'] = (!empty($env['HTTPS']) && 0 != strcasecmp($env['HTTPS'], 'off') && 0 != strcasecmp($env['HTTPS'], 'http')) 
+        $env['HOST']   = static::detectHostname($env);
+        $env['SCHEME'] = (!empty($env['HTTPS']) && 0 != strcasecmp($env['HTTPS'], 'off') && 0 != strcasecmp($env['HTTPS'], 'http'))
             ? 'https' : 'http';
         return $env;
     }
@@ -33,7 +46,7 @@ class Web_RequestBuilder {
         } else {
             $host = php_uname('h');
         }
-        return rtrim( strtolower($host), '.' );
+        return rtrim(strtolower($host), '.');
     }
 
 }

@@ -1,24 +1,46 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
 use Carcass\Corelib;
 
+/**
+ * Memcached session storage with CAS-based checks used to merge
+ * changes made by parallel requests.
+ *
+ * @package Carcass\Application
+ */
 class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
 
-    const
-        TRY_SESSION_SAVE_LIMIT = 10;
+    const TRY_SESSION_SAVE_LIMIT = 10;
 
-    protected 
-        $cas_tokens = [];
+    /**
+     * @var array
+     */
+    protected $cas_tokens = [];
 
+    /**
+     * @param string $session_id
+     * @return array
+     */
     public function get($session_id) {
         $data = $this->getDataFromMemcached($session_id, $cas_token);
         $this->setCasToken($session_id, $cas_token);
         return $data;
     }
-    
-    public function write($session_id, array $data, $was_changed_ignored) {
+
+    /**
+     * @param string $session_id
+     * @param array $data
+     * @return $this
+     */
+    public function write($session_id, array $data) {
         $cas_token          = $this->getCasToken($session_id);
         $mc_key             = $this->getMcacheKey($session_id);
         $attempts_count     = 0;
@@ -36,10 +58,11 @@ class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
                 }
             } else {
                 $result = $this->Memcached->cas(
-                    $cas_token,
                     $mc_key,
-                    $data, 
-                    $this->mc_expire
+                    $data,
+                    null,
+                    $this->mc_expire,
+                    $cas_token
                 );
                 if (false === $result) {
                     $session_data_changed_by_another_process = true;
@@ -59,13 +82,19 @@ class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
         } while (false !== $session_data_changed_by_another_process);
 
         $this->setCasToken($session_id, $cas_token);
+        return $this;
     }
 
+    /**
+     * @param string $session_id
+     * @return $this
+     */
     public function delete($session_id) {
         $this->Memcached->delete($this->getMcacheKey($session_id));
         unset($this->cas_tokens[$session_id]);
+        return $this;
     }
-    
+
     protected function getCasToken($session_id) {
         return isset($this->cas_tokens[$session_id]) ? $this->cas_tokens[$session_id] : null;
     }

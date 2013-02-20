@@ -1,12 +1,24 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Filter;
 
+/**
+ * Html filter: tidy and tags filter/strip
+ * @package Carcass\Filter
+ */
 class Html implements FilterInterface {
 
-    protected
-        $args = [];
+    protected $args = [];
 
+    /**
+     * @return array
+     */
     protected static function getDefaults() {
         return [
             'use_tidy' => true,
@@ -17,14 +29,26 @@ class Html implements FilterInterface {
         ];
     }
 
+    /**
+     * @param array $args
+     */
     public function __construct(array $args = []) {
         $this->setArgs($args + static::getDefaults());
     }
 
+    /**
+     * @param array $args
+     * @return static
+     */
     public static function construct(array $args = []) {
         return new static($args);
     }
 
+    /**
+     * @param array $safe_tags
+     * @param bool $strip_event_attributes
+     * @return static
+     */
     public static function constructStrip(array $safe_tags, $strip_event_attributes = true) {
         return new static([
             'use_strip_tags' => true,
@@ -33,6 +57,9 @@ class Html implements FilterInterface {
         ]);
     }
 
+    /**
+     * @param array $args
+     */
     public function setArgs(array $args) {
         $defaults = static::getDefaults();
         foreach ($args as $k => $v) {
@@ -43,9 +70,13 @@ class Html implements FilterInterface {
         }
     }
 
+    /**
+     * @param mixed $value
+     */
     public function filter(&$value) {
+        $value = (string)$value;
         if (!empty($this->args['use_tidy'])) {
-            $value = tidy_repair_string($value, $this->getTidyConfig(), 'utf8');
+            $value = (new \Tidy)->repairString($value, $this->getTidyConfig(), 'utf8');
         }
         if (!empty($this->args['use_strip_tags'])) {
             $value = $this->stripCdata($value);
@@ -76,7 +107,11 @@ class Html implements FilterInterface {
         return join('', array_map(function($tag) { return '<' . $tag . '>'; }, $this->args['safe_tags']));
     }
 
-    // http://stackoverflow.com/questions/9462104/remove-on-js-event-attributes-from-html-tags
+    /**
+     * @var string regular expression to remove JS events from HTML tags
+     * @author http://stackoverflow.com/users/107152/qtax
+     * @link http://stackoverflow.com/questions/9462104/remove-on-js-event-attributes-from-html-tags
+     */
     protected static $redefs = '(?(DEFINE)
         (?<tagname> [a-z][^\s>/]*+    )
         (?<attname> [^\s>/][^\s=>/]*+    )  # first char can be pretty much anything, including =

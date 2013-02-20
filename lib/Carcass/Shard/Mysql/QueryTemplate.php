@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Shard;
 
@@ -6,7 +12,11 @@ use Carcass\Mysql;
 use Carcass\Connection;
 use Carcass\Corelib;
 
-class Mysql_QueryTemplate extends Mysql\QueryParser {
+/**
+ * Shard Mysql QueryTemplate
+ * @package Carcass\Shard
+ */
+class Mysql_QueryTemplate extends Mysql\QueryTemplate {
 
     protected
         $db_name,
@@ -14,41 +24,63 @@ class Mysql_QueryTemplate extends Mysql\QueryParser {
         $unit_key,
         $unit_id;
 
-    public function __construct($QueryParser, $template) {
-        $Unit = $QueryParser->getClient()->getUnit();
+    /**
+     * @param Mysql_QueryParser $QueryParser
+     * @param string $template
+     */
+    public function __construct(Mysql_QueryParser $QueryParser, $template) {
+        $Unit           = $QueryParser->getClient()->getUnit();
         $this->unit_key = $Unit->getKey();
-        $this->unit_id = $Unit->getId();
+        $this->unit_id  = $Unit->getId();
 
-        $Shard = $Unit->getShard();
+        $Shard          = $Unit->getShard();
         $this->shard_id = $Shard->getId();
-        $this->db_name = $Shard->getDatabaseName();
+        $this->db_name  = $Shard->getDatabaseName();
 
         parent::__construct($QueryParser, $template);
 
-        $this->registerGlobals([
-            $this->unit_key => $this->unit_id,
-            '_unit_key' => $this->unit_key,
-            '_unit_id'  => $this->unit_id,
-        ]);
+        $this->registerGlobals(
+            [
+                $this->unit_key => $this->unit_id,
+                '_unit_key'     => $this->unit_key,
+                '_unit_id'      => $this->unit_id,
+            ]
+        );
     }
 
+    /**
+     * Expands to SET unit_key = unit_value, ... ,
+     * @return string
+     */
     public function set() {
         $table_aliases = func_get_args();
         return 'SET ' . join(', ', $this->buildUnitCond($table_aliases)) . ', ';
     }
 
+    /**
+     * Expands to WHERE unit_key = unit_value AND ... AND
+     * @return string
+     */
     public function where() {
         $table_aliases = func_get_args();
         return 'WHERE ' . join(' AND ', $this->buildUnitCond($table_aliases)) . ' AND ';
     }
 
+    /**
+     * @param $table_name
+     * @return string full name-escaped database and table of the shard
+     */
     public function t($table_name) {
         return $this->name($this->db_name . '.' . $table_name . $this->shard_id);
     }
 
+    /**
+     * @param array $table_aliases
+     * @return array
+     */
     protected function buildUnitCond(array $table_aliases = []) {
         if (empty($table_aliases)) {
-            $result = [ $this->name($this->unit_key) . '=' . $this->i($this->unit_id) ];
+            $result = [$this->name($this->unit_key) . '=' . $this->i($this->unit_id)];
         } else {
             $result = [];
             foreach ($table_aliases as $table_alias) {

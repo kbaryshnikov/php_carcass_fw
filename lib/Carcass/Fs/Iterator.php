@@ -1,9 +1,19 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Fs;
 
 use Carcass\Corelib;
 
+/**
+ * Filesystem Iterator
+ * @package Carcass\Fs
+ */
 class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     protected
@@ -28,7 +38,8 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     /**
      * @param array $options see the constructor $options argument
-     * @return self
+     * @throws \InvalidArgumentException
+     * @return $this
      */
     public function setOptions(array $options) {
         foreach ($options as $name => $value) {
@@ -43,7 +54,8 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     /**
      * @param string $folder Folder to scan
-     * @return self
+     * @throws \RuntimeException
+     * @return $this
      */
     public function setFolder($folder) {
         $folder = rtrim(realpath($folder), '/');
@@ -55,10 +67,11 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
     }
 
     /**
-     * setFilterMask 
-     * 
+     * setFilterMask
+     *
      * @param string|array|NULL $fnmatch_mask, see fnmatch() for syntax
-     * @return self
+     * @throws \InvalidArgumentException
+     * @return $this
      */
     public function setFilterMask($fnmatch_mask) {
         if (!is_string($fnmatch_mask) && !is_array($fnmatch_mask) && !is_null($fnmatch_mask)) {
@@ -78,9 +91,9 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
      * setReturnFullPath
      * 
      * @param bool $bool_return_full_path if false, only filenames are returned
-     * @return self
+     * @return $this
      */
-    public function setReturnFullPath($bool_return_full_path) {
+    public function setReturnFullPath($bool_return_full_path = true) {
         $this->setProp('return_full_path', (bool)$bool_return_full_path);
         return $this;
     }
@@ -89,9 +102,9 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
      * setIncludeFolders 
      * 
      * @param bool $bool_include_folders 
-     * @return self
+     * @return $this
      */
-    public function setIncludeFolders($bool_include_folders) {
+    public function setIncludeFolders($bool_include_folders = true) {
         $this->setProp('include_folders', (bool)$bool_include_folders);
         return $this;
     }
@@ -100,9 +113,9 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
      * setIncludeFiles
      * 
      * @param bool $bool_include_files
-     * @return self
+     * @return $this
      */
-    public function setIncludeFiles($bool_include_files) {
+    public function setIncludeFiles($bool_include_files = true) {
         $this->setProp('include_files', (bool)$bool_include_files);
         return $this;
     }
@@ -111,9 +124,9 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
      * setIncludeHidden 
      * 
      * @param bool $bool_include_hidden 
-     * @return self
+     * @return $this
      */
-    public function setIncludeHidden($bool_include_hidden) {
+    public function setIncludeHidden($bool_include_hidden = true) {
         $this->setProp('include_hidden', (bool)$bool_include_hidden);
         return $this;
     }
@@ -121,17 +134,17 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
     /**
      * setSort 
      * 
-     * @param bool $bool_sort 
-     * @return self
+     * @param bool $enable
+     * @return $this
      */
-    public function setSort($bool_sort) {
-        $this->setProp('sort', (bool)$bool_sort);
+    public function setSort($enable = true) {
+        $this->setProp('sort', (bool)$enable);
         return $this;
     }
 
     /**
      * Iterator implementation
-     * @return mixed
+     * @return string
      */
     public function rewind() {
         $this->getFiles();
@@ -140,7 +153,7 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     /**
      * Iterator implementation
-     * @return mixed
+     * @return string
      */
     public function current() {
         $this->getFiles();
@@ -149,7 +162,7 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     /**
      * Iterator implementation
-     * @return mixed
+     * @return string
      */
     public function key() {
         $this->getFiles();
@@ -158,7 +171,7 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     /**
      * Iterator implementation
-     * @return mixed
+     * @return string
      */
     public function next() {
         $this->getFiles();

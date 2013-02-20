@@ -1,8 +1,20 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\DevTools;
 
-class DebuggerStub {
+use Carcass\Corelib;
+
+/**
+ * DebuggerStub
+ * @package Carcass\DevTools
+ */
+class DebuggerStub extends Corelib\NullObject {
 
     public function isEnabled() {
         return false;
@@ -10,10 +22,6 @@ class DebuggerStub {
 
     public function __toString() {
         return "";
-    }
-
-    public function __call($method, $arguments) {
-        return $this;
     }
 
 }

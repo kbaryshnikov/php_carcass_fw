@@ -1,13 +1,26 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Corelib;
 
+/**
+ * Emulates the Blitz class from blitz 0.6 extension.
+ * Emulation is incomplete (e.g. no fetch), but enough for internal use as string template parsers.
+ *
+ * @package Carcass\Corelib
+ */
 class BlitzLiteEmulator {
 
     protected
         $set = array(),
         $globals = array(),
         $ctx = array(),
+        $context = null,
         $stack = array(),
         $compiled = null,
         $__count = null,
@@ -15,36 +28,63 @@ class BlitzLiteEmulator {
         $result = null,
         $tpl = null;
 
+    /**
+     * @param $file
+     * @return static
+     */
     public static function constructFromFile($file) {
         return new static($file);
     }
 
+    /**
+     * @param $string
+     * @return static
+     */
     public static function constructFromString($string) {
-        $self = new static;
+        $self = new self;
         $self->load($string);
         return $self;
     }
 
+    /**
+     * @param $string
+     * @param array $args
+     * @return mixed
+     */
     public static function parseString($string, array $args = []) {
-        return static::constructFromString($string)->parse($args);
+        return self::constructFromString($string)->parse($args);
     }
 
+    /**
+     * @param null $file
+     */
     public function __construct($file = null) {
         if ($file !== null) {
             $this->loadFile($file);
         }
     }
 
+    /**
+     * @param $string
+     */
     public function load($string) {
         $this->tpl = $string;
         $this->compiled = null;
         $this->clean();
     }
 
+    /**
+     * @param $string
+     */
     public function loadFile($string) {
         $this->tpl = file_get_contents($string);
         $this->compiled = null;
         $this->clean();
+    }
+
+    public function cleanAll() {
+        $this->clean();
+        $this->cleanGlobals();
     }
 
     public function clean() {
@@ -57,16 +97,26 @@ class BlitzLiteEmulator {
         $this->result = null;
     }
 
+    /**
+     * @param array $set
+     */
     public function set(array $set) {
         $this->set = $set + $this->set;
         $this->result = null;
     }
 
+    /**
+     * @param array $globals
+     */
     public function setGlobals(array $globals) {
         $this->globals = $globals + $this->globals;
         $this->result = null;
     }
 
+    /**
+     * @param array $set
+     * @return string
+     */
     public function parse(array $set = null) {
         if ($set !== null) {
             $this->set($set);
@@ -78,6 +128,9 @@ class BlitzLiteEmulator {
         return $this->result;
     }
 
+    /**
+     * @param array $set
+     */
     public function display(array $set = null) {
         if ($set !== null) {
             $this->set($set);
@@ -88,6 +141,10 @@ class BlitzLiteEmulator {
         print $this->result;
     }
 
+    /**
+     * @param $addr
+     * @return bool|int|string
+     */
     protected function __getValue($addr) {
         if (is_numeric($addr)) {
             return $addr;
@@ -100,6 +157,11 @@ class BlitzLiteEmulator {
         return false;
     }
 
+    /**
+     * @param $ptr
+     * @param $addr
+     * @return bool
+     */
     protected function __findValueIn(&$ptr, $addr) {
         foreach (explode('.', trim($addr)) as $k) {
             if (isset($ptr[$k])) {
@@ -111,18 +173,28 @@ class BlitzLiteEmulator {
         return true;
     }
 
+    /**
+     * @return void
+     */
     protected function __push() {
         array_push($this->stack, $this->context);
         array_push($this->stack, $this->__pos);
         array_push($this->stack, $this->__count);
     }
 
+    /**
+     * @return void
+     */
     protected function __pop() {
         $this->__count  = array_pop($this->stack);
         $this->__pos    = array_pop($this->stack);
         $this->context  = array_pop($this->stack);
     }
 
+    /**
+     * @param $addr
+     * @return array
+     */
     protected function __ctxBegin($addr) {
         $this->__push();
         $ptr = $this->__getValue($addr);
@@ -136,6 +208,9 @@ class BlitzLiteEmulator {
         return $result;
     }
 
+    /**
+     * @param $addr
+     */
     protected function __print($addr) {
         $ptr = $this->__getValue($addr);
         if (is_scalar($ptr) && false !== $ptr) {
@@ -143,8 +218,14 @@ class BlitzLiteEmulator {
         }
     }
 
+    /**
+     * @param $addr
+     * @return array|bool|null
+     */
     protected function __special($addr) {
-        if (substr($addr, 0, 1) != '_') return null;
+        if (substr($addr, 0, 1) != '_') {
+            return null;
+        }
         $addr = strtolower($addr);
         switch ($addr) {
             case '_first':
@@ -164,6 +245,10 @@ class BlitzLiteEmulator {
         }
     }
 
+    /**
+     * @param $addr
+     * @return array|bool|null
+     */
     protected function __if($addr) {
         $special = $this->__special($addr);
         if ($special !== null) {
@@ -176,14 +261,24 @@ class BlitzLiteEmulator {
         return $result;
     }
 
+    /**
+     * @param $addr
+     * @return bool
+     */
     protected function __unless($addr) {
         return !$this->__if($addr);
     }
 
+    /**
+     *
+     */
     protected function __ctxEnd() {
         $this->__pop();
     }
 
+    /**
+     * @return string
+     */
     protected function __execute() {
         $this->context = $this->set;
         $this->stack = array();
@@ -192,6 +287,11 @@ class BlitzLiteEmulator {
         return ob_get_clean();
     }
 
+    /**
+     * @param $method
+     * @param array $args
+     * @throws \Exception
+     */
     protected function __dispatchCall($method, array $args) {
         if (method_exists($this, $method)) {
             print call_user_func_array(array($this, $method), $args);
@@ -200,6 +300,9 @@ class BlitzLiteEmulator {
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     protected function __compile() {
         static $compile_regexps = array(
             '/{{\s*BEGIN\s+([\w\d_.]+)\s*}}/i'

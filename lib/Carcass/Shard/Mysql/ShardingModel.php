@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Shard;
 
@@ -6,16 +12,39 @@ use Carcass\Corelib;
 use Carcass\Application\Injector;
 use Carcass\Mysql;
 
+/**
+ * Mysql ShardingModel
+ * Manages shards and servers storage in the central sharding database (mysql/handlerSocket).
+ * Allocates shards for Units.
+ *
+ * @package Carcass\Shard
+ */
 class Mysql_ShardingModel {
 
-    protected
-        $Manager,
-        $cache = [];
+    /**
+     * @var Mysql_ShardManager
+     */
+    protected $Manager;
 
+    /**
+     * @var array
+     */
+    protected $cache = [];
+
+    /**
+     * @param Mysql_ShardManager $Manager
+     */
     public function __construct(Mysql_ShardManager $Manager) {
         $this->Manager = $Manager;
     }
 
+    /**
+     * Allocates shard for $Unit. Tries to find the best shard, or if there's no shard
+     * available, creates a new shard. Unit which received a new shard will be asked
+     * to initialize its tables by calling $Unit->initializeShard().
+     *
+     * @param UnitInterface $Unit
+     */
     public function allocateShard(UnitInterface $Unit) {
         $Shard = $this->findBestShardForNewUnit();
         if ($Shard) {
@@ -25,6 +54,9 @@ class Mysql_ShardingModel {
         }
     }
 
+    /**
+     * @return ShardInterface|null
+     */
     protected function findBestShardForNewUnit() {
         $shard_id = $this->getDb()->getCell(
             "SELECT
@@ -41,6 +73,12 @@ class Mysql_ShardingModel {
         return $shard_id ? $this->getShardById($shard_id) : null;
     }
 
+    /**
+     * @param UnitInterface $Unit
+     * @return ShardInterface
+     * @throws \RuntimeException
+     * @throws \LogicException
+     */
     protected function allocateNewShard(UnitInterface $Unit) {
         $shard_id = $this->doWithLockedTables(function() {
             $Db = $this->getDb();
@@ -71,8 +109,12 @@ class Mysql_ShardingModel {
                 throw new \LogicException('databases_count is less than 1 for server #' . $server_id);
             }
 
+            $db_idx_series = [];
             foreach (range(1, $Server->databases_count) as $idx) {
                 $db_idx_series['idx'] = $idx;
+            }
+            if (empty($db_idx_series['idx'])) {
+                throw new \LogicException("No database indexes allocated on server " . $server_id);
             }
 
             $db_index_data = $Db->getCell(
@@ -100,7 +142,7 @@ class Mysql_ShardingModel {
                 throw new \RuntimeException("Could not fetch db index data for server #" . $server['database_server_id']);
             }
 
-            $db_name = $this->Manager->getShardDbName($db_index_data['idx']);
+            $db_name = $this->Manager->getShardDbNameByIndex($db_index_data['idx']);
 
             if ($db_index_data['shards_count'] == 0) {
                 $SuperDb = new Mysql\Client(Injector::getConnectionManager()->getConnection($Server->getSuperDsn()));
@@ -139,20 +181,32 @@ class Mysql_ShardingModel {
         return $Shard;
     }
 
+    /**
+     * @param int $shard_id
+     * @param bool $skip_cache
+     * @return Mysql_Shard
+     * @throws \RuntimeException
+     */
     public function getShardById($shard_id, $skip_cache = false) {
-        Corelib\Assert::isValidId($shard_id);
+        Corelib\Assert::that('shard_id is a valid ID', '\InvalidArgumentException')->isValidId($shard_id);
         if ($skip_cache || !isset($this->cache['shards'][$shard_id])) {
             $shard_data = $this->fetchServerFromHsById($shard_id);
             if (!$shard_data) {
                 throw new \RuntimeException("Shard with id '$shard_id' not found");
             }
-            $this->cache['shards'][$server_id] = new Mysql_Shard($this->Manager, $shard_data);
+            $this->cache['shards'][$shard_id] = new Mysql_Shard($this->Manager, $shard_data);
         }
-        return $this->cache['servers'][$server_id];
+        return $this->cache['shards'][$shard_id];
     }
 
+    /**
+     * @param int $server_id
+     * @param bool $skip_cache
+     * @return Mysql_Server
+     * @throws \RuntimeException
+     */
     public function getServerById($server_id, $skip_cache = false) {
-        Corelib\Assert::isValidId($server_id);
+        Corelib\Assert::that('server_id is a valid ID', '\InvalidArgumentException')->isValidId($server_id);
         if ($skip_cache || !isset($this->cache['servers'][$server_id])) {
             $server_data = $this->fetchServerFromHsById($server_id);
             if (!$server_data) {
@@ -163,6 +217,12 @@ class Mysql_ShardingModel {
         return $this->cache['servers'][$server_id];
     }
 
+    /**
+     * @param Mysql_Server $Server
+     * @return Mysql_Server
+     * @throws \LogicException
+     * @throws \InvalidArgumentException
+     */
     public function addServer(Mysql_Server $Server) {
         if (!$Server->get('ip_address')) {
             throw new \InvalidArgumentException('Server has no ip address');
@@ -202,6 +262,10 @@ class Mysql_ShardingModel {
         return $this->getServerById($server_id, true);
     }
 
+    /**
+     * @param $server_id
+     * @return null
+     */
     protected function fetchServerFromHsById($server_id) {
         $server_result = $this->getServerIndex()->find('==', ['database_server_id' => $server_id]) ?: null;
         if ($server_result) {
@@ -210,6 +274,9 @@ class Mysql_ShardingModel {
         return $server_result;
     }
 
+    /**
+     * @return mixed
+     */
     protected function getServerIndex() {
         if (!isset($this->cache['HsServerIndex'])) {
             $this->cache['HsServerIndex'] = $this->getHsConn()->openIndex(
@@ -221,14 +288,26 @@ class Mysql_ShardingModel {
         return $this->cache['HsServerIndex'];
     }
 
+    /**
+     * @return \Carcass\Mysql\Client
+     */
     protected function getDb() {
         return $this->Manager->getShardingDb();
     }
 
+    /**
+     * @return \Carcass\Mysql\HandlerSocket_Connection
+     */
     protected function getHsConn() {
         return $this->Manager->getShardingHsConnection();
     }
 
+    /**
+     * @param callable $fn
+     * @param array $args
+     * @return mixed
+     * @throws \Exception|null
+     */
     protected function doWithLockedTables(Callable $fn, array $args = []) {
         $e = null;
         $this->getDb()->query("LOCK TABLES DatabaseServers, DatabaseShards READ LOCAL");
@@ -245,6 +324,10 @@ class Mysql_ShardingModel {
         return $result;
     }
 
+    /**
+     * @param bool $drop_existing_tables
+     * @return $this
+     */
     public function initializeShardingDatabase($drop_existing_tables = false) {
         $Db = $this->getDb();
         if ($drop_existing_tables) {

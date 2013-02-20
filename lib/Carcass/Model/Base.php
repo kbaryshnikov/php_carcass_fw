@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Model;
 
@@ -6,24 +12,41 @@ use Carcass\Query;
 use Carcass\Field;
 use Carcass\Corelib;
 
+/**
+ * Base Model
+ * @package Carcass\Model
+ */
 abstract class Base implements Corelib\DataReceiverInterface, Corelib\ExportableInterface, Corelib\RenderableInterface {
     use Corelib\RenderableTrait;
 
-    protected static
-        $ModelFieldset = null;
+    /**
+     * @var Field\Set|null
+     */
+    protected static $ModelFieldset = null;
 
-    protected
-        $Fieldset = null,
-        $Query = null;
+    /**
+     * @var Field\Set|null
+     */
+    protected $Fieldset = null;
+    /**
+     * @var Query\Base|null
+     */
+    protected $Query = null;
 
     public function __construct() {
         $this->initFieldset();
     }
 
+    /**
+     * @return mixed
+     */
     public function validate() {
         return $this->Fieldset->validate();
     }
 
+    /**
+     * @return mixed
+     */
     public function getErrors() {
         return $this->Fieldset->getError();
     }
@@ -32,6 +55,9 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         $this->Fieldset = clone static::getModelFieldset();
     }
 
+    /**
+     * @return Field\Set
+     */
     protected static function getModelFieldset() {
         if (null === static::$ModelFieldset) {
             static::$ModelFieldset = static::assembleModelFieldset();
@@ -39,6 +65,9 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         return static::$ModelFieldset;
     }
 
+    /**
+     * @return $this
+     */
     protected static function assembleModelFieldset() {
         return Field\Set::constructDynamic()
             ->addFields(static::getModelFields())
@@ -47,23 +76,41 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
             ->setDynamic(false);
     }
 
+    /**
+     * @return array
+     */
     protected static function getModelFields() {
         return [];
     }
 
+    /**
+     * @return array
+     */
     protected static function getModelRules() {
         return [];
     }
 
+    /**
+     * @return array
+     */
     protected static function getModelFilters() {
         return [];
     }
 
+    /**
+     * @param $query
+     * @param array $args
+     */
     protected function doFetch($query, array $args) {
         $this->getQuery()->fetchRow($query);
         $this->executeQuery($args);
     }
 
+    /**
+     * @param string $query
+     * @param array $args
+     * @return bool|null
+     */
     protected function doInsert($query, array $args = []) {
         if (!$this->validate()) {
             return false;
@@ -71,6 +118,11 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         return $this->getQuery()->insert($query, $args + $this->exportArray());
     }
 
+    /**
+     * @param string $query
+     * @param array $args
+     * @return bool|mixed
+     */
     protected function doModify($query, array $args = []) {
         if (!$this->validate()) {
             return false;
@@ -78,6 +130,9 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         return $this->getQuery()->modify($query, $args + $this->exportArray());
     }
 
+    /**
+     * @param array $args
+     */
     protected function executeQuery(array $args = []) {
         $this->getQuery()->execute($args);
         $this->fetchResults();
@@ -90,6 +145,9 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         });
     }
 
+    /**
+     * @return \Carcass\Query\Base|null
+     */
     protected function getQuery() {
         if (null === $this->Query) {
             $this->Query = $this->assembleQuery();
@@ -97,36 +155,64 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         return $this->Query;
     }
 
+    /**
+     * @return \Carcass\Query\Base
+     */
     protected function assembleQuery() {
         return new Query\Base;
     }
 
+    /**
+     * @return Field\Set|null
+     */
     public function getFieldset() {
         return $this->Fieldset;
     }
 
+    /**
+     * @param $key
+     * @return mixed
+     */
     public function __get($key) {
         return $this->Fieldset->$key;
     }
 
+    /**
+     * @param $key
+     * @param $value
+     */
     public function __set($key, $value) {
         $this->Fieldset->set($key, $value);
     }
 
+    /**
+     * @param \Traversable $Source
+     * @return $this
+     */
     public function fetchFrom(\Traversable $Source) {
         $this->Fieldset->fetchFrom($Source);
         return $this;
     }
 
+    /**
+     * @param array $source
+     * @return $this
+     */
     public function fetchFromArray(array $source) {
         $this->Fieldset->fetchFromArray($source);
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     public function exportArray() {
         return $this->Fieldset->exportArray();
     }
 
+    /**
+     * @return mixed
+     */
     public function getRenderArray() {
         return $this->Fieldset->exportArray();
     }

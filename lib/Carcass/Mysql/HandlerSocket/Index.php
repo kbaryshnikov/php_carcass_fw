@@ -1,15 +1,35 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Mysql;
 
+/**
+ * Class HandlerSocket_Index
+ * @package Carcass\Mysql
+ */
 class HandlerSocket_Index {
 
+    /**
+     * @var HandlerSocket_Connection
+     */
+    protected $Connection;
+
     protected
-        $Connection,
         $index_id,
         $cols,
         $index_connect_cmd;
 
+    /**
+     * @param HandlerSocket_Connection $Connection
+     * @param $index_id
+     * @param array $cols
+     * @param $index_connect_cmd
+     */
     public function __construct(HandlerSocket_Connection $Connection, $index_id, array $cols, $index_connect_cmd) {
         $this->Connection = $Connection;
         $this->index_id = $index_id;
@@ -21,6 +41,9 @@ class HandlerSocket_Index {
         return $this->index_id;
     }
 
+    /**
+     * @throws \RuntimeException
+     */
     public function connect() {
         if (!$this->Connection->query($this->index_connect_cmd)) {
             throw new \RuntimeException("Could not query index {$this->index_id}, command: '".join("\t", $this->index_connect_cmd)."'");
@@ -31,9 +54,11 @@ class HandlerSocket_Index {
      * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='. Additionally, '==' means 'fetch one'.
      * @param array  $qargs     index column values to fetch
      * @param array  $extras    array of extra options:
-                                limit => array(int limit, int offset)
-                                in => array(string in_column, array in_values)
-                                filter => array of array(string 'F'|'W', string filter_op, string filter_col, string filter_value)
+                                    limit => array(int limit, int offset)
+                                    in => array(string in_column, array in_values)
+                                    filter => array of array(string 'F'|'W', string filter_op, string filter_col, string filter_value)
+     * @throws \InvalidArgumentException
+     * @return array|bool|mixed
      */
     public function find($op, array $qargs, array $extras = array()) {
         if (count($qargs) > count($this->cols)) {

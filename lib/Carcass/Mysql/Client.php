@@ -1,13 +1,37 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Mysql;
 
+/**
+ * MySQL Client
+ *
+ * @method int getAffectedRows()
+ * @method int getLastInsertId()
+ * @method string escapeString()
+ *
+ * @package Carcass\Mysql
+ */
 class Client {
 
-    protected
-        $Connection,
-        $QueryParser = null;
+    /**
+     * @var Connection
+     */
+    protected $Connection;
+    /**
+     * @var QueryParser
+     */
+    protected $QueryParser = null;
 
+    /**
+     * @param Connection $Connection
+     * @param QueryParser $QueryParser
+     */
     public function __construct(Connection $Connection, QueryParser $QueryParser = null) {
         $this->setConnection($Connection);
         if (null !== $QueryParser) {
@@ -15,17 +39,30 @@ class Client {
         }
     }
 
+    /**
+     * @param Connection $Connection
+     * @return $this
+     */
     public function setConnection(Connection $Connection) {
         $this->Connection = $Connection;
         return $this;
     }
 
+    /**
+     * @param QueryParser $QueryParser
+     * @return $this
+     */
     public function setQueryParser(QueryParser $QueryParser) {
         $this->QueryParser = $QueryParser;
         $this->QueryParser->setClient($this);
         return $this;
     }
 
+    /**
+     * @param string $template
+     * @param array $args
+     * @return mixed
+     */
     public function query($template, array $args = []) {
         $this->executeQueryTemplate($template, $args);
         return $this->getAffectedRows();
@@ -84,7 +121,7 @@ class Client {
      *                             where 1 = values are unique => do not create nested arrays;
      *                                   INF = values are not unique => create nested arrays;
      *                                   string field_name = create scalar value of field_name (must be the last group key)
-     * @return array|false
+     * @return array|bool
      */
     public function getAll($tpl, array $params = [], array $keys = []) {
         if (false === ($h = $this->executeQueryTemplate($tpl, $params))) {
@@ -92,7 +129,7 @@ class Client {
         }
         $result = [];
         $num_keys = count($keys);
-        while (false !== ($row = $this->fetch($h))) {
+        while (false !== ($row = $this->Connection->fetch($h))) {
             if (!$num_keys) {
                 $result[] = $row;
             } else {
@@ -110,7 +147,7 @@ class Client {
                 $r = $row;
             }
         }
-        $this->freeResult($h);
+        $this->Connection->freeResult($h);
         return $result;
     }
 
@@ -119,14 +156,14 @@ class Client {
      *
      * @param string $tpl
      * @param array $params
-     * @return array|false
+     * @return array|bool
      */
     public function getRow($tpl, array $params = []) {
         if (false === ($h = $this->executeQueryTemplate($tpl, $params))) {
             return false;
         }
-        $result = $this->fetch($h) ?: [];
-        $this->freeResult($h);
+        $result = $this->Connection->fetch($h) ?: [];
+        $this->Connection->freeResult($h);
         return $result;
     }
 
@@ -135,7 +172,8 @@ class Client {
      *
      * @param string $tpl
      * @param array $params
-     * @return string|false|null
+     * @param int|string $field_name_or_offset
+     * @return string|bool|null
      */
     public function getCell($tpl, array $params = [], $field_name_or_offset = 0) {
         $result = $this->getRow($tpl, $params);
@@ -159,14 +197,15 @@ class Client {
      * @param array $params
      * @param string|null $column
      * @param string|null $valcol
-     * @return array|false
+     * @throws \LogicException
+     * @return array|bool
      */
     public function getCol($tpl, array $params = [], $column = null, $valcol = null) {
         if (false === ($h = $this->executeQueryTemplate($tpl, $params))) {
             return false;
         }
         $result = false;
-        $row = $this->fetch($h);
+        $row = $this->Connection->fetch($h);
         if (!empty($row)) {
             $result = [];
             if (!empty($column)) {
@@ -185,21 +224,34 @@ class Client {
                 } else {
                     $result[$row[$column]] = $row[$valcol];
                 }
-            } while ($row = $this->fetch($h));
+            } while ($row = $this->Connection->fetch($h));
         }
-        $this->freeResult($h);
+        $this->Connection->freeResult($h);
         return $result;
     }
 
+    /**
+     * @param string $query_template
+     * @param array $args
+     * @return mixed
+     */
     public function executeQueryTemplate($query_template, array $args = []) {
         $query = $this->parseTemplate($query_template, $args);
-        return $this->executeQuery($query);
+        return $this->Connection->executeQuery($query);
     }
 
+    /**
+     * @param string $query_template
+     * @param array $args
+     * @return string
+     */
     protected function parseTemplate($query_template, array $args) {
         return $this->getQueryTemplate($query_template)->parse($args);
     }
 
+    /**
+     * @return QueryParser
+     */
     protected function getQueryParser() {
         if (null === $this->QueryParser) {
             $this->QueryParser = $this->assembleDefaultQueryParser();
@@ -207,14 +259,27 @@ class Client {
         return $this->QueryParser;
     }
 
+    /**
+     * @return QueryParser
+     */
     protected function assembleDefaultQueryParser() {
         return new QueryParser($this);
     }
 
+    /**
+     * @param string $template
+     * @return QueryTemplate
+     */
     protected function getQueryTemplate($template) {
         return $this->getQueryParser()->getTemplate($template);
     }
 
+    /**
+     * @param string $method
+     * @param array $args
+     * @return mixed
+     * @throws \BadMethodCallException
+     */
     public function __call($method, array $args) {
         if (!method_exists($this->Connection, $method)) {
             throw new \BadMethodCallException('Undefined method: ' . $method);

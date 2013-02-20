@@ -1,11 +1,25 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Field;
 
+/**
+ * File upload field
+ * @package Carcass\Field
+ */
 class File extends Base {
 
     protected $upload_struct;
 
+    /**
+     * @param $value
+     * @return bool
+     */
     protected function isValidUploadedFileStructure($value) {
         static $required_fields = [ 'name', 'type', 'size', 'tmp_name' ];
         if (!is_array($value)) {
@@ -19,6 +33,10 @@ class File extends Base {
         return true;
     }
 
+    /**
+     * @param $value
+     * @return $this
+     */
     public function setValue($value) {
         $this->upload_struct = null;
         if (empty($value)) {
@@ -32,12 +50,19 @@ class File extends Base {
         return $this;
     }
 
+    /**
+     * @param null $key
+     * @return null
+     */
     public function getUploadedFileData($key = null) {
         return $key === null
             ? $this->upload_struct
             : ( isset($this->upload_struct[$key]) ? $this->upload_struct[$key] : null );
     }
 
+    /**
+     * @return array
+     */
     public function exportArray() {
         $set = parent::exportArray();
         $set['value'] = '';

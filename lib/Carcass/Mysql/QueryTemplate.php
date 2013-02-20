@@ -29,7 +29,7 @@ class QueryTemplate extends StringTemplate {
     }
 
     public function i($int) {
-        Assert::isInteger($int);
+        Assert::that('value is integer')->isInteger($int);
         return $int;
     }
 
@@ -46,7 +46,7 @@ class QueryTemplate extends StringTemplate {
     }
 
     public function f($float) {
-        Assert::isNumeric($float);
+        Assert::that('value is numeric')->isNumeric($float);
         return $float;
     }
 
@@ -55,7 +55,7 @@ class QueryTemplate extends StringTemplate {
     }
 
     public function id($id) {
-        Assert::isValidId($id);
+        Assert::that('value is a valid id')->isValidId($id);
         return $id;
     }
 

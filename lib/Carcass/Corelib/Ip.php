@@ -1,12 +1,22 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Corelib;
 
+/**
+ * IP v4 tools
+ *
+ * @package Carcass\Corelib
+ */
 class Ip {
 
-    protected
-        $address,
-        $mask;
+    protected $address;
+    protected $mask;
 
     /**
      * Subnet of CIDR form is possible, both separated with / and as a second argument.
@@ -17,8 +27,9 @@ class Ip {
      *   new Ip('192.168.1.0/24');
      *   new Ip('192.168.1.33/24'); (address part will be normalized)
      *
-     * @param scalar $address 
-     * @param scalar|null $subnet 
+     * @param string $address
+     * @param string|int|null $subnet
+     * @throws \InvalidArgumentException
      */
     public function __construct($address, $subnet = null) {
         $expl = explode('/', $address, 2);

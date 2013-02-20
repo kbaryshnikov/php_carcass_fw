@@ -4,7 +4,7 @@ namespace Carcass\Log;
 
 class SyslogWriter implements WriterInterface {
 
-    const DEFAULT_IDENT = 'Carcass';
+    const DEFAULT_IDENT = 'php';
 
     protected static $priority_map = [
         Level::ERROR         => LOG_ERR,

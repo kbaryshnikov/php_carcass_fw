@@ -1,16 +1,30 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Image;
 
 use Carcass\Corelib;
 use Carcass\Application;
 
+/**
+ * Imagemagick captcha
+ * @package Carcass\Image
+ */
 class Captcha_Imagick implements Captcha_Interface {
 
     const DEFAULT_SESSION_FIELD = 'captcha';
 
+    /**
+     * @var \Carcass\Application\Web_Session
+     */
+    protected $Session;
+
     protected
-        $Session,
         $session_field,
 
         $background_color = 'white',
@@ -46,6 +60,11 @@ class Captcha_Imagick implements Captcha_Interface {
         $this->loadText();
     }
 
+    /**
+     * @param int $width
+     * @param int $height
+     * @return $this
+     */
     public function setSize($width, $height) {
         $this->width = (int)$width;
         $this->height = (int)$height;
@@ -53,15 +72,17 @@ class Captcha_Imagick implements Captcha_Interface {
     }
 
     /**
-     * @param Application\ResponseInterface $Response 
-     * @return void
+     * @param \Carcass\Application\Web_Response $Response
+     * @return $this
+     * @throws \LogicException
      */
-    public function output(Application\ResponseInterface $Response) {
+    public function output(Application\Web_Response $Response) {
         if (empty($this->font_file)) {
-            throw new LogicException('setFontFile() required');
+            throw new \LogicException('setFontFile() required');
         }
-        $Response->header('Content-type', 'image/jpeg');
+        $Response->sendHeader('Content-type', 'image/jpeg');
         $Response->write($this->generateImage());
+        return $this;
     }
 
     /**
@@ -109,7 +130,7 @@ class Captcha_Imagick implements Captcha_Interface {
     }
 
     /**
-     * @param mixed $entered_text 
+     * @param string $entered_text
      * @return bool
      */
     public function validate($entered_text) {
@@ -144,6 +165,9 @@ class Captcha_Imagick implements Captcha_Interface {
         }
     }
 
+    /**
+     * @return $this
+     */
     public function regenerate() {
         mt_srand();
         $this->generateText();
@@ -151,6 +175,9 @@ class Captcha_Imagick implements Captcha_Interface {
         return $this;
     }
 
+    /**
+     * @return string
+     */
     protected function generateImage() {
         mt_srand(crc32($this->text));
         $i = new \Imagick;

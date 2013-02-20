@@ -1,34 +1,15 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Corelib;
 
 if (class_exists('\\Blitz', false)) {
-
-    class StringTemplate extends \Blitz {
-
-        public static function constructFromFile($file) {
-            return new static($file);
-        }
-
-        public static function constructFromString($string) {
-            $self = new static;
-            $self->load($string);
-            return $self;
-        }
-
-        public static function parseString($string, array $args = []) {
-            return static::constructFromString($string)->parse($args);
-        }
-
-        public function cleanAll() {
-            $this->clean();
-            $this->cleanGlobals();
-        }
-
-    }
-
+    include_once __DIR__ . '/StringTemplate_Blitz.php';
 } else {
-
-    class StringTemplate extends BlitzLiteEmulator {}
-
+    include_once __DIR__ . '/StringTemplate_BlitzEmulator.php';
 }

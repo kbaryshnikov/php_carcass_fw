@@ -1,13 +1,31 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Corelib;
 
+/**
+ * RenderableInterface implementation.
+ *
+ * User must implement:
+ * @method array getRenderArray()
+ *
+ * @package Carcass\Corelib
+ */
 trait RenderableTrait {
 
-    // getRenderArray() must be implemented
-
+    /** @var \Closure|callable|null */
     protected $renderer = null;
 
+    /**
+     * @param $renderer
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
     public function setRenderer($renderer) {
         if (empty($renderer)) {
             $renderer = null;
@@ -26,6 +44,10 @@ trait RenderableTrait {
         return $this;
     }
 
+    /**
+     * @param ResultInterface $Result
+     * @return $this
+     */
     public function renderTo(ResultInterface $Result) {
         if ($this->renderer === null) {
             $Result->assign($this->getRenderArray());

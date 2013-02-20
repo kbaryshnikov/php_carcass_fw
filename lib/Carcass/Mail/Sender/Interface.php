@@ -1,7 +1,17 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Mail;
 
+/**
+ * Mail Sender Interface
+ * @package Carcass\Mail
+ */
 interface Sender_Interface {
 
     /**
@@ -9,8 +19,8 @@ interface Sender_Interface {
      * 
      * @param string $method  'mail' or 'smtp'
      * @param array $params   for 'smtp' method:
-     *      array('host' => string hostname or IP address, 'port' => int port, 'auth' => bool auth_required, 'username' => str, 'password' => str)
-     * @return void
+     *      array('host' => string hostname or IP address, 'port' => int port,
+     *            'auth' => bool auth_required, 'username' => str, 'password' => str)
      */
     public function __construct($method, array $params = array());
 

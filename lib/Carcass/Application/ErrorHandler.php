@@ -1,34 +1,21 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
-class ErrorException extends \ErrorException  {
-
-    public function getLevel() {
-        return 'Error';
-    }
-
-}
-
-class WarningException extends ErrorException {
-
-    public function getLevel() {
-        return 'Warning';
-    }
-
-}
-
-class NoticeException extends WarningException {
-
-    public function getLevel() {
-        return 'Notice';
-    }
-
-}
-
+/**
+ * Application error handler. Convers PHP errors to exceptions according to error level.
+ *
+ * @package Carcass\Application
+ */
 class ErrorHandler {
 
-    static private $class_by_errno = [
+    private static $class_by_errno = [
         E_USER_ERROR        => 'ErrorException',
         E_RECOVERABLE_ERROR => 'ErrorException',
         E_WARNING           => 'WarningException',
@@ -41,20 +28,81 @@ class ErrorHandler {
         E_DEPRECATED        => 'NoticeException',
     ];
 
-    static public function __errorHandler($errno, $errstr, $errfile, $errline) {
+    /**
+     * Error handler callback for set_error_handler()
+     *
+     * @param int $errno
+     * @param string $errstr
+     * @param string $errfile
+     * @param int $errline
+     * @throws
+     */
+    public static function __errorHandler($errno, $errstr, $errfile, $errline) {
         $error_reporting_level = error_reporting();
         if (
             ($error_reporting_level == 0) // @
-         || ($error_reporting_level & $errno) != $errno // error reporting disabled for this level
+            || ($error_reporting_level & $errno) != $errno // error reporting disabled for this level
         ) {
             return;
         }
-        $class = __NAMESPACE__ . '\\' . (array_key_exists($errno, self::$class_by_errno) ? self::$class_by_errno[$errno] : 'ErrorException');
+        $exception = array_key_exists($errno, self::$class_by_errno) ? self::$class_by_errno[$errno] : 'ErrorException';
+        $class     = __NAMESPACE__ . '\\' . $exception;
         throw new $class($errstr, $errno, 0, $errfile, $errline);
     }
 
-    static public function register($level = null) {
-        set_error_handler( [get_called_class(), '__errorHandler'], $level !== null ? $level : error_reporting() ); 
+    /**
+     * Registers the error handler
+     *
+     * @param int|null $level error level, null for current error_reporting value
+     */
+    public static function register($level = null) {
+        set_error_handler([get_called_class(), '__errorHandler'], $level !== null ? $level : error_reporting());
     }
 
 }
+
+/**
+ * Class ErrorException
+ * @package Carcass\Application
+ */
+class ErrorException extends \ErrorException {
+
+    /**
+     * @return string
+     */
+    public function getLevel() {
+        return 'Error';
+    }
+
+}
+
+/**
+ * Class WarningException
+ * @package Carcass\Application
+ */
+class WarningException extends ErrorException {
+
+    /**
+     * @return string
+     */
+    public function getLevel() {
+        return 'Warning';
+    }
+
+}
+
+/**
+ * Class NoticeException
+ * @package Carcass\Application
+ */
+class NoticeException extends WarningException {
+
+    /**
+     * @return string
+     */
+    public function getLevel() {
+        return 'Notice';
+    }
+
+}
+

@@ -1,17 +1,34 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Rule;
 
+/**
+ * Class IsValidDomainName
+ * @package Carcass\Rule
+ */
 class IsValidDomainName extends Base {
 
     protected
         $ERROR = 'invalid_value',
         $allow_partial = false;
 
+    /**
+     * @param bool $allow_partial
+     */
     public function __construct($allow_partial = false) {
         $this->allow_partial = $allow_partial;
     }
 
+    /**
+     * @param $value
+     * @return bool
+     */
     public function validate($value) {
         if (null === $value) {
             return true;

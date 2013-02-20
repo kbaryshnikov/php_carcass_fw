@@ -1,21 +1,49 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\DevTools;
 
+/**
+ * ConsoleReporter
+ * @package Carcass\DevTools
+ */
 class ConsoleReporter extends BaseReporter {
 
-    protected
-        $handle = null,
-        $colors_enabled = false,
-        $need_to_close_handle = false;
+    /**
+     * @var resource|null
+     */
+    protected $handle = null;
+    /**
+     * @var bool
+     */
+    protected $colors_enabled = false;
+    /**
+     * @var bool
+     */
+    protected $need_to_close_handle = false;
 
+    /**
+     * @var array
+     */
     protected static $known_non_cli_handles = [
         'STDOUT' => 'php://output',
         'STDERR' => 'php://stderr',
     ];
 
+    /**
+     * @var string
+     */
     protected static $is_colorable_terminal_regexp = '#^(linux|xterm)#i';
 
+    /**
+     * @param string|null $handle
+     * @param bool|null $colors_enabled
+     */
     public function __construct($handle = null, $colors_enabled = null) {
         $this->colors_enabled = $colors_enabled === null ? static::doesSupportColors($handle) : (bool)$colors_enabled;
         if ($handle !== null) {
@@ -27,11 +55,19 @@ class ConsoleReporter extends BaseReporter {
         }
     }
 
+    /**
+     * @param mixed $value
+     * @return $this
+     */
     public function dump($value) {
         $this->write(sprintf("\n%s\n", $this->formatValue($value)));
         return $this;
     }
 
+    /**
+     * @param \Exception $Exception
+     * @return $this
+     */
     public function dumpException(\Exception $Exception) {
         $this->write(sprintf(
             "\n" .
@@ -49,6 +85,10 @@ class ConsoleReporter extends BaseReporter {
         return $this;
     }
 
+    /**
+     * @param string $handle_name
+     * @return bool
+     */
     protected static function doesSupportColors($handle_name) {
         if (!in_array($handle_name, ['STDOUT', null], true)) {
             return false;
@@ -56,17 +96,22 @@ class ConsoleReporter extends BaseReporter {
         if (!isset($_SERVER['TERM'])) {
             return false;
         }
-        return preg_match(static::$is_colorable_terminal_regexp, $_SERVER['TERM']);
+        return preg_match(static::$is_colorable_terminal_regexp, $_SERVER['TERM']) ? true : false;
     }
 
+    /**
+     * @param $name
+     * @return resource
+     * @throws \LogicException
+     */
     protected function getStdHandle($name) {
         if (PHP_SAPI === 'cli') {
             return constant($name);
-        } else if (array_key_exists($name, self::$known_non_cli_handles)) {
+        } elseif (array_key_exists($name, self::$known_non_cli_handles)) {
             $this->need_to_close_handle = true;
             return fopen(self::$known_non_cli_handles[$name], 'a');
         } else {
-            throw new LogicException("Unknown destination handle: '$name'");
+            throw new \LogicException("Unknown destination handle: '$name'");
         }
     }
 

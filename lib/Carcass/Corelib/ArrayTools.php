@@ -1,13 +1,32 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Corelib;
 
+/**
+ * Collection of array tools
+ *
+ * @package Carcass\Corelib
+ */
 class ArrayTools {
 
+    /**
+     * @param mixed $var
+     * @return bool
+     */
     public static function isTraversable($var) {
         return is_array($var) || $var instanceof \Traversable;
     }
 
+    /**
+     * @param mixed $var
+     * @return bool
+     */
     public static function isArrayAccessable($var) {
         return is_array($var) || $var instanceof \ArrayAccess;
     }
@@ -81,7 +100,7 @@ class ArrayTools {
      * @return mixed
      */
     public static function numbersToStringsRecursive($data) {
-        if (is_array($data) || (is_object($data) && $data instanceof Traversable)) {
+        if (is_array($data) || (is_object($data) && $data instanceof \Traversable)) {
             $result = [];
             foreach ($data as $k => $v) {
                 $result[$k] = self::numbersToStringsRecursive($v);
@@ -114,9 +133,9 @@ class ArrayTools {
 
     /**
      * Executes map function on associative array.
-     * 
+     *
      * @param array    $array            Array to map
-     * @param Callable $filter_function  (&$key, $value) returns new value, can modify key
+     * @param callable $map_function     fn(&$key, $value) returns new value, can modify key
      * @return array Filtered array
      */
     public static function mapAssoc(array $array, Callable $map_function) {
@@ -146,7 +165,7 @@ class ArrayTools {
      * 
      * @param array $integers 
      * @param string $pack_mode default 'V' pack argument
-     * @return packed string
+     * @return string
      */
     public static function packIntegers(array $integers, $pack_mode = 'V') {
         $len = count($integers);

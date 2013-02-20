@@ -1,12 +1,27 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Application;
 
 use Carcass\Corelib;
 
-class Cli_RequestBuilder {
+/**
+ * Request builder for Cli applications.
+ * @package Carcass\Application
+ */
+class Cli_RequestBuilder implements RequestBuilderInterface {
 
-    public static function assembleRequest() {
+    /**
+     * Uses Cli_ArgsParser to parse argv array into Request->Args.
+     * @param array $app_env
+     * @return \Carcass\Corelib\Request
+     */
+    public static function assembleRequest(array $app_env = []) {
         if (!empty($_SERVER['argv']) && count($_SERVER['argv']) > 1) {
             $args = Cli_ArgsParser::parse(array_slice($_SERVER['argv'], 1));
         } else {

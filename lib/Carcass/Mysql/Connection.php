@@ -1,4 +1,10 @@
 <?php
+/**
+ * Carcass Framework
+ *
+ * @author    Konstantin Baryshnikov <me@fixxxer.me>
+ * @license   http://www.gnu.org/licenses/gpl.html GPL
+ */
 
 namespace Carcass\Mysql;
 
@@ -8,27 +14,50 @@ use \Carcass\Connection\TransactionalConnectionTrait;
 use \Carcass\Connection\Dsn;
 use \Carcass\Corelib;
 
+/**
+ * MySQL Connection
+ * @package Carcass\Mysql
+ */
 class Connection implements ConnectionInterface, TransactionalConnectionInterface {
     use TransactionalConnectionTrait;
 
     const DSN_TYPE = 'mysql';
 
-    protected
-        $Dsn,
-        $QueryParser = null,
-        $Connection = null,
-        $last_result = null;
+    /**
+     * @var \Carcass\Connection\Dsn
+     */
+    protected $Dsn;
+    /**
+     * @var QueryParser
+     */
+    protected $QueryParser = null;
+    /**
+     * @var \mysqli
+     */
+    protected $Connection = null;
 
+    protected $last_result = null;
+
+    /**
+     * @param \Carcass\Connection\Dsn $Dsn
+     * @return static
+     */
     public static function constructWithDsn(Dsn $Dsn) {
         return new static($Dsn);
     }
 
+    /**
+     * @return \Carcass\Connection\Dsn
+     */
     public function getDsn() {
         return $this->Dsn;
     }
 
+    /**
+     * @param \Carcass\Connection\Dsn $Dsn
+     */
     public function __construct(Dsn $Dsn) {
-        Corelib\Assert::onFailureThrow(static::DSN_TYPE . ' dsn is required')->is(static::DSN_TYPE, $Dsn->getType());
+        Corelib\Assert::that('DSN has type ' . static::DSN_TYPE)->is(static::DSN_TYPE, $Dsn->getType());
 
         static $reporting_was_setup = false;
         if (!$reporting_was_setup) {
@@ -39,15 +68,27 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         $this->Dsn = $Dsn;
     }
 
+    /**
+     * @param $query
+     * @return bool|\mysqli_result
+     */
     public function executeQuery($query) {
         $this->triggerScheduledTransaction();
         return $this->doExecuteQuery($query);
     }
 
+    /**
+     * @param \mysqli_result $result
+     * @return bool
+     */
     public function fetch(\mysqli_result $result = null) {
         return $this->getResult($result)->fetch_assoc() ?: false;
     }
 
+    /**
+     * @param \mysqli_result $result
+     * @return $this
+     */
     public function freeResult(\mysqli_result $result = null) {
         if (null !== $result = $this->getResult($result)) {
             $result->free();
@@ -55,18 +96,31 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return $this;
     }
 
+    /**
+     * @param \mysqli_result $result
+     * @return int
+     */
     public function getNumRows(\mysqli_result $result = null) {
         return $this->getResult($result)->num_rows;
     }
 
+    /**
+     * @return int
+     */
     public function getAffectedRows() {
         return $this->getConnection()->affected_rows;
     }
 
+    /**
+     * @return null
+     */
     public function getLastInsertId() {
         return $this->getConnection()->insert_id ?: null;
     }
 
+    /**
+     * @return bool
+     */
     public function close() {
         $result = true;
         if ($this->Connection) {
@@ -76,10 +130,17 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return $result;
     }
 
+    /**
+     * @return \mysqli_warning
+     */
     public function getWarnings() {
         return $this->getConnection()->get_warnings();
     }
 
+    /**
+     * @param $s
+     * @return string
+     */
     public function escapeString($s) {
         return $this->getConnection()->escape_string($s);
     }
@@ -96,6 +157,9 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         $this->doexecuteQuery('COMMIT');
     }
 
+    /**
+     * @return \mysqli|null
+     */
     protected function getConnection() {
         if (null === $this->Connection) {
             $this->Connection = $this->createConnectionByCurrentDsn();
@@ -103,6 +167,12 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return $this->Connection;
     }
 
+    /**
+     * @param \mysqli_result $result
+     * @param bool $allow_empty
+     * @return \mysqli_result|null
+     * @throws \LogicException
+     */
     protected function getResult(\mysqli_result $result = null, $allow_empty = false) {
         if (null === $result) {
             $result = $this->last_result;
@@ -116,6 +186,9 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return $result;
     }
 
+    /**
+     * @return \mysqli
+     */
     protected function createConnectionByCurrentDsn() {
         $Connection = new \mysqli(
             $this->Dsn->get('hostname', null),
@@ -129,6 +202,11 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return $Connection;
     }
 
+    /**
+     * @param $query
+     * @return bool|\mysqli_result
+     * @throws \RuntimeException
+     */
     protected function doExecuteQuery($query) {
         $result = $this->getConnection()->query($query);
         if ($result === false) {
