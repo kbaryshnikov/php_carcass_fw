@@ -1,6 +1,5 @@
 <?php
 
-use \Carcass;
 use \Carcass\Corelib;
 
 class ArrayObjectTraitUser implements Iterator, ArrayAccess, Countable {
@@ -54,6 +53,7 @@ class Corelib_ArrayObjectTraitTest extends PHPUnit_Framework_TestCase {
         $ArrayObject[] = 2;
         $ArrayObject[] = 3;
         $ArrayObject['x'] = 4;
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($array, $ArrayObject->data);
     }
 

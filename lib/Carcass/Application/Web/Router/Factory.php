@@ -25,13 +25,13 @@ class Web_Router_Factory {
      * @throws \LogicException
      */
     public static function assembleByConfig(Config\Item $RouteConfig) {
-        switch ($RouteConfig->name) {
+        switch ($RouteConfig->get('name')) {
             case 'map':
                 return static::assembleMapRouter($RouteConfig);
             case 'simple':
                 return static::assembleSimpleRouter($RouteConfig);
             default:
-                throw new \LogicException("Unknown router name: '{$RouteConfig->name}'");
+                throw new \LogicException("Unknown router name: '{$RouteConfig->get('name')}'");
         }
     }
 

@@ -141,6 +141,7 @@ class FieldsFieldsTest extends PHPUnit_Framework_TestCase {
         $C = Field\Set::constructDynamic();
         $C->setRules(['x' => 'isNotEmpty']);
         $C->setFilters(['y' => 'nullifyEmpty']);
+        /** @noinspection PhpUndefinedFieldInspection */
         $C->z = 1;
         $C->import(['a' => 1]);
         $this->assertTrue($C->has('x'));

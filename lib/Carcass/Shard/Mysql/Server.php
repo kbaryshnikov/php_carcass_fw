@@ -18,6 +18,7 @@ use Carcass\Corelib;
  */
 class Mysql_Server extends Corelib\Hash {
 
+    public $super_username;
     protected $cache = [];
 
     /**

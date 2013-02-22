@@ -1,6 +1,5 @@
 <?php
 
-use \Carcass;
 use \Carcass\Corelib;
 
 class DataReceiverTraitUser {
@@ -22,34 +21,42 @@ class Corelib_DataReceiverTraitTest extends PHPUnit_Framework_TestCase {
     public function testFetchFromArray() {
         $array = [ 'a' => 1, 'b' => null, 'c' => false ];
         $DataReceiver = (new DataReceiverTraitUser)->fetchFromArray($array);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($array, $DataReceiver->data);
         $DataReceiver->fetchFromArray($new_array = ['a' => 'new value']);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($new_array + $array, $DataReceiver->data);
         $array = [
             ['a' => 1, 'b' => 2],
             ['a' => 11, 'b' => 12],
         ];
         $DataReceiver = (new DataReceiverTraitUser)->fetchFromArray($array);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($array, $DataReceiver->data);
     }
 
     public function testFetchFrom() {
         $array = [ 'a' => 1, 'b' => null, 'c' => false ];
         $DataReceiver = (new DataReceiverTraitUser)->fetchFrom(new ArrayObject($array));
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($array, $DataReceiver->data);
         $DataReceiver->fetchFrom(new ArrayObject($new_array = ['a' => 'new value']));
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($new_array + $array, $DataReceiver->data);
     }
 
     public function testSet() {
         $DataReceiver = (new DataReceiverTraitUser)->set('a', 1);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals(1, $DataReceiver->data['a']);
     }
 
     public function testDelete() {
         $DataReceiver = (new DataReceiverTraitUser)->set('a', 1);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals(1, $DataReceiver->data['a']);
         $DataReceiver->delete('a');
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertArrayNotHasKey('a', $DataReceiver->data);
     }
 

@@ -97,8 +97,8 @@ class FirebugReporter extends BaseReporter {
     }
 
     public static function ensureFireLoggerLibraryIsLoaded() {
-        if (class_exists('\FireLogger', false)) {
-            return;
+        if (class_exists('\FireLogger')) {
+            throw new \RuntimeException("Could not load the FireLogger class");
         }
 
         foreach (self::$firelogger_definitions as $name => $value) {

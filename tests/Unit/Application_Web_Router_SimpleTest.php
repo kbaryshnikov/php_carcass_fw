@@ -10,30 +10,37 @@ class Application_Web_Router_SimpleTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Foo'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/foo'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Foo'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/foo'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Foo_Bar'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/foo/bar'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Foo_Bar'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/foo/bar/'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Foo_Bar.act'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/foo/bar.act'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Default'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Foo_Bar'), $this->equalTo(new Corelib\Hash(['a'=>1,'b'=>'b'])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/foo/bar/', ['a'=>1,'b'=>'b']), $C);
     }
 

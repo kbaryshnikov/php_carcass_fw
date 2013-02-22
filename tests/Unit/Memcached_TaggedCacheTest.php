@@ -6,6 +6,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetOne() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             'important_{{ i(id) }}',
             'unimportant_{{ i(id) }}'
@@ -28,6 +29,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetMulti() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             'important_{{ i(id) }}',
             'unimportant_{{ i(id) }}'
@@ -62,6 +64,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testTagExpiredGetOne() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             'important',
             'unimportant'
@@ -81,6 +84,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testTagKeyExpiredGetOne() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             'important',
             'unimportant'
@@ -99,6 +103,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testMultipleImportantTagsGetOne() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             [ 'important1', 'important2' ],
             'unimportant'
@@ -119,6 +124,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function _testOneOfImportantTagsExpiredGetOne() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             [ 'important1', 'important2_{{ i(id) }}' ],
             'unimportant'
@@ -139,6 +145,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetMultiExpiredOneValue() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             'important',
             'unimportant'
@@ -162,6 +169,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetMultiWithManyImportantKeysExpired() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             [ 'important1', 'important2' ],
             'unimportant'
@@ -186,6 +194,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
     public function testSetOne() {
         $version = microtime(true);
         $ConnMock = $this->getConnectionMock($version);
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, ['important_{{ i(id) }}', 'unimportant_{{ i(id) }}']);
         $value = [
             Memcached\TaggedCache::SUBKEY_DATA => 1,
@@ -208,6 +217,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
     public function testSetOneKey() {
         $version = microtime(true);
         $ConnMock = $this->getConnectionMock($version);
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, ['important_{{ i(id) }}', 'unimportant_{{ i(id) }}']);
         $value = [
             Memcached\TaggedCache::SUBKEY_DATA => 1,
@@ -230,6 +240,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
     public function testSetMulti() {
         $version = microtime(true);
         $ConnMock = $this->getConnectionMock($version);
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             [
                 'important_{{ i(id) }}',
@@ -266,6 +277,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
     public function testSetMultiKeys() {
         $version = microtime(true);
         $ConnMock = $this->getConnectionMock($version);
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, [
             [
                 'important_{{ i(id) }}',
@@ -307,6 +319,7 @@ class Memcached_TaggedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testFlush() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $TC = new Memcached\TaggedCache($ConnMock, ['important_{{ i(id) }}', 'unimportant_{{ i(id) }}']);
         $map = [
             '&important_1' => true,

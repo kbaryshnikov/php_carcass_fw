@@ -44,6 +44,8 @@ namespace Carcass\Less;
  *
  * The `lessc_formatter` takes a CSS tree, and dumps it to a formatted string,
  * handling things like indentation.
+ * @property mixed scope
+ * @property mixed formatter
  */
 class Compiler {
     static public $VERSION = "v0.3.8";
@@ -122,6 +124,7 @@ class Compiler {
         $root = $parser->parse(file_get_contents($realPath));
 
         // set the parents of all the block props
+        /** @noinspection PhpUndefinedFieldInspection */
         foreach ($root->props as $prop) {
             if ($prop[0] == "block") {
                 $prop[1]->parent = $parentBlock;
@@ -131,6 +134,7 @@ class Compiler {
         // copy mixins into scope, set their parents
         // bring blocks from import into current block
         // TODO: need to mark the source parser    these came from this file
+        /** @noinspection PhpUndefinedFieldInspection */
         foreach ($root->children as $childName => $child) {
             if (isset($parentBlock->children[$childName])) {
                 $parentBlock->children[$childName] = array_merge(
@@ -144,13 +148,15 @@ class Compiler {
         $pi = pathinfo($realPath);
         $dir = $pi["dirname"];
 
+        /** @noinspection PhpUndefinedFieldInspection */
         list($top, $bottom) = $this->sortProps($root->props, true);
         $this->compileImportedProps($top, $parentBlock, $out, $parser, $dir);
 
         return array(true, $bottom, $parser, $dir);
     }
 
-    protected function compileImportedProps($props, $block, $out, $sourceParser, $importDir) {
+    protected function compileImportedProps($props, $block, $out, /** @noinspection PhpUnusedParameterInspection */
+                                            $sourceParser, $importDir) {
         $oldSourceParser = $this->sourceParser;
 
         $oldImport = $this->importDir;
@@ -792,6 +798,7 @@ class Compiler {
         default: // assumed to be unit
             $this->throwError("unknown value type: $value[0]");
         }
+        return null;
     }
 
     protected function lib_isnumber($value) {
@@ -989,6 +996,7 @@ class Compiler {
         if (!is_null($color = $this->coerceColor($value))) {
             return isset($color[4]) ? $color[4] : 1;
         }
+        return null;
     }
 
     // set the alpha of the color
@@ -1046,6 +1054,7 @@ class Compiler {
     protected function assertNumber($value, $error = "expecting number") {
         if ($value[0] == "number") return $value[1];
         $this->throwError($error);
+        return null;
     }
 
     protected function toHSL($color) {
@@ -1312,6 +1321,7 @@ class Compiler {
                 }
                 return null;
         }
+        return null;
     }
 
     // make something string like into a string
@@ -1397,6 +1407,7 @@ class Compiler {
             array_unshift($strRight[2], $left);
             return $strRight;
         }
+        return null;
     }
 
 
@@ -1414,6 +1425,7 @@ class Compiler {
         if ($op == '+' || $op == '*') {
             return $this->op_color_number($op, $rgt, $lft);
         }
+        return null;
     }
 
     protected function op_color_number($op, $lft, $rgt) {

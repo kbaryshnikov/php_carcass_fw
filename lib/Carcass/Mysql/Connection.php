@@ -44,6 +44,7 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     protected $last_result = null;
 
     protected $xa_state = self::XA_STATE_NON_EXISTING;
+    protected $connection_id = null;
 
     /**
      * @param \Carcass\Connection\Dsn $Dsn
@@ -152,9 +153,16 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
         return $this->getConnection()->escape_string($s);
     }
 
+    protected function getConnectionId() {
+        if (null === $this->connection_id) {
+            $this->connection_id = Corelib\UniqueId::generate();
+        }
+        return $this->connection_id;
+    }
+
     protected function doExecuteXaQuery($xa_query) {
         $this->doExecuteQuery(
-            str_replace('#', "'" . $this->escapeString($this->getTransactionId()) . "'", $xa_query)
+            str_replace('#', "'" . $this->escapeString($this->connection_id . '_' . $this->getTransactionId()) . "'", $xa_query)
         );
     }
 

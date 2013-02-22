@@ -6,6 +6,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
+/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
 namespace Carcass\Application;
 
 use Carcass\Corelib;
@@ -20,8 +21,8 @@ use Carcass\Corelib;
  * @method static \Carcass\Connection\Manager getConnectionManager()
  * @method static \Carcass\Log\Dispatcher getLogger()
  * @method static \Carcass\DevTools\Debugger getDebugger()
- * @method static \Carcass\Application\PathManager getPathManager()
- * @method static \Carcass\Application\Web_Router_Interface getRouter()
+ * @method static PathManager getPathManager()
+ * @method static Web_Router_Interface getRouter()
  * @method static \Carcass\Corelib\Request getRequest()
  *
  * @package Carcass\Application

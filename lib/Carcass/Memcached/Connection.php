@@ -111,7 +111,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
      * @return bool|mixed
      * @throw \LogicException
      */
-    public function callRequired($method /* ... */) {
+    public function callRequired(/** @noinspection PhpUnusedParameterInspection */ $method /* ... */) {
         $args = func_get_args();
         return $this->dispatch(array_shift($args), $args, true);
     }
@@ -122,7 +122,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
      * @param string $method
      * @return mixed
      */
-    public function callRaw($method /* ... */) {
+    public function callRaw(/** @noinspection PhpUnusedParameterInspection */ $method /* ... */) {
         $args = func_get_args();
         return $this->dispatch(array_shift($args), $args, false, true);
     }
@@ -134,7 +134,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
      * @return mixed
      * @throw \LogicException
      */
-    public function callRawRequired($method /* ... */) {
+    public function callRawRequired(/** @noinspection PhpUnusedParameterInspection */ $method /* ... */) {
         $args = func_get_args();
         return $this->dispatch(array_shift($args), $args, true, true);
     }

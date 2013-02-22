@@ -128,6 +128,7 @@ class Memcached extends Base {
             return parent::execute($args);
         }
 
+        /** @noinspection PhpUnusedParameterInspection */
         $this->doInTransaction(function($Db, $args) {
             $result = $this->getMct()->getKey($this->key, $args);
             if (false === $result) {

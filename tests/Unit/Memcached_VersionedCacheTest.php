@@ -6,6 +6,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testSetNew() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -30,6 +31,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testSetExisting() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -50,6 +52,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testSetMulti() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -76,6 +79,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetNotExpired() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -96,6 +100,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetExpiredVersionNumber() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -116,6 +121,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetExpiredVersionKey() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -135,6 +141,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetMultiNotExpired() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -166,6 +173,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetMultiExpiredVersionNumber() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -193,6 +201,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetMultiPartiallyExpred() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -223,6 +232,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testGetMultiExpiredVersionKey() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -249,6 +259,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testFlush() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
         $VC->setNamespace('ns');
 
@@ -260,6 +271,7 @@ class Memcached_VersionedCacheTest extends PHPUnit_Framework_TestCase {
 
     public function testFlushNamespace() {
         $ConnMock = $this->getConnectionMock();
+        /** @noinspection PhpParamsInspection */
         $VC = new Memcached\VersionedCache($ConnMock);
 
         $ConnMock->expects($this->exactly(2))

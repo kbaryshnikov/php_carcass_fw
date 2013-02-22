@@ -298,7 +298,7 @@ class TaggedCache {
         $result = $this->getTagKeys([self::TAG_HARD, self::TAG_SOFT], $args);
         if ($flat) {
             $flat_result = [];
-            foreach ($result as $importance => $tags) {
+            foreach ($result as $tags) {
                 $flat_result = array_merge($flat_result, $tags);
             }
             return $flat_result;

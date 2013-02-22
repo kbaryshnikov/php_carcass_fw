@@ -106,7 +106,7 @@ class Mysql_ShardManager {
     }
 
     /**
-     * @return \Carcass\Connection\ConnectionInterface
+     * @return \Carcass\Mysql\Connection
      */
     protected function assembleShardingDbConnection() {
         return Injector::getConnectionManager()->getConnection($this->getShardingDbConnectionDsn());

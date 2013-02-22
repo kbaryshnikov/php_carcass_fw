@@ -1,7 +1,6 @@
 <?php
 
 use \Carcass\Mysql;
-use \Carcass;
 
 class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
 
@@ -103,6 +102,7 @@ class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
             ->method('vote')
             ->will($this->returnValue(false));
 
+        /** @noinspection PhpParamsInspection */
         $Manager->addConnection($ConnMock);
             
         $Conn->executeQuery("INSERT INTO test (s) VALUES ('1')");

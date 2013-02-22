@@ -8,7 +8,7 @@
 
 namespace Carcass\Less;
 
-/**
+    /**
  * lessphp v0.3.8
  * http://leafo.net/lessphp
  *
@@ -16,7 +16,13 @@ namespace Carcass\Less;
  *
  * copyright 2012, leaf corcoran <leafot@gmail.com>
  * licensed under mit or gplv3, see license
- */
+ * @property int count
+ * @property mixed env
+ * @property mixed seenComments
+ * @property mixed buffer
+     * @property int line
+     * @property mixed inExp
+     */
 
 // responsible for taking a string of LESS code and converting it into a
 // syntax tree
@@ -109,13 +115,13 @@ class Parser {
         $this->whitespace();
 
         // parse the entire file
-        $lastCount = $this->count;
         while (false !== $this->parseChunk());
 
         if ($this->count != strlen($this->buffer))
             $this->throwError();
 
         // TODO report where the block was opened
+        /** @noinspection PhpUndefinedFieldInspection */
         if (!is_null($this->env->parent))
             throw new Exception('parse error: unclosed block');
 
@@ -516,8 +522,9 @@ class Parser {
     }
 
     // an import statement
+    /** @noinspection PhpInconsistentReturnPointsInspection */
     protected function import(&$out) {
-        $s = $this->seek();
+        $this->seek();
         if (!$this->literal('@import')) return false;
 
         // @import "something.css" media;

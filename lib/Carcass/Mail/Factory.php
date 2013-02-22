@@ -43,7 +43,7 @@ class Factory {
     public static function createSenderForCurrentConfig($type = null) {
         $config = Injector::getConfigReader()->get('mail');
         if (!$config) {
-            throw new \RuntimeException('mail configuration missing')
+            throw new \RuntimeException('mail configuration missing');
         }
         $method = $config->get('method', self::DEFAULT_METHOD);
         $params = $config->exportArrayFrom('params', []);

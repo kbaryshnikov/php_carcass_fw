@@ -1,7 +1,5 @@
 <?php
 
-use \Carcass;
-
 class ConfigReaderStub extends Carcass\Config\Reader {
 
     public $files = [];

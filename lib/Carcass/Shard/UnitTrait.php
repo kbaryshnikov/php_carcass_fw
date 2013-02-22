@@ -59,6 +59,7 @@ trait UnitTrait {
      */
     public function getDatabase() {
         if (null === $this->Database) {
+            /** @noinspection PhpParamsInspection */
             $this->Database = new Mysql_Client($this);
         }
         return $this->Database;

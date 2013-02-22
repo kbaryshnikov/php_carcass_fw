@@ -44,6 +44,7 @@ class BuildngxScript extends Application\Controller {
     }
 
     protected function parse($file, array $args) {
+        /** @noinspection PhpUndefinedClassInspection */
         return Corelib\StringTemplate::constructFromFile($file)->parse($args);
     }
 
@@ -126,7 +127,7 @@ class BuildngxScript extends Application\Controller {
     }
 
     protected static function fixPathes(array $dirnames) {
-        return array_map([self, 'fixPath'], $dirnames);
+        return array_map([get_called_class(), 'fixPath'], $dirnames);
     }
 
     protected static function fixPath($dirname) {
@@ -141,7 +142,7 @@ class BuildngxScript extends Application\Controller {
 
     protected function printHelp() {
         (new Help([
-            '-o filename' => 'Output to <filename>, default: stdout',
+            '-o filename' => 'Output to < filename >, default: stdout',
             '-h' => 'Show help',
         ], 'buildngx arguments:'))->displayTo($this->Response);
     }

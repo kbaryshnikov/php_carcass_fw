@@ -58,7 +58,7 @@ class Multiselect extends Base {
             $value = [];
         }
         $set_value = [];
-        foreach ($value as $k => $v) {
+        foreach ($value as $v) {
             if (is_scalar($v) && strlen($v)) {
                 $set_value[] = $v;
             }

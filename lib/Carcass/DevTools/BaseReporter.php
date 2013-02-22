@@ -33,16 +33,11 @@ abstract class BaseReporter {
     protected function formatValue($value) {
         $type = gettype($value);
         switch ($type) {
-            case 'resource':
-                $contents = print_r($value, true);
-                break;
             case 'array':
             case 'object':
                 $type = null;
-                // no break intentionally
-            default:
-                $contents = print_r($value, true);
         }
+        $contents = print_r($value, true);
         return ($type === null ? '' : "$type: ") . $contents;
     }
 

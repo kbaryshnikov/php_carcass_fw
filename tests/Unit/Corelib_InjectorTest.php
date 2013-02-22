@@ -46,7 +46,9 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
         };
         $service = $inj->service;
         $this->assertInstanceOf('Service', $service);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertInstanceOf('Dependency', $service->dependency);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals(1, $service->flag);
     }
 

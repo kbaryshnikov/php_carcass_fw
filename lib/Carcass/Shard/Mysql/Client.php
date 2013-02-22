@@ -35,6 +35,7 @@ class Mysql_Client extends Mysql\Client {
      */
     public function __construct(UnitInterface $Unit, Mysql_QueryParser $QueryParser = null) {
         $this->Unit = $Unit;
+        /** @noinspection PhpParamsInspection */
         parent::__construct(
             Injector::getConnectionManager()->getConnection($Unit->getShard()->getDsn()),
             $QueryParser

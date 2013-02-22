@@ -75,6 +75,7 @@ trait HashTrait {
     /**
      * @return array
      */
+    /** @noinspection PhpHierarchyChecksInspection */
     protected function &getDataArrayPtr() {
         return $this->storage;
     }
@@ -82,6 +83,7 @@ trait HashTrait {
     /**
      * @return array
      */
+    /** @noinspection PhpHierarchyChecksInspection */
     protected function getRenderArray() {
         return $this->storage;
     }
@@ -97,6 +99,7 @@ trait HashTrait {
      * @param $instance
      * @return bool
      */
+    /** @noinspection PhpHierarchyChecksInspection */
     protected static function instanceOfSelf($instance) {
         $class_name = static::getClass();
         return $instance instanceof $class_name;
@@ -106,6 +109,7 @@ trait HashTrait {
      * @param $init_with
      * @return mixed
      */
+    /** @noinspection PhpHierarchyChecksInspection */
     protected static function newSelf($init_with = null) {
         $class_name = static::getClass();
         return new $class_name($init_with);

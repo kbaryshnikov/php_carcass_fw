@@ -117,7 +117,7 @@ class Instance {
      * @return mixed
      */
     public static function getEnv($key, $default_value = null) {
-        return array_key_exists($key, static::$instance->app_env) ? static::$instance->app_env[$key] : null;
+        return array_key_exists($key, static::$instance->app_env) ? static::$instance->app_env[$key] : $default_value;
     }
 
     /**
@@ -189,12 +189,14 @@ class Instance {
         $this->Injector->Debugger     = $this->Debugger;
         $this->Injector->Logger       = $this->Logger;
 
-        $this->Injector->ConnectionManager = $this->Injector->reuse(isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function (Corelib\Injector $I) {
-            /** @var \Carcass\Connection\Manager $ConnectionManager */
-            $class = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
-            $ConnectionManager = new $class;
-            return $ConnectionManager->registerTypes($I->ConfigReader->exportArrayFrom('connections.types', []));
-        });
+        $this->Injector->ConnectionManager = $this->Injector->reuse(
+            isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function (Corelib\Injector $I) {
+                /** @var \Carcass\Connection\Manager $ConnectionManager */
+                $class             = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
+                $ConnectionManager = new $class;
+                return $ConnectionManager->registerTypes($I->ConfigReader->exportArrayFrom('connections.types', []));
+            }
+        );
 
         if (is_callable($setupFn)) {
             $setupFn($this->Injector, $dep_map);
@@ -205,39 +207,57 @@ class Instance {
     }
 
     protected function setupDependenciesCli($Injector, array $dep_map) {
-        $this->Injector->Request = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\Injector $I) {
-            /** @var RequestBuilderInterface $class */
-            $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Cli_RequestBuilder');
-            return $class::assembleRequest($this->app_env);
-        });
-        $this->Injector->Response = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\Injector $I) {
-            $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Cli_Response');
-            return new $class;
-        });
-        $this->Injector->Router = $this->Injector->reuse(isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\Injector $I) {
-            $class = (isset($I->dep_map['Router']) ? $I->dep_map['Router'] : '\Carcass\Application\Cli_Router');
-            return new $class;
-        });
-        $this->Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\Injector $I) {
+        $Injector->Request = $this->Injector->reuse(
+            isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\Injector $I) {
+                /** @var RequestBuilderInterface $class */
+                $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Cli_RequestBuilder');
+                return $class::assembleRequest($this->app_env);
+            }
+        );
+
+        $Injector->Response = $this->Injector->reuse(
+            isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\Injector $I) {
+                $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Cli_Response');
+                return new $class;
+            }
+        );
+
+        $Injector->Router = $this->Injector->reuse(
+            isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\Injector $I) {
+                $class = (isset($I->dep_map['Router']) ? $I->dep_map['Router'] : '\Carcass\Application\Cli_Router');
+                return new $class;
+            }
+        );
+
+        $Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\Injector $I) {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Cli_FrontController');
             return new $class($I->Request, $I->Response, $I->Router);
         };
     }
 
     protected function setupDependenciesWeb($Injector, array $dep_map) {
-        $this->Injector->Request         = $this->Injector->reuse(isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\Injector $I) {
-            /** @var RequestBuilderInterface $class */
-            $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Web_RequestBuilder');
-            return $class::assembleRequest($this->app_env);
-        });
-        $this->Injector->Response        = $this->Injector->reuse(isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\Injector $I) {
-            $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Web_Response');
-            return new $class($I->Request);
-        });
-        $this->Injector->Router          = $this->Injector->reuse(isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\Injector $I) {
-            return \Carcass\Application\Web_Router_Factory::assembleByConfig($I->ConfigReader->web->router);
-        });
-        $this->Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\Injector $I) {
+        $Injector->Request = $this->Injector->reuse(
+            isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\Injector $I) {
+                /** @var RequestBuilderInterface $class */
+                $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Web_RequestBuilder');
+                return $class::assembleRequest($this->app_env);
+            }
+        );
+
+        $Injector->Response = $this->Injector->reuse(
+            isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\Injector $I) {
+                $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Web_Response');
+                return new $class($I->Request);
+            }
+        );
+
+        $Injector->Router = $this->Injector->reuse(
+            isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\Injector $I) {
+                return Web_Router_Factory::assembleByConfig($I->ConfigReader->web->router);
+            }
+        );
+
+        $Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\Injector $I) {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Web_FrontController');
             return new $class($I->Request, $I->Response, $I->Router, $I->ConfigReader->web);
         };
@@ -369,6 +389,9 @@ class Instance {
         }
     }
 
+    /**
+     * @return DevTools\BaseReporter
+     */
     protected function getDebuggerReporter() {
         $config = $this->ConfigReader->getPath('application.debug.reporter');
         if (is_scalar($config)) {

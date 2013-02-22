@@ -48,11 +48,11 @@ class Captcha_Imagick implements Captcha_Interface {
         $allowed_chars = 'ABCDEFGHKLNPRSTXYZ123456789';
 
     /**
-     * __construct 
-     * 
-     * @param Session $Session
+     * __construct
+     *
+     * @param \Carcass\Application\Web_Session $Session $Session
      * @param string $session_field
-     * @return void
+     * @return \Carcass\Image\Captcha_Imagick
      */
     public function __construct(Application\Web_Session $Session, $session_field = null) {
         $this->Session = $Session;
@@ -184,11 +184,11 @@ class Captcha_Imagick implements Captcha_Interface {
         $draw = new \ImagickDraw();
         $i->newImage(380, 120, $pixel = new \ImagickPixel($this->background_color));
         $i->setFormat('jpeg');
+        /** @noinspection PhpParamsInspection */
         $draw->setFillColor($this->text_color);
         $draw->setFont($this->font_file);
         $draw->setFontSize($this->font_size);
         $n = -10;
-        $chr='';
         for ($cn=0; $cn<strlen($this->text); $cn++) {
             $n += 23;
             $chr = substr($this->text,$cn,1);
@@ -204,6 +204,7 @@ class Captcha_Imagick implements Captcha_Interface {
         if ($this->noise) {
             for ($cn=0; $cn<$this->noise; $cn++) {
                 $draw->setFontSize(Corelib\Crypter::getRandomNumber(round($this->font_size/4), round($this->font_size/3)));
+                /** @noinspection PhpParamsInspection */
                 $draw->setFillColor(!round(Corelib\Crypter::getRandomNumber(0,9)) ? $this->text_color : $this->background_color);
                 $i->annotateImage($draw, Corelib\Crypter::getRandomNumber(10, 160), Corelib\Crypter::getRandomNumber(10, 60), Corelib\Crypter::getRandomNumber(0, 90), $this->noise_chars[ Corelib\Crypter::getRandomNumber(0, strlen($this->noise_chars)-1) ]);
             }

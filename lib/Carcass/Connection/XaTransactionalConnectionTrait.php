@@ -56,6 +56,7 @@ trait XaTransactionalConnectionTrait {
      */
     public function commit($local = false) {
         if (!$local && $this->ConnectionManager) {
+            /** @noinspection PhpParamsInspection */
             $this->ConnectionManager->commit($this);
         }
         switch ($this->transaction_status) {

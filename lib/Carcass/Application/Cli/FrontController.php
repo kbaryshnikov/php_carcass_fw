@@ -61,6 +61,7 @@ class Cli_FrontController implements ControllerInterface {
      * Dispatches the action.
      * @param string $fq_action fully-qualified action name
      * @param \Carcass\Corelib\Hash $Args
+     * @return void
      */
     public function dispatch($fq_action, Corelib\Hash $Args) {
         list ($controller, $action) = Corelib\StringTools::split($fq_action, '.', [null, 'Default']);

@@ -1,7 +1,6 @@
 <?php
 
 use \Carcass\Mysql;
-use \Carcass;
 
 class Mysql_ClientTest extends PHPUnit_Framework_TestCase {
 
@@ -18,6 +17,7 @@ class Mysql_ClientTest extends PHPUnit_Framework_TestCase {
 
     public function testQueryTemplate() {
         $Dsn = new Carcass\Connection\Dsn(test_mysql_get_dsn());
+        /** @noinspection PhpParamsInspection */
         $Client = new Mysql\Client(Mysql\Connection::constructWithDsn($Dsn));
         $Client->executeQueryTemplate("INSERT INTO test SET s = {{ s(s) }}", ['s' => 'foo']);
         $Client->executeQueryTemplate("INSERT INTO test SET s = {{ snul(s) }}", []);
@@ -33,6 +33,7 @@ class Mysql_ClientTest extends PHPUnit_Framework_TestCase {
 
     public function testMysqlDatabaseQueries() {
         $Dsn = new Carcass\Connection\Dsn(test_mysql_get_dsn());
+        /** @noinspection PhpParamsInspection */
         $Client = new Mysql\Client(Mysql\Connection::constructWithDsn($Dsn));
         $Client->query("INSERT INTO test (s) VALUES {{ BEGIN values }} ( {{ s }} ) {{ UNLESS _last }} , {{ END }} {{ END }}", ['values' => [
             ['s' => '1'],
@@ -103,6 +104,7 @@ class Mysql_ClientTest extends PHPUnit_Framework_TestCase {
                 return $QueryTemplate;
             }));
 
+        /** @noinspection PhpParamsInspection */
         $Client = new Mysql\Client(Mysql\Connection::constructWithDsn($Dsn), $QueryParser);
         $result = $Client->getCell('{{ test() }}');
         $this->assertEquals('123', $result);

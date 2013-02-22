@@ -44,7 +44,7 @@ class TestShardUnit extends Corelib\Hash implements Shard\UnitInterface {
         );
     }
 
-    public $map = [
+    public static $map = [
         1 => [
             'id' => 1,
             'shard_id' => 1,
@@ -67,6 +67,7 @@ class ShardUnitMysqlTest extends PHPUnit_Framework_TestCase {
 
     public function setUp() {
         init_app();
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->ShardConfig = Injector::getConfigReader()->sharding;
         $this->ShardManager = new Shard\Mysql_ShardManager($this->ShardConfig);
     }

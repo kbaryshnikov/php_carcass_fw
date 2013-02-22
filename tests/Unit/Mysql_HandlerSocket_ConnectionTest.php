@@ -1,7 +1,6 @@
 <?php
 
 use \Carcass\Mysql;
-use \Carcass;
 
 class Mysql_HandlerSocket_ConnectionTest extends PHPUnit_Framework_TestCase {
 

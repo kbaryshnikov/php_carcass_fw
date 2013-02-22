@@ -15,11 +15,11 @@ namespace Carcass\Mail;
 class Message {
 
     protected
-        $encoding = 'utf-8',
-        $sender,
-        $subject,
-        $body,
-        $attachments = array();
+        $_encoding = 'utf-8',
+        $_sender,
+        $_subject,
+        $_body,
+        $_attachments = array();
 
     /**
      * @param string $sender
@@ -27,16 +27,16 @@ class Message {
      * @param string $body
      */
     public function __construct($sender, $subject, $body) {
-        $this->sender       = (string)$sender;
-        $this->subject      = (string)$subject;
-        $this->body         = (string)$body;
+        $this->_sender       = (string)$sender;
+        $this->_subject      = (string)$subject;
+        $this->_body         = (string)$body;
     }
 
     /**
      * @param string $encoding
      */
     public function setEncoding($encoding) {
-        $this->encoding = (string)$encoding;
+        $this->_encoding = (string)$encoding;
     }
 
     /**
@@ -44,7 +44,7 @@ class Message {
      * @param string $data
      */
     public function attachString($mime_type, $data) {
-        $this->attachments[] = (object)array('mime_type' => (string)$mime_type, 'contents' => (string)$data);
+        $this->_attachments[] = (object)array('mime_type' => (string)$mime_type, 'contents' => (string)$data);
     }
 
     /**
@@ -52,7 +52,7 @@ class Message {
      * @param string $file
      */
     public function attachFile($mime_type, $file) {
-        $this->attachments[] = (object)array('mime_type' => (string)$mime_type, 'filename' => $file);
+        $this->_attachments[] = (object)array('mime_type' => (string)$mime_type, 'filename' => $file);
     }
 
     /**
@@ -60,7 +60,8 @@ class Message {
      * @return bool
      */
     public function has($k) {
-        return !empty($this->$k);
+        $key = '_' . $k;
+        return !empty($this->$key);
     }
 
     /**
@@ -69,8 +70,9 @@ class Message {
      * @throws \OutOfBoundsException
      */
     public function __get($k) {
-        if (isset($this->$k)) {
-            return $this->$k;
+        $key = '_' . $k;
+        if (isset($this->$key)) {
+            return $this->$key;
         }
         throw new \OutOfBoundsException("$k undefined");
     }

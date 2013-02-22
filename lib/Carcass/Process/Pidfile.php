@@ -19,8 +19,8 @@ class Pidfile {
 
     const
         PID_FILE_EXT = '.pid',
-        ERR_EPERM = 1, // EPERM/ESRCH values on most *nix systems
-        ERR_ESRCH = 3; // No such process
+        ERR_EPERM    = 1, // EPERM/ESRCH values on most *nix systems
+        ERR_ESRCH    = 3; // No such process
 
     protected
         $pid = null,
@@ -35,16 +35,16 @@ class Pidfile {
      */
     public function __construct($name, $folder = null) {
         $this->basename = $name;
-        $this->folder = $folder ?: null;
+        $this->folder   = $folder ? : null;
         $this->setFilename($this->basename);
     }
 
     /**
-     * @param string $name 
+     * @param string $name
      * @return string pidfile realpath
      */
     public function getPidFileRealpath($name) {
-        $folder = rtrim($this->folder ?: sys_get_temp_dir(), '/') . '/';
+        $folder = rtrim($this->folder ? : sys_get_temp_dir(), '/') . '/';
         return $folder . $name . self::PID_FILE_EXT;
     }
 
@@ -59,6 +59,7 @@ class Pidfile {
             return null;
         }
 
+        /** @noinspection PhpUsageOfSilenceOperatorInspection */
         if (0 >= $file_pid = (int)@file_get_contents($this->pidfile)) {
             Injector::getLogger()->logEvent('Debug', $this->basename . ': Pidfile ' . $this->pidfile . ' has no pid');
             return null;
@@ -81,6 +82,7 @@ class Pidfile {
         switch (posix_get_last_error()) {
             case self::ERR_ESRCH:
             case self::ERR_EPERM:
+                /** @noinspection PhpUsageOfSilenceOperatorInspection */
                 @$this->unlink();
                 return null;
                 break;
@@ -96,7 +98,7 @@ class Pidfile {
     public function writePidfile() {
         $this->pid = $this->getCurrentPid();
         Fs\Directory::mkdirIfNotExists(dirname($this->pidfile));
-        file_put_contents($this->pidfile, $this->pid."\n");
+        file_put_contents($this->pidfile, $this->pid . "\n");
         $this->written = true;
         return $this;
     }

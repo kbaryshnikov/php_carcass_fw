@@ -134,6 +134,7 @@ class Connection_TransactionalConnectionTraitTest extends PHPUnit_Framework_Test
     public function testManagedCommit() {
         $T = new TransactionalConnectionTraitUser;
         $ManagerMock = $this->getMock('\Carcass\Connection\Manager');
+        /** @noinspection PhpParamsInspection */
         $T->setManager($ManagerMock);
 
         $ManagerMock->expects($this->once())->method('begin')->with($this->equalTo($T));
@@ -155,6 +156,7 @@ class Connection_TransactionalConnectionTraitTest extends PHPUnit_Framework_Test
     public function testManagedRollback() {
         $T = new TransactionalConnectionTraitUser;
         $ManagerMock = $this->getMock('\Carcass\Connection\Manager');
+        /** @noinspection PhpParamsInspection */
         $T->setManager($ManagerMock);
         $T->begin();
         $T->query();

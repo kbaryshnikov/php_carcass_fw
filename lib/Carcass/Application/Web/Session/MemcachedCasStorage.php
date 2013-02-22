@@ -38,6 +38,7 @@ class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
     /**
      * @param string $session_id
      * @param array $data
+     * @throws \LogicException
      * @return $this
      */
     public function write($session_id, array $data) {

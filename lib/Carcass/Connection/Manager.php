@@ -8,8 +8,6 @@
 
 namespace Carcass\Connection;
 
-use Carcass\Corelib\UniqueId;
-
 /**
  * Connections and transactions manager.
  * Registered in Injector as ConnectionManager during the application instance bootstrapping process.
@@ -176,6 +174,7 @@ class Manager {
      */
     public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
         $e = null;
+        $result = null;
         try {
             $this->begin();
             $result = call_user_func_array($fn, $args);
@@ -222,7 +221,8 @@ class Manager {
                     } catch (\Exception $e) {
                         throw new ManagerXaVotedNoException($e->getMessage(), $e->getCode(), $e);
                     }
-                }
+                },
+                true
             );
         } catch (ManagerXaVotedNoException $e) {
             $this->rollback();
@@ -254,7 +254,8 @@ class Manager {
                 if ($Connection !== $Source) {
                     $Connection->$method(true);
                 }
-            }
+            },
+            $xa
         );
     }
 

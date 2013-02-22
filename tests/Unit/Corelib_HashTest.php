@@ -1,6 +1,5 @@
 <?php
 
-use \Carcass;
 use \Carcass\Corelib;
 use \Carcass\Corelib\Hash;
 
@@ -108,6 +107,7 @@ class Corelib_HashTest extends PHPUnit_Framework_TestCase {
             ->expects($this->once())
             ->method('assign')
             ->with($this->identicalTo($array));
+        /** @noinspection PhpParamsInspection */
         $Hash->renderTo($Result);
     }
 
@@ -121,6 +121,7 @@ class Corelib_HashTest extends PHPUnit_Framework_TestCase {
         $Hash->setRenderer(function($Result) {
             $Result->assign(array_map(function($value) { return $value * 2; }, $this->exportArray()));
         });
+        /** @noinspection PhpParamsInspection */
         $Hash->renderTo($Result);
     }
 

@@ -22,14 +22,17 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Index.Default'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Users.Default'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/users/'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.Default'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/news/'), $C);
     }
 
@@ -38,6 +41,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Users.ById'), $this->equalTo(new Corelib\Hash(['id'=>1])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/users/1'), $C);
     }
 
@@ -46,6 +50,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.ByTitle'), $this->equalTo(new Corelib\Hash(['title'=>'foo'])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/news/foo'), $C);
     }
 
@@ -54,6 +59,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Search.Default'), $this->equalTo(new Corelib\Hash(['q'=>'1/2/3'])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/search/1/2/3'), $C);
     }
 
@@ -62,6 +68,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Users.ByIdEx'), $this->equalTo(new Corelib\Hash(['id'=>1,'title'=>'name','extra'=>'1/2/3'])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/users/1-name/1/2/3'), $C);
     }
 
@@ -70,10 +77,12 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.ByIdAndTitle'), $this->equalTo(new Corelib\Hash(['id'=>1,'title'=>'name'])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/news/id/1-name'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('News.ByIdAndTitle'), $this->equalTo(new Corelib\Hash(['id'=>1])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/news/id/1'), $C);
     }
 
@@ -82,14 +91,17 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Nested.Default'), $this->equalTo(new Corelib\Hash));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/nested/'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Nested.Default'), $this->equalTo(new Corelib\Hash(['id'=>1])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/nested/1'), $C);
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Nested.Default'), $this->equalTo(new Corelib\Hash(['id'=>1, 'title'=>'name'])));
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/nested/1-name'), $C);
     }
 
@@ -98,6 +110,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
 
         $C = $this->getControllerMock();
         $C->expects($this->once())->method('dispatchNotFound');
+        /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/miss/'), $C);
     }
 

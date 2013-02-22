@@ -207,6 +207,7 @@ class Client {
         $result = false;
         $row = $this->Connection->fetch($h);
         if (!empty($row)) {
+            $row = (array)$row;
             $result = [];
             if (!empty($column)) {
                 if (!array_key_exists($column, $row)) {

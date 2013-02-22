@@ -10,6 +10,7 @@ class Connection_ManagerTest extends PHPUnit_Framework_TestCase {
         $CM->replaceTypes(['test' => 'TestConnection']);
         $TC = $CM->getConnection('test://localhost/');
         $this->assertInstanceOf('TestConnection', $TC);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals('test://localhost/', (string)$TC->Dsn);
     }
 
@@ -18,6 +19,7 @@ class Connection_ManagerTest extends PHPUnit_Framework_TestCase {
         $CM->replaceTypes(['test' => 'TestConnection']);
         $TC = $CM->getConnectionByDsn(Connection\Dsn::factory('test://localhost/'));
         $this->assertInstanceOf('TestConnection', $TC);
+        /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals('test://localhost/', (string)$TC->Dsn);
     }
 
@@ -45,7 +47,9 @@ class Connection_ManagerTest extends PHPUnit_Framework_TestCase {
     public function testTransactions() {
         $CM = new Connection\Manager;
         $CM->replaceTypes(['test' => 'TestTransactionalConnection']);
+        /** @var TransactionalConnectionTraitUser $TTC */
         $TTC = $CM->getConnection('test://localhost');
+        /** @var TransactionalConnectionTraitUser $TTC2 */
         $TTC2 = $CM->getConnection('test://remotehost');
         $this->assertInstanceOf('TestTransactionalConnection', $TTC);
         $this->assertInstanceOf('TestTransactionalConnection', $TTC2);
@@ -64,14 +68,19 @@ class Connection_ManagerTest extends PHPUnit_Framework_TestCase {
     public function testTransactionCallsFilterSource() {
         $CM = new Connection\Manager;
         $CM->replaceTypes(['test' => 'TestTransactionalConnection']);
+        /** @var TransactionalConnectionTraitUser $TTC */
         $TTC = $CM->getConnection('test://localhost');
+        /** @var TransactionalConnectionTraitUser $TTC2 */
         $TTC2 = $CM->getConnection('test://remotehost');
+        /** @noinspection PhpParamsInspection */
         $CM->begin($TTC2);
         $this->assertEquals('begin', $TTC->transaction);
         $this->assertNull($TTC2->transaction);
+        /** @noinspection PhpParamsInspection */
         $CM->commit($TTC2);
         $this->assertEquals('commit', $TTC->transaction);
         $this->assertNull($TTC2->transaction);
+        /** @noinspection PhpParamsInspection */
         $CM->rollback($TTC2);
         $this->assertEquals('rollback', $TTC->transaction);
         $this->assertNull($TTC2->transaction);
@@ -109,6 +118,7 @@ class TestConnection implements Connection\ConnectionInterface {
 
     public static function constructWithDsn(Connection\Dsn $Dsn) {
         $self = new static;
+        /** @noinspection PhpUndefinedFieldInspection */
         $self->Dsn = $Dsn;
         return $self;
     }
@@ -121,12 +131,16 @@ class TestPoolConnection extends TestConnection implements Connection\PoolConnec
 
     public static function constructWithPool(Connection\DsnPool $DsnPool) {
         $self = new static;
+        /** @noinspection PhpUndefinedFieldInspection */
         $self->DsnPool = $DsnPool;
         return $self;
     }
 
 }
 
+/**
+ * @property \Carcass\Connection\Manager Manager
+ */
 class TestTransactionalConnection extends TestConnection implements Connection\TransactionalConnectionInterface {
 
     public $transaction = null;

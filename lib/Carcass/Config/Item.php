@@ -20,7 +20,9 @@ use Carcass\Corelib;
  */
 class Item implements ItemInterface, \Iterator, \ArrayAccess, \Countable, Corelib\ExportableInterface {
     use Corelib\DatasourceTrait, Corelib\ExportableTrait, Corelib\ArrayObjectTrait, Corelib\ArrayObjectDatasourceTrait {
+        /** @noinspection PhpUndefinedClassInspection */
         Corelib\ArrayObjectDatasourceTrait::hasArrayObjectItemByKey insteadof Corelib\ArrayObjectTrait;
+        /** @noinspection PhpUndefinedClassInspection */
         Corelib\ArrayObjectDatasourceTrait::getArrayObjectItemByKey insteadof Corelib\ArrayObjectTrait;
     }
 
@@ -89,6 +91,7 @@ class Item implements ItemInterface, \Iterator, \ArrayAccess, \Countable, Coreli
      * @param $key
      * @return ItemInterface|null|string
      */
+    /** @noinspection PhpHierarchyChecksInspection */
     protected function &getRef($key) {
         $value = $this->getPath($key);
         return $value;
@@ -97,6 +100,7 @@ class Item implements ItemInterface, \Iterator, \ArrayAccess, \Countable, Coreli
     /**
      * @return array
      */
+    /** @noinspection PhpHierarchyChecksInspection */
     protected function &getDataArrayPtr() {
         return $this->storage;
     }

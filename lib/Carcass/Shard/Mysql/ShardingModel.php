@@ -145,6 +145,7 @@ class Mysql_ShardingModel {
             $db_name = $this->Manager->getShardDbNameByIndex($db_index_data['idx']);
 
             if ($db_index_data['shards_count'] == 0) {
+                /** @noinspection PhpParamsInspection */
                 $SuperDb = new Mysql\Client(Injector::getConnectionManager()->getConnection($Server->getSuperDsn()));
                 $SuperDb->query("CREATE DATABASE IF NOT EXISTS {{ name(db_name) }}", compact('db_name'));
                 $SuperDb->query("GRANT ALL PRIVILEGES ON {{ name(db_name) }} TO {{ s(username) }}@'%' IDENTIFIED BY {{ s(password) }}", [

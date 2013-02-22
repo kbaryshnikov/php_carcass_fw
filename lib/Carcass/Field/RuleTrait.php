@@ -75,6 +75,7 @@ trait RuleTrait {
         $this->error = null;
         foreach ($this->rules as $Rule) {
             /** @var Rule\RuleInterface $Rule */
+            /** @noinspection PhpParamsInspection */
             $Rule->validateField($this);
             if (null !== $this->error) {
                 break;

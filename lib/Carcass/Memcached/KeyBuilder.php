@@ -9,7 +9,8 @@
 namespace Carcass\Memcached;
 
 use Carcass\Corelib;
-use Carcass\Corelib\StringTemplate;
+use /** @noinspection PhpUndefinedClassInspection */
+    Carcass\Corelib\StringTemplate;
 use Carcass\Corelib\ArrayTools;
 use Carcass\Corelib\Assert;
 
@@ -17,6 +18,7 @@ use Carcass\Corelib\Assert;
  * Memcached Key Builder
  * @package Carcass\Memcached
  */
+/** @noinspection PhpUndefinedClassInspection */
 class KeyBuilder extends StringTemplate {
 
     /**
@@ -33,6 +35,7 @@ class KeyBuilder extends StringTemplate {
      * @param array $config
      */
     public function __construct($template = null, array $config = []) {
+        /** @noinspection PhpUndefinedClassInspection */
         parent::__construct();
         $this->config = $config + $this->config;
         $template and $this->load($template);
@@ -167,6 +170,7 @@ class KeyBuilder extends StringTemplate {
         if ($args instanceof Corelib\ExportableInterface) {
             $args = $args->exportArray();
         }
+        /** @noinspection PhpUndefinedClassInspection */
         return parent::parse($args);
     }
 
@@ -175,7 +179,7 @@ class KeyBuilder extends StringTemplate {
      * @param $value
      * @return mixed
      */
-    protected function nullOr($method, $value /* args */) {
+    protected function nullOr(/** @noinspection PhpUnusedParameterInspection */ $method, $value /* args */) {
         if (null === $value) {
             return $this->config['null_value'];
         }

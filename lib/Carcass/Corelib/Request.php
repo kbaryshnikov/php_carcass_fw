@@ -9,6 +9,10 @@
 namespace Carcass\Corelib;
 
 /**
+ * @property mixed Env
+ * @property mixed Args
+ * @property mixed Vars
+ * @property mixed Cookies
  * @package Carcass\Corelib
  */
 class Request extends Hash {

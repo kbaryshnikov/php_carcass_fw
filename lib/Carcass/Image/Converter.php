@@ -40,6 +40,8 @@ class Converter {
         $result_quality,
 
         $watermark,
+        $watermark_x,
+        $watermark_y,
         $watermark_image,
         $watermark_gravity,
         $watermark_offset,

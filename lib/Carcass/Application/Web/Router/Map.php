@@ -129,6 +129,7 @@ class Web_Router_Map implements Web_Router_Interface {
 
     /**
      * @param $route
+     * @return string|null
      */
     protected function findUrl($route) {
         $route = static::normalize($route);

@@ -105,6 +105,7 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
         if (!isset($env_args['autoescape'])) {
             $env_args['autoescape'] = true;
         }
+        /** @noinspection PhpParamsInspection */
         $Env = new \Twig_Environment($this->assembleTwigLoader(), $env_args);
         $Env->addFunction(new \Twig_SimpleFunction('url', [$this, 'getTwigUrl']));
         $Env->addFunction(new \Twig_SimpleFunction('static', [$this, 'getTwigStaticUrl']));
@@ -126,6 +127,7 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
      * @return string
      */
     public function getTwigUrl($route_name, array $args = []) {
+        /** @noinspection PhpParamsInspection */
         if ($this->getTwigIsAbsolute($route_name)) {
             return Injector::getRouter()->getAbsoluteUrl(Injector::getRequest(), $route_name, $args);
         } else {
@@ -139,12 +141,13 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
      * @return mixed
      */
     public function getTwigStaticUrl($url) {
+        /** @noinspection PhpParamsInspection */
         $absolute = $this->getTwigIsAbsolute($url);
         return Injector::getRouter()->getStaticUrl(Injector::getRequest(), $url, $absolute);
     }
 
     /**
-     * @param $url NB: gets $url by references, truncates the ':' prefix of absolute urls
+     * @param string $url NB: gets $url by references, truncates the ':' prefix of absolute urls
      * @return bool
      */
     protected function getTwigIsAbsolute(&$url) {

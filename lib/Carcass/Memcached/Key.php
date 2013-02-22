@@ -14,10 +14,11 @@ use Carcass\Corelib;
  * Memcached key factory
  * @package Carcass\Memcached
  */
+/** @noinspection PhpUndefinedClassInspection */
 class Key {
 
     /**
-     * @var \Carcass\Corelib\StringTemplate
+     * @var Corelib\StringTemplate
      */
     protected $Builder;
 
@@ -32,7 +33,7 @@ class Key {
     /**
      * @param \Carcass\Corelib\StringTemplate $Builder
      */
-    private function __construct(Corelib\StringTemplate $Builder) {
+    private function __construct(/** @noinspection PhpUndefinedClassInspection */Corelib\StringTemplate $Builder) {
         $this->Builder = $Builder;
     }
 

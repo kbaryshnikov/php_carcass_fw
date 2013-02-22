@@ -1,6 +1,5 @@
 <?php
 
-use \Carcass;
 use \Carcass\Corelib;
 
 class DatasourceTraitUser {

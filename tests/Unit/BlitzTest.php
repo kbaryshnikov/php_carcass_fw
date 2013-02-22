@@ -3,6 +3,7 @@
 class BlitzTest extends PHPUnit_Framework_TestCase {
 
     public function testSimpleVarsTpl() {
+        /** @noinspection PhpUndefinedClassInspection */
         $Tpl = new Blitz;
         $Tpl->load('Hello {{ who }}{{footer.text}}');
         $Tpl->set(array(
@@ -14,6 +15,7 @@ class BlitzTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testGlobalVars() {
+        /** @noinspection PhpUndefinedClassInspection */
         $Tpl = new Blitz;
         $Tpl->load('{{ value }}{{ BEGIN items }}({{ name }}={{ value }}){{ END }}');
         $Tpl->set(array(
@@ -30,6 +32,7 @@ class BlitzTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testIfUnlessTpl() {
+        /** @noinspection PhpUndefinedClassInspection */
         $Tpl = new Blitz;
         $Tpl->load('Hello{{ UNLESS no_space }} {{ END }}{{ IF value }}{{ UNLESS foo }}{{ value }}{{ END }}{{ END }}{{ UNLESS test }}{{ IF value2.x }}{{ value2.x.y }}{{ END }}!{{ END }}');
         $Tpl->set(array(
@@ -42,6 +45,7 @@ class BlitzTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testIterations() {
+        /** @noinspection PhpUndefinedClassInspection */
         $Tpl = new Blitz;
         $tpl = 'Hello'
             . '{{ BEGIN items }}'
@@ -69,6 +73,7 @@ class BlitzTest extends PHPUnit_Framework_TestCase {
     }
 
     public function _FAIL_testIterations_() {
+        /** @noinspection PhpUndefinedClassInspection */
         $Tpl = new Blitz;
         $tpl = 'Hello'
             . '{{ BEGIN items }}'
@@ -109,6 +114,7 @@ class BlitzTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testClean() {
+        /** @noinspection PhpUndefinedClassInspection */
         $Tpl = new Blitz;
         $Tpl->load('Hello {{ who }}{{footer.text}}');
         $Tpl->set(array(
@@ -122,6 +128,7 @@ class BlitzTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testCleanGlobals() {
+        /** @noinspection PhpUndefinedClassInspection */
         $Tpl = new Blitz;
         $Tpl->load('Hello {{ global }}');
         $Tpl->setGlobals(array('global' => 'world'));
@@ -132,6 +139,7 @@ class BlitzTest extends PHPUnit_Framework_TestCase {
 
 }
 
+/** @noinspection PhpUndefinedClassInspection */
 class BlitzChild extends Blitz {
 
     public function test() {

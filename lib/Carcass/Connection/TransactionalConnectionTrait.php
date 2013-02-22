@@ -92,6 +92,7 @@ trait TransactionalConnectionTrait {
                 break;
         }
         if (!$local && $this->ConnectionManager) {
+            /** @noinspection PhpParamsInspection */
             $this->ConnectionManager->begin($this);
         }
         return $this;
@@ -103,6 +104,7 @@ trait TransactionalConnectionTrait {
      */
     public function commit($local = false) {
         if (!$local && $this->ConnectionManager) {
+            /** @noinspection PhpParamsInspection */
             $this->ConnectionManager->commit($this);
         }
         switch ($this->transaction_status) {
@@ -129,6 +131,7 @@ trait TransactionalConnectionTrait {
      */
     public function rollback($local = false) {
         switch ($this->transaction_status) {
+            /** @noinspection PhpMissingBreakStatementInspection */
             case self::$TRANSACTION_STATUS_STARTED:
                 $this->rollbackTransaction();
                 // no break intentionally
@@ -139,6 +142,7 @@ trait TransactionalConnectionTrait {
         }
         $this->transaction_status = self::$TRANSACTION_STATUS_NONE;
         if (!$local && $this->ConnectionManager) {
+            /** @noinspection PhpParamsInspection */
             $this->ConnectionManager->rollback($this);
         }
         return $this;

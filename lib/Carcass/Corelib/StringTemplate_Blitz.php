@@ -21,6 +21,7 @@ namespace Carcass\Corelib;
  *
  * @package Carcass\Corelib
  */
+/** @noinspection PhpUndefinedClassInspection */
 class StringTemplate extends \Blitz {
 
     /**

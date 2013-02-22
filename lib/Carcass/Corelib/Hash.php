@@ -14,6 +14,7 @@ namespace Carcass\Corelib;
  * @method Hash|mixed get($key, $default_value = null)
  * @method Hash|mixed __get($key)
  *
+ * @property mixed Cookie
  * @package Carcass\Corelib
  */
 class Hash implements \Iterator, \ArrayAccess, \Countable, DatasourceRefInterface, DataReceiverInterface, ExportableInterface, ImportableInterface {
