@@ -94,4 +94,31 @@ class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(['id' => '1', 's' => 'new'], $row);
     }
 
+    public function testXA() {
+        $Manager = new Carcass\Connection\Manager;
+        $Conn = $Manager->getConnection(test_mysql_get_dsn());
+
+        $ConnMock = $this->getMock('\Carcass\Mysql\Connection', [], [ \Carcass\Connection\Dsn::factory('mysql://mock/') ]);
+        $ConnMock->expects($this->once())
+            ->method('vote')
+            ->will($this->returnValue(false));
+
+        $Manager->addConnection($ConnMock);
+            
+        $Conn->executeQuery("INSERT INTO test (s) VALUES ('1')");
+        $Manager->begin();
+        try {
+            $Conn->executeQuery("INSERT INTO test (s) VALUES ('2')");
+            $ConnMock->executeQuery('foo');
+            $Manager->commit();
+        } catch (Exception $e) {
+            $Manager->rollback();
+        }
+        $this->assertTrue(isset($e));
+        $this->assertInstanceOf('\Carcass\Connection\ManagerXaVotedNoException', $e);
+
+        $Conn->executeQuery("SELECT count(*) c FROM test");
+        $this->assertEquals('1', $Conn->fetch()['c']);
+    }
+
 }

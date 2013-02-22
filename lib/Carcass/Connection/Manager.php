@@ -119,6 +119,22 @@ class Manager {
     }
 
     /**
+     * Registers $Connection in manager.
+     *
+     * @param ConnectionInterface $Connection
+     * @return $this
+     * @throws \LogicException
+     */
+    public function addConnection(ConnectionInterface $Connection) {
+        $normalized_string_dsn = (string)$Connection->getDsn();
+        if (isset($this->registry[$normalized_string_dsn])) {
+            throw new \LogicException("Connectino with DSN '$normalized_string_dsn' is already registered'");
+        }
+        $this->registry[$normalized_string_dsn] = $Connection;
+        return $this;
+    }
+
+    /**
      * Calls $fn for each connection in the registry, as $fn($Connection, $connection_dsn)
      *
      * @param callable $fn
@@ -135,12 +151,15 @@ class Manager {
      * Calls $fn for each transactional connection in the registry, as $fn($Connection, $connection_dsn)
      *
      * @param callable $fn
+     * @param null|bool $xa: true = XA connections only, false = non-XA connections only, null = any transactional connection
      * @return $this
      */
-    public function forEachTransactionalConnection(Callable $fn) {
+    public function forEachTransactionalConnection(Callable $fn, $xa = null) {
         foreach ($this->registry as $dsn => $Connection) {
             if ($Connection instanceof TransactionalConnectionInterface) {
-                $fn($Connection, $dsn);
+                if (null === $xa || $xa === $Connection instanceof XaTransactionalConnectionInterface) {
+                    $fn($Connection, $dsn);
+                }
             }
         }
         return $this;
@@ -187,10 +206,28 @@ class Manager {
     /**
      * Commits transaction for all transactional connections
      *
-     * @param TransactionalConnectionInterface $Source
+     * @param TransactionalConnectionInterface|null $Source
+     * @throws ManagerXaVotedNoException|\Exception
      * @return $this
      */
     public function commit(TransactionalConnectionInterface $Source = null) {
+        try {
+            $this->forEachTransactionalConnection(
+                function ($Connection) use ($Source) {
+                    /** @var XaTransactionalConnectionInterface $Connection */
+                    try {
+                        if (!$Connection->vote(true)) {
+                            throw new ManagerXaVotedNoException;
+                        }
+                    } catch (\Exception $e) {
+                        throw new ManagerXaVotedNoException($e->getMessage(), $e->getCode(), $e);
+                    }
+                }
+            );
+        } catch (ManagerXaVotedNoException $e) {
+            $this->rollback();
+            throw $e;
+        }
         $this->iterateTransactionMethod('commit', $Source);
         return $this;
     }
@@ -209,13 +246,16 @@ class Manager {
     /**
      * @param string $method
      * @param TransactionalConnectionInterface $Source
+     * @param null|bool $xa: true = XA connections only, false = non-XA connections only, null = any transactional connection
      */
-    protected function iterateTransactionMethod($method, TransactionalConnectionInterface $Source = null) {
-        $this->forEachTransactionalConnection(function($Connection) use ($method, $Source) {
-            if ($Connection !== $Source) {
-                $Connection->$method(true);
+    protected function iterateTransactionMethod($method, TransactionalConnectionInterface $Source = null, $xa = null) {
+        $this->forEachTransactionalConnection(
+            function ($Connection) use ($method, $Source) {
+                if ($Connection !== $Source) {
+                    $Connection->$method(true);
+                }
             }
-        });
+        );
     }
 
     /**
@@ -233,7 +273,7 @@ class Manager {
         if ($Dsn instanceof DsnPool) {
             if (array_key_exists(__NAMESPACE__ . '\PoolConnectionInterface', class_implements($class))) {
                 /** @var PoolConnectionInterface $class */
-                $class = $this->dsn_type_map[$type];
+                $class      = $this->dsn_type_map[$type];
                 $Connection = $class::constructWithPool($Dsn);
             } else {
                 throw new \LogicException("'$type' connection does not support pools, but pool dsn given");
@@ -250,3 +290,9 @@ class Manager {
     }
 
 }
+
+class ManagerXaVotedNoException extends \LogicException {
+    // pass
+}
+
+;

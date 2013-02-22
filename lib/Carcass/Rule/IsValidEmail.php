@@ -41,10 +41,11 @@ class IsValidEmail extends Base {
      * @return bool
      */
     protected function checkMx($value) {
-        @list (,$host) = explode('@', $value);
-        if (empty($host)) {
+        $tokens = explode('@', $value);
+        if (count($tokens) != 2 || empty($tokens[1])) {
             return false;
         }
+        $host = $tokens[1];
         return $this->checkMxRecord($host);
     }
 

@@ -13,6 +13,10 @@ function test_mysql_get_dsn() {
     return 'mysql://test:test@localhost/test';
 }
 
+function test_mysql_get_dsn_ip() {
+    return 'mysql://test:test@127.0.0.1/test';
+}
+
 function test_hs_get_dsn() {
     return 'hs://localhost/test';
 }

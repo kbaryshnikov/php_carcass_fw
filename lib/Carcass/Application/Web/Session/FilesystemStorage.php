@@ -73,9 +73,8 @@ class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
             } catch (\Exception $e) {
                 Injector::getLogger()->logException($e);
             }
-        } else {
-            return [];
         }
+        return [];
     }
 
     /**

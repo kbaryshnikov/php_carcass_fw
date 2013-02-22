@@ -43,7 +43,12 @@ class SessionTokenMatches extends Base {
      * @return bool
      */
     public function validate($field_value_array) {
-        @list($field_token_key, $field_token_value) = each($field_value_array);
+        if (!is_array($field_value_array) || empty($field_value_array)) {
+            return false;
+        }
+
+        reset($field_value_array);
+        list($field_token_key, $field_token_value) = each($field_value_array);
 
         if (empty($field_token_key) || empty($field_token_value)) {
             return false;

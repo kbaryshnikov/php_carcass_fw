@@ -9,8 +9,8 @@
 namespace Carcass\Mysql;
 
 use \Carcass\Connection\ConnectionInterface;
-use \Carcass\Connection\TransactionalConnectionInterface;
-use \Carcass\Connection\TransactionalConnectionTrait;
+use \Carcass\Connection\XaTransactionalConnectionInterface;
+use \Carcass\Connection\XaTransactionalConnectionTrait;
 use \Carcass\Connection\Dsn;
 use \Carcass\Corelib;
 
@@ -18,10 +18,15 @@ use \Carcass\Corelib;
  * MySQL Connection
  * @package Carcass\Mysql
  */
-class Connection implements ConnectionInterface, TransactionalConnectionInterface {
-    use TransactionalConnectionTrait;
+class Connection implements ConnectionInterface, XaTransactionalConnectionInterface {
+    use XaTransactionalConnectionTrait;
 
     const DSN_TYPE = 'mysql';
+
+    const XA_STATE_NON_EXISTING = 0;
+    const XA_STATE_ACTIVE       = 1;
+    const XA_STATE_IDLE         = 2;
+    const XA_STATE_PREPARED     = 3;
 
     /**
      * @var \Carcass\Connection\Dsn
@@ -37,6 +42,8 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
     protected $Connection = null;
 
     protected $last_result = null;
+
+    protected $xa_state = self::XA_STATE_NON_EXISTING;
 
     /**
      * @param \Carcass\Connection\Dsn $Dsn
@@ -82,7 +89,7 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
      * @return bool
      */
     public function fetch(\mysqli_result $result = null) {
-        return $this->getResult($result)->fetch_assoc() ?: false;
+        return $this->getResult($result)->fetch_assoc() ? : false;
     }
 
     /**
@@ -115,7 +122,7 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
      * @return null
      */
     public function getLastInsertId() {
-        return $this->getConnection()->insert_id ?: null;
+        return $this->getConnection()->insert_id ? : null;
     }
 
     /**
@@ -124,7 +131,7 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
     public function close() {
         $result = true;
         if ($this->Connection) {
-            $result = $this->Connection->close();
+            $result           = $this->Connection->close();
             $this->Connection = null;
         }
         return $result;
@@ -145,16 +152,67 @@ class Connection implements ConnectionInterface, TransactionalConnectionInterfac
         return $this->getConnection()->escape_string($s);
     }
 
+    protected function doExecuteXaQuery($xa_query) {
+        $this->doExecuteQuery(
+            str_replace('#', "'" . $this->escapeString($this->getTransactionId()) . "'", $xa_query)
+        );
+    }
+
+    protected function endXa() {
+        $this->doExecuteXaQuery('XA END #');
+        $this->xa_state = self::XA_STATE_IDLE;
+    }
+
+    protected function prepareXa() {
+        $this->doExecuteXaQuery('XA PREPARE #');
+        $this->xa_state = self::XA_STATE_PREPARED;
+    }
+
+    protected function ensureXaIsPrepared() {
+        if ($this->xa_state === self::XA_STATE_NON_EXISTING) {
+            throw new \LogicException("Should never get here with XA state = NON EXISTING");
+        }
+        if ($this->xa_state === self::XA_STATE_ACTIVE) {
+            $this->endXa();
+        }
+        if ($this->xa_state === self::XA_STATE_IDLE) {
+            $this->prepareXa();
+        }
+        if ($this->xa_state !== self::XA_STATE_PREPARED) {
+            throw new \LogicException("Could not reach PREPARED XA state");
+        }
+    }
+
     protected function beginTransaction() {
-        $this->doExecuteQuery('BEGIN');
+        $this->doExecuteXaQuery('XA START #');
+        $this->xa_state = self::XA_STATE_ACTIVE;
     }
 
     protected function rollbackTransaction() {
-        $this->doExecuteQuery('ROLLBACK');
+        $this->ensureXaIsPrepared();
+        $this->doExecuteXaQuery('XA ROLLBACK #');
+        $this->xa_state = self::XA_STATE_NON_EXISTING;
     }
 
     protected function commitTransaction() {
-        $this->doexecuteQuery('COMMIT');
+        $this->ensureXaIsPrepared();
+        $this->doexecuteXaQuery('XA COMMIT #');
+        $this->xa_state = self::XA_STATE_NON_EXISTING;
+    }
+
+    protected function doXaVote() {
+        if ($this->xa_state === self::XA_STATE_ACTIVE) {
+            $this->endXa();
+        }
+        if ($this->xa_state !== self::XA_STATE_IDLE) {
+            throw new \LogicException('Could not reach IDLE XA state');
+        }
+        try {
+            $this->prepareXa();
+        } catch (\Exception $e) {
+            return false;
+        }
+        return true;
     }
 
     /**

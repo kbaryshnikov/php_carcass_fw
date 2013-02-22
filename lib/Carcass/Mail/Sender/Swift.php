@@ -9,6 +9,10 @@
 namespace Carcass\Mail;
 
 use Carcass\Corelib;
+use Swift_Attachment;
+use Swift_MailTransport;
+use Swift_Message;
+use Swift_SmtpTransport;
 
 require_once 'Swift/lib/swift_required.php';
 
@@ -44,7 +48,7 @@ class Sender_Swift implements Sender_Interface {
             $to = $to instanceof Corelib\ExportableInterface ? $to->exportArray() : array($to);
         }
 
-        $SwiftMessage = \Swift_Message::newInstance()
+        $SwiftMessage = Swift_Message::newInstance()
             ->setSubject($Message->subject)
             ->setFrom(array($Message->sender))
             ->setTo(is_array($to) ? $to : array($to))
@@ -53,9 +57,9 @@ class Sender_Swift implements Sender_Interface {
         if ($Message->has('attachments')) {
             foreach ($Message->attachments as $attachment) {
                 if (isset($attachment->contents)) {
-                    $SwiftAttachment = \Swift_Attachment::newInstance()->setBody($attachment->contents);
+                    $SwiftAttachment = Swift_Attachment::newInstance()->setBody($attachment->contents);
                 } elseif (isset($attachment->filename)) {
-                    $SwiftAttachment = \Swift_Attachment::fromPath($attachment->filename);
+                    $SwiftAttachment = Swift_Attachment::fromPath($attachment->filename);
                 } else {
                     throw new \LogicException("Invalid attachment");
                 }
@@ -104,9 +108,9 @@ class Sender_Swift implements Sender_Interface {
     protected function assembleSwiftTransport() {
         switch ($this->method) {
             case 'mail':
-                return \Swift_MailTransport::newInstance();
+                return Swift_MailTransport::newInstance();
             case 'smtp':
-                $SwiftTransport = \Swift_SmtpTransport::newInstance(
+                $SwiftTransport = Swift_SmtpTransport::newInstance(
                     !empty( $this->params['host'] ) ? $this->params['host'] : '127.0.0.1',
                     !empty( $this->params['port'] ) ? $this->params['port'] : 25
                 );

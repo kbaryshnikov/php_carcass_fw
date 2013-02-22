@@ -14,11 +14,7 @@ use Carcass\Corelib\UniqueId;
  * TransactionalConnectionInterface implementation, with support
  * for pseudo-inner transactions via transaction counter.
  *
- * A user must implement protected methods:
- *
- * @method beginTransaction()
- * @method rollbackTransaction()
- * @method commitTransaction()
+ * A user must implement protected methods: beginTransaction(), commitTransaction(), rollbackTransaction().
  *
  * Before running a real query on a connection, a user must call triggerScheduledTransaction().
  *
@@ -106,6 +102,9 @@ trait TransactionalConnectionTrait {
      * @return $this
      */
     public function commit($local = false) {
+        if (!$local && $this->ConnectionManager) {
+            $this->ConnectionManager->commit($this);
+        }
         switch ($this->transaction_status) {
             case self::$TRANSACTION_STATUS_NONE:
             case self::$TRANSACTION_STATUS_SCHEDULED:
@@ -120,9 +119,6 @@ trait TransactionalConnectionTrait {
         }
         if ($this->transaction_counter == 0) {
             $this->transaction_status = self::$TRANSACTION_STATUS_NONE;
-        }
-        if (!$local && $this->ConnectionManager) {
-            $this->ConnectionManager->commit($this);
         }
         return $this;
     }
@@ -185,6 +181,18 @@ trait TransactionalConnectionTrait {
             $this->transaction_status = self::$TRANSACTION_STATUS_STARTED;
         }
         return $this;
+    }
+
+    protected function beginTransaction() {
+        throw new \LogicException("Implementation required");
+    }
+
+    protected function rollbackTransaction() {
+        throw new \LogicException("Implementation required");
+    }
+
+    protected function commitTransaction() {
+        throw new \LogicException("Implementation required");
     }
 
 }
