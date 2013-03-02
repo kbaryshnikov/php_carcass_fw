@@ -9,7 +9,7 @@
 namespace Carcass\Shard;
 
 use Carcass\Corelib;
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 /**
  * Mysql Shard
@@ -44,7 +44,7 @@ class Mysql_Shard extends Corelib\Hash implements ShardInterface {
         if (!$shard_id) {
             throw new \LogicException('database_shard_id is undefined');
         }
-        return $shard_id;
+        return (int)$shard_id;
     }
 
     /**
@@ -57,7 +57,7 @@ class Mysql_Shard extends Corelib\Hash implements ShardInterface {
             if (!$server_id) {
                 throw new \LogicException('database_server_id is undefined');
             }
-            $this->Server = $this->ShardManager->getModel()->getServerById($server_id);
+            $this->Server = $this->ShardManager->getServerById($server_id);
         }
         return $this->Server;
     }
@@ -70,7 +70,7 @@ class Mysql_Shard extends Corelib\Hash implements ShardInterface {
     }
 
     /**
-     * @return string
+     * @return string shard database name
      */
     public function getDatabaseName() {
         return $this->ShardManager->getShardDbNameByIndex($this->database_idx);

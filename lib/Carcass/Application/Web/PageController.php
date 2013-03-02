@@ -84,7 +84,7 @@ abstract class Web_PageController extends Controller {
      */
     protected function assembleRenderer($template_file = null) {
         /** @var \Carcass\Config\ItemInterface $RendererCfg */
-        $RendererCfg = Injector::getConfigReader()->getPath('web.renderer');
+        $RendererCfg = DI::getConfigReader()->getPath('web.renderer');
         if (!$RendererCfg) {
             throw new \LogicException('web.renderer is not defined in configuration');
         }

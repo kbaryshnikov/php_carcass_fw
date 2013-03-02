@@ -9,7 +9,7 @@
 namespace Carcass\Query;
 
 use Carcass\Corelib;
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 use Carcass\Mysql;
 
 /**
@@ -71,7 +71,7 @@ class Base {
      */
     public function fetchWith(Callable $fn, Callable $finally_fn = null) {
         return $this->setFetchWith(function() use ($fn, $finally_fn) {
-            return Injector::getConnectionManager()->doInTransaction($fn, func_get_args(), $finally_fn);
+            return DI::getConnectionManager()->doInTransaction($fn, func_get_args(), $finally_fn);
         });
     }
 
@@ -182,7 +182,7 @@ class Base {
      * @return mixed
      */
     public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
-        return Injector::getConnectionManager()->doInTransaction($fn, $this->getCallbackArgs($args), $finally_fn);
+        return DI::getConnectionManager()->doInTransaction($fn, $this->getCallbackArgs($args), $finally_fn);
     }
 
     /**
@@ -209,8 +209,8 @@ class Base {
      */
     protected function assembleDatabaseClient() {
         /** @var Mysql\Connection $Connection */
-        $Connection = Injector::getConnectionManager()->getConnection(
-            Injector::getConfigReader()->getPath('application.connections.database')
+        $Connection = DI::getConnectionManager()->getConnection(
+            DI::getConfigReader()->getPath('application.connections.database')
         );
         return new Mysql\Client($Connection);
     }

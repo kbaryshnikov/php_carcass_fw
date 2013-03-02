@@ -11,11 +11,11 @@ namespace Carcass\Corelib;
 /**
  * DataReceiverInterface trait implementation. Supports tainting and locks.
  *
- * User must implement:
+ * <User> must implement:
  *
  * @method array getDataArrayPtr() must return reference to internal values storage
  * @method static DataReceiverInterface newSelf($value) must construct own subitem
- * @method static bool instanceOfSelf($value) must return whether $value is instance of user
+ * @method static bool instanceOfSelf($value) must return whether $value is instance of <User>
  *
  * @package Carcass\Corelib
  */
@@ -32,14 +32,18 @@ trait DataReceiverTrait {
 
     /**
      * @param \Traversable|array $data
+     * @param bool $no_overwrite
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function import(/* Traversable */ $data) {
+    public function import(/* Traversable */ $data, $no_overwrite = false) {
         if (!ArrayTools::isTraversable($data)) {
             throw new \InvalidArgumentException('Argument is not traversable');
         }
         foreach ($data as $key => $value) {
+            if ($no_overwrite && array_key_exists($key, $this->getDataArrayPtr())) {
+                continue;
+            }
             if (ArrayTools::isTraversable($value) && !static::instanceOfSelf($value)) {
                 $value = static::newSelf($value);
             }
@@ -50,10 +54,14 @@ trait DataReceiverTrait {
 
     /**
      * @param \Traversable $Source
+     * @param bool $no_overwrite
      * @return $this
      */
-    public function fetchFrom(\Traversable $Source) {
+    public function fetchFrom(\Traversable $Source, $no_overwrite = false) {
         foreach ($Source as $key => $value) {
+            if ($no_overwrite && array_key_exists($key, $this->getDataArrayPtr())) {
+                continue;
+            }
             $this->set($key, $value);
         }
         return $this;
@@ -61,10 +69,14 @@ trait DataReceiverTrait {
 
     /**
      * @param array $source
+     * @param bool $no_overwrite
      * @return $this
      */
-    public function fetchFromArray(array $source) {
+    public function fetchFromArray(array $source, $no_overwrite = false) {
         foreach ($source as $key => $value) {
+            if ($no_overwrite && array_key_exists($key, $this->getDataArrayPtr())) {
+                continue;
+            }
             $this->set($key, $value);
         }
         return $this;
@@ -174,7 +186,7 @@ trait DataReceiverTrait {
     }
 
     /**
-     * @param callable $applier
+     * @param callable $applier must return false if should not taint
      * @throws \LogicException
      */
     protected function changeWith(Callable $applier) {

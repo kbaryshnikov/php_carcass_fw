@@ -1,12 +1,12 @@
 <?php
 
 use \Carcass\Corelib;
-use \Carcass\Corelib\Injector;
+use \Carcass\Corelib\DIContainer;
 
 class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
     
     public function testObjectDependency() {
-        $inj = new Injector;
+        $inj = new DIContainer;
         $inj->dep = function() {
             return new stdClass;
         };
@@ -14,13 +14,13 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testValueDependency() {
-        $inj = new Injector;
+        $inj = new DIContainer;
         $inj->dep = 'test';
         $this->assertEquals('test', $inj->dep);
     }
 
     public function testInstancesAreDifferent() {
-        $inj = new Injector;
+        $inj = new DIContainer;
         $inj->dep = function() {
             return new stdClass;
         };
@@ -28,7 +28,7 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testReusedInstancesAreSame() {
-        $inj = new Injector;
+        $inj = new DIContainer;
         $inj->dep = $inj->reuse(function() {
             return new stdClass;
         });
@@ -36,7 +36,7 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testUsingArguments() {
-        $inj = new Injector;
+        $inj = new DIContainer;
         $inj->flag = 1;
         $inj->dependency = function() {
             return new Dependency;
@@ -53,7 +53,7 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testUsingCallArguments() {
-        $inj = new Injector;
+        $inj = new DIContainer;
         $inj->dependency = function() {
             return new Dependency;
         };
@@ -67,7 +67,7 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testClosureDependency() {
-        $inj = new Injector;
+        $inj = new DIContainer;
         $closure = function() { return true; };
         $inj->setClosure('closure', $closure);
         $this->assertInstanceOf('Closure', $inj->closure);

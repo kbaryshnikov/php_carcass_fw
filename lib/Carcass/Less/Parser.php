@@ -22,6 +22,8 @@ namespace Carcass\Less;
  * @property mixed buffer
      * @property int line
      * @property mixed inExp
+     * @property null currentProperty
+     * @property mixed commentsSeen
      */
 
 // responsible for taking a string of LESS code and converting it into a
@@ -258,6 +260,7 @@ class Parser {
 
         // closing a block
         if ($this->literal('}', false)) {
+            $block = null;
             try {
                 $block = $this->pop();
             } catch (exception $e) {
@@ -1110,6 +1113,7 @@ class Parser {
     protected function genericList(&$out, $parseItem, $delim="", $flatten=true) {
         $s = $this->seek();
         $items = array();
+        $value = null;
         while ($this->$parseItem($value)) {
             $items[] = $value;
             if ($delim) {

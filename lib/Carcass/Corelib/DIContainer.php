@@ -31,7 +31,7 @@ use InvalidArgumentException;
  *
  * @package Carcass\Corelib
  */
-class Injector {
+class DIContainer {
 
     protected $registry = [];
 

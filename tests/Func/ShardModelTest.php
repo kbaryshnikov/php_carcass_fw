@@ -4,7 +4,7 @@
 
 use Carcass\Model;
 
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 use Carcass\Shard;
 

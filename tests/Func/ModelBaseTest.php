@@ -2,7 +2,7 @@
 
 use Carcass\Model;
 
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 class TestBaseModel extends Model\Base {
 
@@ -49,7 +49,7 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
 
     public function setUp() {
         init_app();
-        $this->Db = Injector::getConnectionManager()->getConnection(Injector::getConfigReader()->getPath('application.connections.database'));
+        $this->Db = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.database'));
         $this->Db->executeQuery('drop table if exists t');
         $this->Db->executeQuery('create table t (id integer auto_increment, email varchar(255) not null, primary key(id)) engine=innodb');
     }

@@ -13,13 +13,22 @@ use \Carcass\Connection\XaTransactionalConnectionInterface;
 use \Carcass\Connection\XaTransactionalConnectionTrait;
 use \Carcass\Connection\Dsn;
 use \Carcass\Corelib;
+use \Carcass\Application\DI;
+use \Carcass\DevTools;
 
 /**
- * MySQL Connection
+ * MySQL Connection.
+ *
+ * Uses the mysqli exception. Supports XA transactions.
+ *
  * @package Carcass\Mysql
  */
 class Connection implements ConnectionInterface, XaTransactionalConnectionInterface {
     use XaTransactionalConnectionTrait;
+    use DevTools\TimerTrait;
+    use Corelib\UniqueObjectIdTrait {
+        Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
+    }
 
     const DSN_TYPE = 'mysql';
 
@@ -44,7 +53,6 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     protected $last_result = null;
 
     protected $xa_state = self::XA_STATE_NON_EXISTING;
-    protected $connection_id = null;
 
     /**
      * @param \Carcass\Connection\Dsn $Dsn
@@ -87,10 +95,11 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
 
     /**
      * @param \mysqli_result $result
-     * @return bool
+     * @return array|null
      */
     public function fetch(\mysqli_result $result = null) {
-        return $this->getResult($result)->fetch_assoc() ? : false;
+        $result = $this->getResult($result)->fetch_assoc();
+        return $result === false ? null : $result;
     }
 
     /**
@@ -132,7 +141,8 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     public function close() {
         $result = true;
         if ($this->Connection) {
-            $result           = $this->Connection->close();
+            $result = $this->Connection->close();
+
             $this->Connection = null;
         }
         return $result;
@@ -153,17 +163,18 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
         return $this->getConnection()->escape_string($s);
     }
 
-    protected function getConnectionId() {
-        if (null === $this->connection_id) {
-            $this->connection_id = Corelib\UniqueId::generate();
-        }
-        return $this->connection_id;
-    }
-
     protected function doExecuteXaQuery($xa_query) {
         $this->doExecuteQuery(
-            str_replace('#', "'" . $this->escapeString($this->connection_id . '_' . $this->getTransactionId()) . "'", $xa_query)
+            str_replace(
+                '#',
+                "'" . $this->escapeString($this->getXaId()) . "'",
+                $xa_query
+            )
         );
+    }
+
+    protected function getXaId() {
+        return $this->getConnectionId() . '_' . $this->getTransactionId();
     }
 
     protected function endXa() {
@@ -256,29 +267,51 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
      * @return \mysqli
      */
     protected function createConnectionByCurrentDsn() {
-        $Connection = new \mysqli(
-            $this->Dsn->get('hostname', null),
-            $this->Dsn->get('user', null),
-            $this->Dsn->get('password', null),
-            $this->Dsn->get('name', null),
-            $this->Dsn->get('port', null),
-            $this->Dsn->get('socket', null)
+        return $this->develCollectExecutionTime(
+            'connect: ' . $this->Dsn,
+            function () {
+                $Connection = new \mysqli(
+                    $this->Dsn->get('hostname', null),
+                    $this->Dsn->get('user', null),
+                    $this->Dsn->get('password', null),
+                    $this->Dsn->get('name', null),
+                    $this->Dsn->get('port', null),
+                    $this->Dsn->get('socket', null)
+                );
+                $Connection->set_charset($this->Dsn->args->get('charset', 'utf8'));
+                return $Connection;
+            }
         );
-        $Connection->set_charset($this->Dsn->args->get('charset', 'utf8'));
-        return $Connection;
     }
 
     /**
      * @param $query
-     * @return bool|\mysqli_result
      * @throws \RuntimeException
+     * @throws \Exception
+     * @return bool|\mysqli_result
      */
     protected function doExecuteQuery($query) {
-        $result = $this->getConnection()->query($query);
+        $Connection = $this->getConnection();
+
+        $result = $this->develCollectExecutionTime(
+            $query, function () use ($query, $Connection) {
+                return $Connection->query($query);
+            }
+        );
+
         if ($result === false) {
             throw new \RuntimeException(__CLASS__ . ' error #' . $this->getConnection()->errno . ': ' . $this->getConnection()->error);
         }
+
         return $this->last_result = $result;
+    }
+
+    protected function develGetTimerGroup() {
+        return 'mysql';
+    }
+
+    protected function develGetTimerMessage($message) {
+        return sprintf('[%s] %s', $this->getConnectionId(), $message);
     }
 
 }

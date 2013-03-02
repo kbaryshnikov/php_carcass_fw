@@ -18,7 +18,6 @@ use Carcass\Corelib;
  */
 class Mysql_Server extends Corelib\Hash {
 
-    public $super_username;
     protected $cache = [];
 
     /**
@@ -32,15 +31,17 @@ class Mysql_Server extends Corelib\Hash {
 
         if (!isset($this->cache[$super])) {
             if ($super) {
-                $pw = [ 'user' => $this->super_username, 'password' => $this->super_password ];
+                $pw = ['user' => $this->super_username, 'pass' => $this->super_password];
             } else {
-                $pw = [ 'user' => $this->username, 'password' => $this->password ];
+                $pw = ['user' => $this->username, 'pass' => $this->password];
             }
-            $this->cache[$super] = Connection\Dsn::constructByTokens(new Corelib\Hash($pw + [
-                'type'      => 'mysql',
-                'hostname'  => $this->ip_address,
-                'port'      => $this->port ?: null,
-            ]));
+            $this->cache[$super] = Connection\Dsn::constructByTokensArray(
+                $pw + [
+                    'scheme' => 'mysql',
+                    'host'   => $this->ip_address,
+                    'port'   => $this->port ? : null,
+                ]
+            );
         }
 
         $Dsn = $this->cache[$super];
@@ -58,6 +59,18 @@ class Mysql_Server extends Corelib\Hash {
      */
     public function getSuperDsn() {
         return $this->getDsn(true);
+    }
+
+    /**
+     * @return int
+     * @throws \LogicException
+     */
+    public function getId() {
+        $server_id = $this->get('database_server_id');
+        if (!$server_id) {
+            throw new \LogicException('database_server_id is undefined');
+        }
+        return (int)$server_id;
     }
 
     /**

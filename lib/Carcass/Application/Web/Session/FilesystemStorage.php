@@ -71,7 +71,7 @@ class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
             try {
                 return (array)unserialize(file_get_contents($file));
             } catch (\Exception $e) {
-                Injector::getLogger()->logException($e);
+                DI::getLogger()->logException($e);
             }
         }
         return [];
@@ -127,7 +127,7 @@ class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
                     unlink($file);
                 }
             } catch (\Exception $e) {
-                Injector::getLogger()->logException($e, 'Warning');
+                DI::getLogger()->logException($e, 'Warning');
             }
         }
     }

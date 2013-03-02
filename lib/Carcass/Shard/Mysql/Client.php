@@ -9,10 +9,15 @@
 namespace Carcass\Shard;
 
 use Carcass\Mysql;
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 /**
  * Shard mysql client
+ *
+ * @method int getAffectedRows()
+ * @method int getLastInsertId()
+ * @method string escapeString()
+ * @method string getDsn()
  *
  * @package Carcass\Shard
  */
@@ -35,11 +40,10 @@ class Mysql_Client extends Mysql\Client {
      */
     public function __construct(UnitInterface $Unit, Mysql_QueryParser $QueryParser = null) {
         $this->Unit = $Unit;
-        /** @noinspection PhpParamsInspection */
-        parent::__construct(
-            Injector::getConnectionManager()->getConnection($Unit->getShard()->getDsn()),
-            $QueryParser
-        );
+
+        /** @var $Connection Mysql\Connection */
+        $Connection = DI::getConnectionManager()->getConnection($Unit->getShard()->getDsn());
+        parent::__construct($Connection, $QueryParser);
     }
 
     /**
@@ -64,23 +68,25 @@ class Mysql_Client extends Mysql\Client {
      * @return mixed
      */
     public function getSequenceNextValue($sequence_name, $initial_value = 1) {
-        return $this->doInTransaction(function() use ($sequence_name) {
-            $this->query(
-                "INSERT INTO {{ t(table_name) }}
-                {{ set() }}
-                    name = {{ s(sequence_name) }},
-                    value = {{ i(initial_value) }}
-                ON DUPLICATE KEY UPDATE
-                    value = value + 1
-                ",
-                [
-                    'table_name' => $this->sequence_table_name,
-                    'sequence_name' => $sequence_name,
-                    'initial_value' => $initial_value,
-                ]
-            );
-            return $this->getSequenceCurrentValue($sequence_name);
-        });
+        return $this->doInTransaction(
+            function () use ($sequence_name, $initial_value) {
+                $this->query(
+                    "INSERT INTO {{ t(table_name) }}
+                    {{ set() }}
+                        name = {{ s(sequence_name) }},
+                        value = {{ i(initial_value) }}
+                    ON DUPLICATE KEY UPDATE
+                        value = value + 1
+                    ",
+                    [
+                        'table_name'    => $this->sequence_table_name,
+                        'sequence_name' => $sequence_name,
+                        'initial_value' => $initial_value,
+                    ]
+                );
+                return $this->getSequenceCurrentValue($sequence_name);
+            }
+        );
     }
 
     /**
@@ -96,7 +102,7 @@ class Mysql_Client extends Mysql\Client {
             {{ where() }}
                 name = {{ s(sequence_name) }}",
             [
-                'table_name' => $this->sequence_table_name,
+                'table_name'    => $this->sequence_table_name,
                 'sequence_name' => $sequence_name,
             ]
         );
@@ -117,9 +123,9 @@ class Mysql_Client extends Mysql\Client {
                 value = {{ i(value) }}
             ",
             [
-                'table_name' => $this->sequence_table_name,
+                'table_name'    => $this->sequence_table_name,
                 'sequence_name' => $sequence_name,
-                'value' => $value,
+                'value'         => $value,
             ]
         );
         return $this;

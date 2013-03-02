@@ -34,7 +34,7 @@ trait Web_Session_ControllerTrait {
          * @var \Carcass\Application\Web_Session_StorageInterface $Storage
          */
         $Storage = null;
-        $SessionConfig = Injector::getConfigReader()->getPath('web.session');
+        $SessionConfig = DI::getConfigReader()->getPath('web.session');
         if ($SessionConfig && $storage_class = $SessionConfig->getPath('storage.class')) {
             $Storage = Corelib\ObjectTools::construct(
                 Corelib\ObjectTools::resolveRelativeClassName($storage_class, __NAMESPACE__ . '\Web_Session_'),

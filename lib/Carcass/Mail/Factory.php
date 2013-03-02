@@ -8,7 +8,7 @@
 
 namespace Carcass\Mail;
 
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 /**
  * Mail Factory
@@ -41,7 +41,7 @@ class Factory {
      * @return Sender_Interface
      */
     public static function createSenderForCurrentConfig($type = null) {
-        $config = Injector::getConfigReader()->get('mail');
+        $config = DI::getConfigReader()->get('mail');
         if (!$config) {
             throw new \RuntimeException('mail configuration missing');
         }

@@ -226,7 +226,7 @@ class Web_Response extends Corelib\Response {
             throw new \LogicException("Headers already sent");
         }
         header(Http\Definitions::getStatusHeader($this->status, $this->http_protocol));
-        if ($this->redirect && static::isRedirectStatus($status)) {
+        if ($this->redirect && static::isRedirectStatus($this->status)) {
             header('Location: ' . $this->redirect);
         }
         foreach ($this->headers as $name => $values) {

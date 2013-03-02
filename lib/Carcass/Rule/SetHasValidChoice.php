@@ -29,7 +29,7 @@ class SetHasValidChoice extends Base {
         if (!$Field instanceof Field\Multiselect) {
             return false;
         }
-        return $this->validate(['selected_values' => $Field->getValue(), 'allowed_values' => $Field->getSetValues()]);
+        return $this->validate(['selected_values' => $Field->getValue(), 'allowed_values' => $Field->getMultiselectValues()]);
     }
 
     /**
@@ -37,7 +37,8 @@ class SetHasValidChoice extends Base {
      * @return bool
      */
     public function validate($values) {
-        extract($values);
+        $selected_values = $values['selected_values'];
+        $allowed_values  = $values['allowed_values'];
         if (null === $selected_values) {
             return true;
         }

@@ -2,7 +2,7 @@
 
 use Carcass\Query;
 
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
 
@@ -10,8 +10,8 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
 
     public function setUp() {
         init_app();
-        $this->Db = Injector::getConnectionManager()->getConnection(Injector::getConfigReader()->getPath('application.connections.database'));
-        $this->Mc = Injector::getConnectionManager()->getConnection(Injector::getConfigReader()->getPath('application.connections.memcached'));
+        $this->Db = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.database'));
+        $this->Mc = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.memcached'));
         $this->Mc->flush();
     }
 

@@ -65,7 +65,7 @@ class Timer {
      * @return bool
      */
     public function isRunning() {
-        return null === $this->start_time;
+        return null !== $this->start_time;
     }
 
     /**

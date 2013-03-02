@@ -46,7 +46,7 @@ class Web_Session_Factory {
         $Args = $StorageConfig->get('args', new Corelib\Hash);
 
         if ($type instanceof \Closure) {
-            return $type(Injector::getInstance(), $Args);
+            return $type(DI::getInstance(), $Args);
         }
 
         $method = 'assemble' . $type . 'Storage';

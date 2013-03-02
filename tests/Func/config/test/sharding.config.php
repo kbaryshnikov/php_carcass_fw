@@ -9,4 +9,11 @@ return [
 
     'shard_dbname_prefix' => 'TestShardDb',
 
+    'server_defaults' => [
+        'username' => 'test',
+        'password' => 'test',
+        'super_username' => 'root',
+        'super_password' => '890p',
+    ]
+
 ];

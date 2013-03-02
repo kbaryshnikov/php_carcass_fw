@@ -34,7 +34,7 @@ class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
         $this->setConnection(
             $memcache_connection_or_dsn instanceof Memcached\Connection
                 ? $memcache_connection_or_dsn
-                : Injector::getConnectionManager()->getConnection($memcache_connection_or_dsn)
+                : DI::getConnectionManager()->getConnection($memcache_connection_or_dsn)
         );
     }
 

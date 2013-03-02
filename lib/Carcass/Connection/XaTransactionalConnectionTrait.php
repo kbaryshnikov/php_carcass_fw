@@ -43,6 +43,7 @@ trait XaTransactionalConnectionTrait {
                 break;
         }
         if (!$local && $this->ConnectionManager) {
+            /** @noinspection PhpUndefinedMethodInspection */
             $this->ConnectionManager->vote($this);
         }
         return true;

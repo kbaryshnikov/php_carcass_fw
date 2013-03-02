@@ -15,11 +15,6 @@ namespace Carcass\Shard;
 interface UnitInterface {
 
     /**
-     * @return $this
-     */
-    public function initializeShard();
-
-    /**
      * @param $id
      * @return bool
      */
@@ -42,9 +37,10 @@ interface UnitInterface {
 
     /**
      * @param ShardInterface $Shard
+     * @param bool $must_initialize_shard
      * @return $this
      */
-    public function setShard(ShardInterface $Shard);
+    public function setShard(ShardInterface $Shard, $must_initialize_shard = false);
 
     /**
      * @return \Carcass\Memcached\Connection

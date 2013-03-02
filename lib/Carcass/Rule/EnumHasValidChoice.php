@@ -23,9 +23,13 @@ class EnumHasValidChoice extends Base {
 
     /**
      * @param \Carcass\Field\FieldInterface $Field
+     * @throws \InvalidArgumentException
      * @return bool
      */
     protected function validateFieldValue(Field\FieldInterface $Field) {
+        if (!$Field instanceof Field\Enum) {
+            return false;
+        }
         return $this->validate(['value' => $Field->getValue(), 'allowed_values' => $Field->getEnumValues()]);
     }
 

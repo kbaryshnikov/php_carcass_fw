@@ -16,8 +16,9 @@ interface ImportableInterface {
 
     /**
      * @param \Traversable|array $data
+     * @param bool $no_overwrite
      * @return $this
      */
-    public function import(/* Traversable */ $data);
+    public function import(/* Traversable */ $data, $no_overwrite = false);
 
 }

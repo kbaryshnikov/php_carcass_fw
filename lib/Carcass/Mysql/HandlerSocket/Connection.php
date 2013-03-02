@@ -11,6 +11,7 @@ namespace Carcass\Mysql;
 use \Carcass\Connection\ConnectionInterface;
 use \Carcass\Connection\Dsn;
 use \Carcass\Corelib;
+use \Carcass\DevTools;
 
 /**
  * MySQL HandlerSocket Connection.
@@ -19,11 +20,15 @@ use \Carcass\Corelib;
  * @package Carcass\Mysql
  */
 class HandlerSocket_Connection implements ConnectionInterface {
+    use DevTools\TimerTrait;
+    use Corelib\UniqueObjectIdTrait {
+    Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
+    }
 
     const
-        DEFAULT_PORT = 9998,
-        CONN_TIMEOUT = 1,
-        SOCK_TIMEOUT = 1,
+        DEFAULT_PORT    = 9998,
+        CONN_TIMEOUT    = 1,
+        SOCK_TIMEOUT    = 1,
         SOCK_TIMEOUT_MS = 0;
 
     /**
@@ -75,8 +80,8 @@ class HandlerSocket_Connection implements ConnectionInterface {
         if ($this->socket !== null) {
             fclose($this->socket);
             $this->next_dbname = null;
-            $this->indexes = array();
-            $this->socket = null;
+            $this->indexes     = array();
+            $this->socket      = null;
         }
     }
 
@@ -116,7 +121,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
         }
         $dbname = null;
         if (null !== $this->next_dbname) {
-            $dbname = $this->next_dbname;
+            $dbname            = $this->next_dbname;
             $this->next_dbname = null;
         }
         if (null === $dbname) {
@@ -143,9 +148,16 @@ class HandlerSocket_Connection implements ConnectionInterface {
         if ($Index) {
             $this->ensureIndexIsOpened($Index);
         }
-        $query = join("\t", $tokens);
-        fwrite($this->h(), $query . "\n");
-        $result = explode("\t", rtrim($raw_response = fgets($this->h())));
+        $query  = join("\t", $tokens);
+        $h = $this->h();
+        $result = $this->develCollectExecutionTime(
+            $query,
+            function () use ($h, $query, &$raw_response) {
+                fwrite($h, $query . "\n");
+                $result = explode("\t", rtrim($raw_response = fgets($h)));
+                return $result;
+            }
+        );
         if (!is_array($result) || !isset($result[0])) {
             throw new \LogicException("Malformed HandlerSocket response: " . $raw_response);
         }
@@ -155,7 +167,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
         } else {
             $this->last_error = $result;
             if ($this->exception_on_errors) {
-                throw new \RuntimeException("Query [" . join(' ', $tokens) . "] failed: [" 
+                throw new \RuntimeException("Query [" . join(' ', $tokens) . "] failed: ["
                     . join(" ", $this->last_error) . "]");
             }
             return false;
@@ -178,23 +190,41 @@ class HandlerSocket_Connection implements ConnectionInterface {
 
     protected function h() {
         if (null === $this->socket) {
-            if ($this->Dsn->has('socket')) {
-                $this->socket = fsockopen('unix://' . $this->Dsn->socket, null, $errno, $errstr);
-            } else {
-                $this->socket = fsockopen(
-                    $this->Dsn->get('hostname') ?: 'localhost',
-                    $this->Dsn->get('port') ?: static::DEFAULT_PORT,
-                    $errno,
-                    $errstr,
-                    static::CONN_TIMEOUT
-                );
-            }
-            stream_set_timeout($this->socket, static::SOCK_TIMEOUT, static::SOCK_TIMEOUT_MS);
-        }
-        if (null === $this->socket) {
-            throw new \RuntimeException("Connection to {$this->Dsn} failed");
+            $this->connect();
         }
         return $this->socket;
+    }
+
+    protected function connect() {
+        $this->socket = $this->develCollectExecutionTime(
+            'connect: ' . $this->Dsn,
+            function () {
+                if ($this->Dsn->has('socket')) {
+                    $socket = fsockopen('unix://' . $this->Dsn->socket, null, $errno, $errstr);
+                } else {
+                    $socket = fsockopen(
+                        $this->Dsn->get('hostname') ? : 'localhost',
+                        $this->Dsn->get('port') ? : static::DEFAULT_PORT,
+                        $errno,
+                        $errstr,
+                        static::CONN_TIMEOUT
+                    );
+                }
+                if (!$socket) {
+                    throw new \RuntimeException("Connection to " . $this->Dsn . " failed: error #$errno '$errstr'");
+                }
+                return $socket;
+            }
+        );
+        stream_set_timeout($this->socket, static::SOCK_TIMEOUT, static::SOCK_TIMEOUT_MS);
+    }
+
+    protected function develGetTimerGroup() {
+        return 'hs';
+    }
+
+    protected function develGetTimerMessage($message) {
+        return sprintf('[%s] %s', $this->getConnectionId(), $message);
     }
 
 }

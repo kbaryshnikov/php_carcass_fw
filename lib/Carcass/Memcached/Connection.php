@@ -14,10 +14,16 @@ use Carcass\Connection\TransactionalConnectionTrait;
 use Carcass\Connection\Dsn;
 use Carcass\Connection\DsnPool;
 use Carcass\Corelib;
+use Carcass\DevTools;
 
 /**
- * Memcached connection and client.
- * Uses pecl/memcache.
+ * Memcached client.
+ *
+ * Requires pecl/memcache 3.0+.
+ *
+ * Implements TransactionalConnectionInterface by supporting pseudo-transactions:
+ * when a "transaction" is running, write calls are collected to internal queue
+ * and executed on commit.
  *
  * @method mixed add()
  * @method mixed cas()
@@ -36,8 +42,12 @@ use Carcass\Corelib;
  */
 class Connection implements PoolConnectionInterface, TransactionalConnectionInterface {
     use TransactionalConnectionTrait;
+    use DevTools\TimerTrait;
+    use Corelib\UniqueObjectIdTrait {
+    Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
+    }
 
-    protected static $mc_calls = [
+    protected static $mc_methods = [
         // name            => delay on transaction
         'add'              => true,
         'cas'              => true,
@@ -106,25 +116,33 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     }
 
     /**
-     * Calls the required $method with varargs. If a method fails, LogicException is thrown.
+     * Calls the required $method with varargs.
+     * If the call fails, LogicException is thrown.
+     * Usable with pseudo-transactions to enqueue calls which must cause rollback on failure.
+     *
      * @param $method
-     * @return bool|mixed
+     * @return mixed
      * @throw \LogicException
      */
-    public function callRequired(/** @noinspection PhpUnusedParameterInspection */ $method /* ... */) {
+    public function callRequired($method /* ... */) {
         $args = func_get_args();
-        return $this->dispatch(array_shift($args), $args, true);
+        array_shift($args);
+        return $this->dispatch($method, $args, true);
     }
 
     /**
-     * Executes a raw pecl/memcached call
+     * Executes a raw pecl/memcached call.
+     * When outside a transaction, identical to normal call.
+     * When inside a transaction, bypasses the pseudo-transaction commands queue
+     * and executes the memcached $method immediately.
      *
      * @param string $method
      * @return mixed
      */
-    public function callRaw(/** @noinspection PhpUnusedParameterInspection */ $method /* ... */) {
+    public function callRaw($method /* ... */) {
         $args = func_get_args();
-        return $this->dispatch(array_shift($args), $args, false, true);
+        array_shift($args);
+        return $this->dispatch($method, $args, false, true);
     }
 
     /**
@@ -134,9 +152,10 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
      * @return mixed
      * @throw \LogicException
      */
-    public function callRawRequired(/** @noinspection PhpUnusedParameterInspection */ $method /* ... */) {
+    public function callRawRequired($method /* ... */) {
         $args = func_get_args();
-        return $this->dispatch(array_shift($args), $args, true, true);
+        array_shift($args);
+        return $this->dispatch($method, $args, true, true);
     }
 
     /**
@@ -186,28 +205,39 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
      * @throws \BadMethodCallException
      */
     protected function dispatch($method, array $args, $is_required = false, $no_delay = false) {
-        if (!isset(static::$mc_calls[$method])) {
+        if (!isset(static::$mc_methods[$method])) {
             throw new \BadMethodCallException("Invalid method call: '$method'");
         }
+
         if (!$no_delay) {
             $this->triggerScheduledTransaction();
         }
-        if (!$no_delay && $this->delay_mode && true == static::$mc_calls[$method]) {
+
+        if (!$no_delay && $this->delay_mode && true == static::$mc_methods[$method]) {
             $this->delayed_calls[] = [$method, $args, $is_required];
-            $result                = true;
-        } else {
-            $result = call_user_func_array([$this->getMc(), $method], $args);
-            if (false === $result && $is_required) {
-                throw new \LogicException("Required call {$method}() returned false");
-            }
+            return true;
         }
+
+        $MemcachedInstance = $this->getMemcachedInstance();
+
+        $result = $this->develCollectExecutionTime(
+            $method . (isset($args[0]) ? ' ' . json_encode($args[0]) : ''),
+            function () use ($MemcachedInstance, $method, $args) {
+                return call_user_func_array([$this->getMemcachedInstance(), $method], $args);
+            }
+        );
+
+        if (false === $result && $is_required) {
+            throw new \LogicException("Required call {$method}() returned false");
+        }
+
         return $result;
     }
 
     /**
      * @return \Memcache
      */
-    protected function getMc() {
+    protected function getMemcachedInstance() {
         if (null === $this->MemcachedInstance) {
             $this->MemcachedInstance = $this->assembleMemcachedInstance();
         }
@@ -297,4 +327,11 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         return $Mc;
     }
 
+    protected function develGetTimerGroup() {
+        return 'memcached';
+    }
+
+    protected function develGetTimerMessage($message) {
+        return sprintf('[%s] %s', $this->getConnectionId(), $message);
+    }
 }

@@ -11,7 +11,7 @@ namespace Carcass\Query;
 use Carcass\Corelib;
 use Carcass\Memcached\TaggedCache;
 use Carcass\Memcached\Key as MemcachedKey;
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 /**
  * Memcached query, with tags support
@@ -199,14 +199,14 @@ class Memcached extends Base {
      * @return \Carcass\Connection\ConnectionInterface
      */
     protected function assembleMemcachedConnection() {
-        return Injector::getConnectionManager()->getConnection($this->getMemcachedDsn());
+        return DI::getConnectionManager()->getConnection($this->getMemcachedDsn());
     }
 
     /**
      * @return \Carcass\Config\ItemInterface|null|string
      */
     protected function getMemcachedDsn() {
-        return $this->mc_dsn ?: Injector::getConfigReader()->getPath('application.connections.memcached');
+        return $this->mc_dsn ?: DI::getConfigReader()->getPath('application.connections.memcached');
     }
 
     /**

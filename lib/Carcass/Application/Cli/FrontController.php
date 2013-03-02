@@ -50,8 +50,8 @@ class Cli_FrontController implements ControllerInterface {
         try {
             $this->Router->route($this->Request, $this);
         } catch (\Exception $e) {
-            Injector::getLogger()->logException($e);
-            Injector::getDebugger()->dumpException($e);
+            DI::getLogger()->logException($e);
+            DI::getDebugger()->dumpException($e);
             $this->Response->setStatus(self::INTERNAL_ERROR);
         }
         exit($this->Response->getStatus());
@@ -69,7 +69,7 @@ class Cli_FrontController implements ControllerInterface {
         $script_class = "{$controller}Script";
 
         try {
-            include_once Injector::getPathManager()->getPathToPhpFile('scripts', $script_class);
+            include_once DI::getPathManager()->getPathToPhpFile('scripts', $script_class);
         } catch (WarningException $e) {
             $this->Response->setStatus(self::INPUT_ERROR)->writeErrorLn("Could not load '$script_class' implementation file: " . $e->getMessage());
             return;

@@ -54,6 +54,18 @@ class Dsn extends Corelib\Hash implements DsnInterface {
     }
 
     /**
+     * Constructs Dsn from tokens array (see the parseDsnTokens() implementation for details)
+     *
+     * @param array $tokens
+     * @return Dsn
+     */
+    public static function constructByTokensArray(array $tokens) {
+        /** @var $self Dsn */
+        $self = new static;
+        return $self->parseDsnTokens(new Corelib\Hash($tokens));
+    }
+
+    /**
      * @return string|null
      */
     public function getType() {

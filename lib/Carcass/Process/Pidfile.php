@@ -8,7 +8,7 @@
 
 namespace Carcass\Process;
 
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 use Carcass\Fs;
 
 /**
@@ -55,13 +55,13 @@ class Pidfile {
      */
     public function check($pid = null) {
         if (!file_exists($this->pidfile)) {
-            Injector::getLogger()->logEvent('Debug', $this->basename . ': Pidfile ' . $this->pidfile . ' not exists');
+            DI::getLogger()->logEvent('Debug', $this->basename . ': Pidfile ' . $this->pidfile . ' not exists');
             return null;
         }
 
         /** @noinspection PhpUsageOfSilenceOperatorInspection */
         if (0 >= $file_pid = (int)@file_get_contents($this->pidfile)) {
-            Injector::getLogger()->logEvent('Debug', $this->basename . ': Pidfile ' . $this->pidfile . ' has no pid');
+            DI::getLogger()->logEvent('Debug', $this->basename . ': Pidfile ' . $this->pidfile . ' has no pid');
             return null;
         }
 
@@ -70,7 +70,7 @@ class Pidfile {
         }
 
         if (false !== $pid && $pid == $file_pid) {
-            Injector::getLogger()->logEvent('Debug', $this->basename . ': Saved pid #' . $file_pid . ' matches current pid #' . $pid);
+            DI::getLogger()->logEvent('Debug', $this->basename . ': Saved pid #' . $file_pid . ' matches current pid #' . $pid);
             return null;
         }
 
@@ -79,7 +79,7 @@ class Pidfile {
             return $file_pid;
         }
 
-        switch (posix_get_last_error()) {
+        switch ($errno = posix_get_last_error()) {
             case self::ERR_ESRCH:
             case self::ERR_EPERM:
                 /** @noinspection PhpUsageOfSilenceOperatorInspection */
@@ -87,7 +87,7 @@ class Pidfile {
                 return null;
                 break;
             default:
-                Injector::getLogger()->logEvent('Notice', $this->basename . ': kill(' . $file_pid . ',0) errno is ' . $errno . '; assuming the process is running');
+                DI::getLogger()->logEvent('Notice', $this->basename . ': kill(' . $file_pid . ',0) errno is ' . $errno . '; assuming the process is running');
                 return $file_pid;
         }
     }

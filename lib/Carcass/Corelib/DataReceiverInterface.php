@@ -17,14 +17,16 @@ interface DataReceiverInterface {
 
     /**
      * @param \Traversable $Source
+     * @param bool $no_overwrite
      * @return mixed
      */
-    public function fetchFrom(\Traversable $Source);
+    public function fetchFrom(\Traversable $Source, $no_overwrite = false);
 
     /**
      * @param array $source
+     * @param bool $no_overwrite
      * @return mixed
      */
-    public function fetchFromArray(array $source);
+    public function fetchFromArray(array $source, $no_overwrite = false);
 
 }

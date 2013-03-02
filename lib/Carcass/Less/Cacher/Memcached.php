@@ -10,7 +10,7 @@ namespace Carcass\Less;
 
 use Carcass\Memcached;
 use Carcass\Connection;
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 /**
  * Memcached LESS cacher
@@ -37,7 +37,7 @@ class Cacher_Memcached implements Cacher_Interface {
         $this->setConnection(
             $memcache_connection_or_dsn instanceof Memcached\Connection
                 ? $memcache_connection_or_dsn
-                : Injector::getConnectionManager()->getConnection($memcache_connection_or_dsn)
+                : DI::getConnectionManager()->getConnection($memcache_connection_or_dsn)
         );
         $this->setKeyPrefix($key_prefix ?: self::DEFAULT_KEY_PREFIX);
     }

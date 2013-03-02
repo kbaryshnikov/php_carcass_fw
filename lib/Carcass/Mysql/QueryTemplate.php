@@ -3,13 +3,11 @@
 namespace Carcass\Mysql;
 
 use Carcass\Corelib;
-use /** @noinspection PhpUndefinedClassInspection */
-    Carcass\Corelib\StringTemplate;
+use  Carcass\Corelib\StringTemplate;
 use Carcass\Corelib\ArrayTools;
 use Carcass\Corelib\TimeTools;
 use Carcass\Corelib\Assert;
 
-/** @noinspection PhpUndefinedClassInspection */
 class QueryTemplate extends StringTemplate {
 
     protected
@@ -19,8 +17,7 @@ class QueryTemplate extends StringTemplate {
         $time_format     = 'H:i:s',
         $datetime_format = 'Y-m-d H:i:s';
 
-    public function __construct($QueryParser, $template) {
-        /** @noinspection PhpUndefinedClassInspection */
+    public function __construct(QueryParser $QueryParser, $template) {
         parent::__construct();
         $this->QueryParser = $QueryParser;
         $this->load($template);
@@ -167,7 +164,6 @@ class QueryTemplate extends StringTemplate {
         if ($globals) {
             $this->setGlobals($globals);
         }
-        /** @noinspection PhpUndefinedClassInspection */
         return parent::parse($args);
     }
 

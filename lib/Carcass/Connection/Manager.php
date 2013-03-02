@@ -10,7 +10,7 @@ namespace Carcass\Connection;
 
 /**
  * Connections and transactions manager.
- * Registered in Injector as ConnectionManager during the application instance bootstrapping process.
+ * Registered in DI as ConnectionManager during the application instance bootstrapping process.
  *
  * @package Carcass\Connection
  */

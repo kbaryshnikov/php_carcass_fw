@@ -226,11 +226,11 @@ class TaggedCache {
             }
             $mc_item = $mc_result[$key];
             if (!is_array($mc_item)) {
-                Corelib\Injector::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' is not an array");
+                Corelib\DIContainer::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' is not an array");
                 continue;
             }
             if (!isset($mc_item[self::SUBKEY_TAGS], $mc_item[self::SUBKEY_DATA]) || !is_array($mc_item[self::SUBKEY_TAGS])) {
-                Corelib\Injector::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' has broken structure");
+                Corelib\DIContainer::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' has broken structure");
             }
             $key_tag_values = $mc_item[self::SUBKEY_TAGS];
             foreach ($tag_values as $tag_key => $tag_value) {
@@ -259,6 +259,7 @@ class TaggedCache {
         $tag_keys = $this->getAllTagKeys($args);
 
         $tags = [];
+        $mc_set = [];
 
         foreach ([self::TAG_HARD, self::TAG_SOFT] as $importance) {
             foreach ($tag_keys[$importance] as $tag) {

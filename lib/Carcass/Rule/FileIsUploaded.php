@@ -37,7 +37,8 @@ class FileIsUploaded extends Base {
      * @return bool
      */
     public function validate($values) {
-        extract($values);
+        $value = $values['value'];
+        $data = $values['data'];
         if (null === $value) {
             return true;
         }

@@ -11,9 +11,11 @@ namespace Carcass\Mysql;
 /**
  * MySQL Client
  *
+ * Proxies missing methods to $Connection via __call:
  * @method int getAffectedRows()
  * @method int getLastInsertId()
  * @method string escapeString()
+ * @method string getDsn()
  *
  * @package Carcass\Mysql
  */
@@ -121,15 +123,15 @@ class Client {
      *                             where 1 = values are unique => do not create nested arrays;
      *                                   INF = values are not unique => create nested arrays;
      *                                   string field_name = create scalar value of field_name (must be the last group key)
-     * @return array|bool
+     * @return array|null
      */
     public function getAll($tpl, array $params = [], array $keys = []) {
-        if (false === ($h = $this->executeQueryTemplate($tpl, $params))) {
-            return false;
+        if (null === ($h = $this->executeQueryTemplate($tpl, $params))) {
+            return null;
         }
         $result = [];
         $num_keys = count($keys);
-        while (false !== ($row = $this->Connection->fetch($h))) {
+        while (null !== ($row = $this->Connection->fetch($h))) {
             if (!$num_keys) {
                 $result[] = $row;
             } else {
@@ -156,11 +158,11 @@ class Client {
      *
      * @param string $tpl
      * @param array $params
-     * @return array|bool
+     * @return array|null
      */
     public function getRow($tpl, array $params = []) {
-        if (false === ($h = $this->executeQueryTemplate($tpl, $params))) {
-            return false;
+        if (null === ($h = $this->executeQueryTemplate($tpl, $params))) {
+            return null;
         }
         $result = $this->Connection->fetch($h) ?: [];
         $this->Connection->freeResult($h);
@@ -173,12 +175,12 @@ class Client {
      * @param string $tpl
      * @param array $params
      * @param int|string $field_name_or_offset
-     * @return string|bool|null
+     * @return string|null
      */
     public function getCell($tpl, array $params = [], $field_name_or_offset = 0) {
         $result = $this->getRow($tpl, $params);
         if (!is_array($result)) {
-            return false;
+            return null;
         }
         if (is_numeric($field_name_or_offset)) {
             $result = array_values($result);
@@ -189,43 +191,40 @@ class Client {
     /**
      * Executes a query and returns:
      *
-     * $valcol == false -> array of ( $row[$column] )
-     *
-     * $valcol == true  -> array of ( $row[$column] => $row[$valcol] )
+     * $valcol is null  -> array of ( $row[$column] )
+     * else             -> array of ( $row[$column] => $row[$valcol] )
      *
      * @param string $tpl
      * @param array $params
-     * @param string|null $column
+     * @param string|null $column name, or, if null, first column
      * @param string|null $valcol
      * @throws \LogicException
-     * @return array|bool
+     * @return array|null
      */
     public function getCol($tpl, array $params = [], $column = null, $valcol = null) {
-        if (false === ($h = $this->executeQueryTemplate($tpl, $params))) {
-            return false;
+        if (null === ($h = $this->executeQueryTemplate($tpl, $params))) {
+            return null;
         }
-        $result = false;
+        $result = [];
         $row = $this->Connection->fetch($h);
-        if (!empty($row)) {
-            $row = (array)$row;
-            $result = [];
-            if (!empty($column)) {
+        if ($row) {
+            if (null !== $column) {
                 if (!array_key_exists($column, $row)) {
                     throw new \LogicException('Invalid column key "'.$column.'" in getCol()');
                 }
-                if (!empty($valcol) && !array_key_exists($valcol, $row)) {
+                if (null !== $valcol && !array_key_exists($valcol, $row)) {
                     throw new \LogicException('Invalid column "'.$valcol.'" in getCol()');
                 }
             }
             do {
-                if (empty($column)) {
+                if (null === $column) {
                     $result[] = reset($row);
-                } elseif (empty($valcol)) {
+                } elseif (null === $valcol) {
                     $result[] = $row[$column];
                 } else {
                     $result[$row[$column]] = $row[$valcol];
                 }
-            } while ($row = $this->Connection->fetch($h));
+            } while (null !== $row = $this->Connection->fetch($h));
         }
         $this->Connection->freeResult($h);
         return $result;

@@ -17,6 +17,10 @@ class Corelib_HashTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $Hash->get('a'));
         $this->assertEquals(2, $Hash->get('b')->get('a'));
         $this->assertEquals(3, $Hash->get('b')->get('b')->get('c'));
+
+        $Hash->import(['a' => 'overwritten', 'x' => 4], true);
+        $this->assertEquals(1, $Hash->get('a'));
+        $this->assertEquals(4, $Hash->get('x'));
     }
 
     public function testMerge() {

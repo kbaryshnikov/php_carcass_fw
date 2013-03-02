@@ -46,6 +46,10 @@ namespace Carcass\Less;
  * handling things like indentation.
  * @property mixed scope
  * @property mixed formatter
+ * @property mixed env
+ * @property mixed allParsedFiles
+ * @property mixed parser
+ * @property mixed formatterName
  */
 class Compiler {
     static public $VERSION = "v0.3.8";
@@ -1059,6 +1063,7 @@ class Compiler {
 
     protected function toHSL($color) {
         if ($color[0] == 'hsl') return $color;
+        $H = 0;
 
         $r = $color[1] / 255;
         $g = $color[2] / 255;

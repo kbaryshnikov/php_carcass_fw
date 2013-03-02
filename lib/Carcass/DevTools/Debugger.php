@@ -107,6 +107,16 @@ class Debugger {
     }
 
     /**
+     * @param string $group
+     * @param Timer $Timer
+     * @return $this
+     */
+    public function registerTimer($group, Timer $Timer) {
+        $this->timers[$group][] = $Timer;
+        return $this;
+    }
+
+    /**
      * @param bool $clean_stopped
      * @return $this
      */
@@ -119,7 +129,7 @@ class Debugger {
             foreach ($timers as $k => $Timer) {
                 /** @var Timer $Timer */
                 $value = $Timer->getValue();
-                $group_results[ sprintf('%03d) %0.8f', ++$i, $value ?: 0) ] = preg_replace('/\s+/', ' ', $Timer->getTitle());
+                $group_results[ sprintf('%3d: %0.8f', ++$i, $value ?: 0) ] = preg_replace('/\s+/', ' ', $Timer->getTitle());
                 if (null !== $value) {
                     $group_total += $value;
                 }
@@ -142,7 +152,7 @@ class Debugger {
      */
     public function truncate($string) {
         if (!isset($this->truncate)) {
-            $this->truncate = (int)Application\Injector::getConfigReader()->getPath('application.debug.truncate', self::TRUNCATE_DEFAULT) ?: 0;
+            $this->truncate = (int)Application\DI::getConfigReader()->getPath('application.debug.truncate', self::TRUNCATE_DEFAULT) ?: 0;
         }
 
         if ($this->truncate > 0 && mb_strlen($string) > $this->truncate) {
@@ -150,6 +160,10 @@ class Debugger {
         }
 
         return $string;
+    }
+
+    public function finalize() {
+        $this->dumpTimers(true);
     }
 
 }

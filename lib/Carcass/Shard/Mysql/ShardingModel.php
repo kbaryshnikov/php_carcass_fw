@@ -9,7 +9,7 @@
 namespace Carcass\Shard;
 
 use Carcass\Corelib;
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 use Carcass\Mysql;
 
 /**
@@ -40,18 +40,29 @@ class Mysql_ShardingModel {
 
     /**
      * Allocates shard for $Unit. Tries to find the best shard, or if there's no shard
-     * available, creates a new shard. Unit which received a new shard will be asked
-     * to initialize its tables by calling $Unit->initializeShard().
+     * available, creates a new shard.
+     *
+     * Unit->setShard($Shard, bool must_initialize_shard) unit method will be called.
+     * A unit must update its persistent state to know which shard has been allocated for it later.
+     * If must_initialize_shard is true, unit must initialize the shard (create tables etc).
      *
      * @param UnitInterface $Unit
+     * @return ShardInterface
      */
     public function allocateShard(UnitInterface $Unit) {
+        $must_initialize_shard = false;
+
         $Shard = $this->findBestShardForNewUnit();
-        if ($Shard) {
-            $Unit->setShard($Shard);
-        } else {
-            $this->allocateNewShard($Unit);
+
+        if (!$Shard) {
+            $Shard = $this->allocateNewShard();
+
+            $must_initialize_shard = true;
         }
+
+        $Unit->setShard($Shard, $must_initialize_shard);
+
+        return $Shard;
     }
 
     /**
@@ -74,112 +85,108 @@ class Mysql_ShardingModel {
     }
 
     /**
-     * @param UnitInterface $Unit
      * @return ShardInterface
      * @throws \RuntimeException
      * @throws \LogicException
      */
-    protected function allocateNewShard(UnitInterface $Unit) {
-        $shard_id = $this->doWithLockedTables(function() {
-            $Db = $this->getDb();
-            $server_id = $Db->getCell(
-                "SELECT
-                    SRV.database_server_id,
-                FROM
-                    DatabaseServers SRV
-                LEFT JOIN
-                    DatabaseShards DSH ON (
-                        DSH.database_server_id = SRV.database_server_id
-                    )
-                WHERE
-                    SRV.is_available = TRUE
-                GROUP BY
-                    SRV.database_server_id
-                ORDER BY
-                    COUNT(DSH.database_shard_id) / SRV.capacity
-                LIMIT 1"
-            );
-            if (!$server) {
-                throw new \RuntimeException("No server available for new shard was found");
+    protected function allocateNewShard() {
+        $shard_id = $this->doWithLockedTables(
+            function () {
+                $Db        = $this->getDb();
+                $server_id = $Db->getCell(
+                    "SELECT
+                        DatabaseServers.database_server_id
+                    FROM
+                        DatabaseServers
+                    LEFT JOIN
+                        DatabaseShards USING (database_server_id)
+                    WHERE
+                        DatabaseServers.is_available = TRUE
+                    GROUP BY
+                        DatabaseServers.database_server_id
+                    ORDER BY
+                        COUNT(DatabaseShards.database_shard_id) / DatabaseServers.capacity
+                    LIMIT 1"
+                );
+                if (!$server_id) {
+                    throw new \RuntimeException("No server available for new shard was found");
+                }
+
+                $Server = $this->getServerById($server_id);
+
+                if ($Server->databases_count < 1) {
+                    throw new \LogicException('databases_count is less than 1 for server #' . $server_id);
+                }
+
+                // there's no generate_series in mysql, so...
+                $db_idx_series = [];
+                foreach (range(1, $Server->databases_count) as $idx) {
+                    $db_idx_series[] = compact('idx');
+                }
+
+                $db_index_data = $Db->getRow(
+                    "SELECT
+                        SEQ.idx AS idx,
+                        COUNT(database_shard_id) AS shards_count
+                    FROM
+                        (
+                            {{ BEGIN SERIES }}
+                                SELECT {{ idx }} AS idx {{ UNLESS _last }} UNION {{ END }}
+                            {{ END }}
+                        ) AS SEQ
+                    LEFT JOIN
+                        DatabaseShards ON (database_idx = SEQ.idx AND database_server_id = {{ i(database_server_id) }})
+                    GROUP BY
+                        SEQ.idx
+                    ORDER BY
+                        COUNT(database_shard_id), SEQ.idx",
+                    [
+                        'database_server_id' => $server_id,
+                        'SERIES'             => $db_idx_series,
+                    ]
+                );
+                if (!$db_index_data) {
+                    throw new \RuntimeException("Could not fetch db index data for server #" . $server['database_server_id']);
+                }
+
+                $db_name = $this->Manager->getShardDbNameByIndex($db_index_data['idx']);
+
+                if ($db_index_data['shards_count'] == 0) {
+                    /** @noinspection PhpParamsInspection */
+                    $SuperDb = new Mysql\Client(DI::getConnectionManager()->getConnection($Server->getSuperDsn()));
+                    $SuperDb->query("CREATE DATABASE IF NOT EXISTS {{ name(db_name) }}", compact('db_name'));
+                    $SuperDb->query(
+                        "GRANT ALL PRIVILEGES ON {{ name(db_name) }}.* TO {{ s(username) }}@'%' IDENTIFIED BY {{ s(password) }}", [
+                            'db_name'  => $db_name,
+                            'username' => $Server->username,
+                            'password' => $Server->password,
+                        ]
+                    );
+                }
+
+                $Db->query('UNLOCK TABLES');
+
+                $Db->query(
+                    "INSERT INTO
+                        DatabaseShards
+                    SET
+                        database_server_id = {{ i(database_server_id) }},
+                        database_idx = {{ i(database_idx) }},
+                        units_allocated = 0,
+                        units_free = {{ i(units_free) }},
+                        created_ts = NOW()",
+                    [
+                        'database_server_id' => $server_id,
+                        'database_idx'       => $db_index_data['idx'],
+                        'units_free'         => $Server->units_per_shard,
+                    ]
+                );
+
+                return $Db->getLastInsertId();
             }
+        );
 
-            $Server = $this->getServerById($server_id);
-
-            if ($Server->databases_count < 1) {
-                throw new \LogicException('databases_count is less than 1 for server #' . $server_id);
-            }
-
-            $db_idx_series = [];
-            foreach (range(1, $Server->databases_count) as $idx) {
-                $db_idx_series['idx'] = $idx;
-            }
-            if (empty($db_idx_series['idx'])) {
-                throw new \LogicException("No database indexes allocated on server " . $server_id);
-            }
-
-            $db_index_data = $Db->getCell(
-                "SELECT
-                    SEQ.idx,
-                    COUNT(database_shard_id) AS shards_count
-                FROM
-                    (
-                        {{ BEGIN SERIES }}
-                            SELECT {{ idx }} AS idx {{ UNLESS _last }} UNION {{ END }}
-                        {{ END }}
-                    ) AS SEQ
-                LEFT JOIN
-                    DatabaseShards ON (database_idx = SEQ.idx AND database_server_id = {{ i(database_server_id) }})
-                GROUP BY
-                    SEQ.idx
-                ORDER BY
-                    COUNT(database_shard_id), SEQ.idx",
-                [ 
-                    'database_server_id' => $server_id,
-                    'SERIES' => $db_idx_series,
-                ]
-            );
-            if (!$db_index_data) {
-                throw new \RuntimeException("Could not fetch db index data for server #" . $server['database_server_id']);
-            }
-
-            $db_name = $this->Manager->getShardDbNameByIndex($db_index_data['idx']);
-
-            if ($db_index_data['shards_count'] == 0) {
-                /** @noinspection PhpParamsInspection */
-                $SuperDb = new Mysql\Client(Injector::getConnectionManager()->getConnection($Server->getSuperDsn()));
-                $SuperDb->query("CREATE DATABASE IF NOT EXISTS {{ name(db_name) }}", compact('db_name'));
-                $SuperDb->query("GRANT ALL PRIVILEGES ON {{ name(db_name) }} TO {{ s(username) }}@'%' IDENTIFIED BY {{ s(password) }}", [
-                    'db_name'   => $db_name,
-                    'username'  => $Server->username,
-                    'password'  => $Server->password,
-                ]);
-            }
-
-            $Db->query(
-                "INSERT INTO
-                    DatabaseShards
-                SET
-                    database_server_id = {{ i(database_server_id) }},
-                    database_idx = {{ i(database_idx) }},
-                    units_allocated = 0,
-                    units_free = {{ i(units_free) }},
-                    created_ts = NOW()",
-                [
-                    'database_server_id' => $server_id,
-                    'database_idx' => $db_index_data['idx'],
-                    'units_free' => $Server->units_per_shard,
-                ]
-            );
-
-            return $Db->getLastInsertId();
-        });
-
-        $Shard = $this->getShardById($shard_id);
-        $Unit->setShard($Shard);
-
-        $Unit->initializeShard();
-
-        return $Shard;
+        return $this->getShardById($shard_id);
     }
 
     /**
@@ -191,7 +198,7 @@ class Mysql_ShardingModel {
     public function getShardById($shard_id, $skip_cache = false) {
         Corelib\Assert::that('shard_id is a valid ID', '\InvalidArgumentException')->isValidId($shard_id);
         if ($skip_cache || !isset($this->cache['shards'][$shard_id])) {
-            $shard_data = $this->fetchServerFromHsById($shard_id);
+            $shard_data = $this->fetchShardFromHsById($shard_id);
             if (!$shard_data) {
                 throw new \RuntimeException("Shard with id '$shard_id' not found");
             }
@@ -265,14 +272,22 @@ class Mysql_ShardingModel {
 
     /**
      * @param $server_id
-     * @return null
+     * @return array|null
      */
     protected function fetchServerFromHsById($server_id) {
-        $server_result = $this->getServerIndex()->find('==', ['database_server_id' => $server_id]) ?: null;
+        $server_result = $this->getServerIndex()->find('==', ['database_server_id' => $server_id]) ? : null;
         if ($server_result) {
             $server_result['ip_address'] = long2ip($server_result['ip_address']);
         }
         return $server_result;
+    }
+
+    /**
+     * @param $shard_id
+     * @return array|null
+     */
+    protected function fetchShardFromHsById($shard_id) {
+        return $this->getShardIndex()->find('==', ['database_shard_id' => $shard_id]) ? : null;
     }
 
     /**
@@ -283,10 +298,27 @@ class Mysql_ShardingModel {
             $this->cache['HsServerIndex'] = $this->getHsConn()->openIndex(
                 'DatabaseServers',
                 'PRIMARY',
-                ['database_server_id', 'ip_address', 'port', 'username', 'password', 'super_username', 'super_password']
+                ['database_server_id', 'ip_address', 'port', 'username', 'password',
+                    'super_username', 'super_password', 'is_available',
+                    'capacity', 'units_per_shard', 'databases_count']
             );
         }
         return $this->cache['HsServerIndex'];
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getShardIndex() {
+        if (!isset($this->cache['HsShardIndex'])) {
+            $this->cache['HsShardIndex'] = $this->getHsConn()->openIndex(
+                'DatabaseShards',
+                'PRIMARY',
+                ['database_shard_id', 'database_server_id', 'database_idx',
+                    'units_allocated', 'units_free', 'is_available']
+            );
+        }
+        return $this->cache['HsShardIndex'];
     }
 
     /**
@@ -310,8 +342,9 @@ class Mysql_ShardingModel {
      * @throws \Exception|null
      */
     protected function doWithLockedTables(Callable $fn, array $args = []) {
-        $e = null;
-        $this->getDb()->query("LOCK TABLES DatabaseServers, DatabaseShards READ LOCAL");
+        $e      = null;
+        $result = null;
+        $this->getDb()->query("LOCK TABLES DatabaseServers READ LOCAL, DatabaseShards READ LOCAL");
         try {
             $result = call_user_func_array($fn, $args);
         } catch (\Exception $e) {

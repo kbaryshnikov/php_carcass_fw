@@ -41,7 +41,7 @@ class Web_FrontController implements ControllerInterface {
     }
 
     public function run() {
-        $debugger_is_enabled = Injector::getDebugger()->isEnabled();
+        $debugger_is_enabled = DI::getDebugger()->isEnabled();
         register_shutdown_function(function() use ($debugger_is_enabled) {
             if ($e = error_get_last()) {
                 $this->showInternalError($debugger_is_enabled ? "$e[message] in $e[file] line $e[line]" : null);
@@ -50,10 +50,10 @@ class Web_FrontController implements ControllerInterface {
         try {
             $this->Router->route($this->Request, $this);
         } catch (\Exception $e) {
-            Injector::getLogger()->logException($e);
+            DI::getLogger()->logException($e);
             if ($debugger_is_enabled) {
-                Injector::getDebugger()->dumpException($e);
-                $this->showInternalError(Injector::getDebugger()->exceptionToString($e));
+                DI::getDebugger()->dumpException($e);
+                $this->showInternalError(DI::getDebugger()->exceptionToString($e));
             } else {
                 $this->showInternalError();
             }
@@ -71,7 +71,7 @@ class Web_FrontController implements ControllerInterface {
 
         $page_class = "{$controller}Page";
 
-        include_once Injector::getPathManager()->getPathToPhpFile('pages', $page_class);
+        include_once DI::getPathManager()->getPathToPhpFile('pages', $page_class);
 
         $page_fq_class = Instance::getFqClassName($page_class);
 
@@ -110,12 +110,12 @@ class Web_FrontController implements ControllerInterface {
             $this->Response->setStatus(500);
             try {
                 $this->Response->write(
-                    file_get_contents(Injector::getPathManager()->getPathTo('var', $stub_file))
+                    file_get_contents(DI::getPathManager()->getPathTo('var', $stub_file))
                 );
                 return;
             } catch (\Exception $e) {
-                Injector::getLogger()->logException($e);
-                Injector::getDebugger()->dumpException($e);
+                DI::getLogger()->logException($e);
+                DI::getDebugger()->dumpException($e);
             }
         }
         $this->Response->writeHttpError(500, null, $message);

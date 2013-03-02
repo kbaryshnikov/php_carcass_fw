@@ -10,7 +10,7 @@ namespace Carcass\Application;
 
 /**
  * Application pathes manager.
- * In usual workflow, application instance initializes it and registers the instance in the Injector as 'PathManager'.
+ * In usual workflow, application instance initializes it and registers the instance in the DI as 'PathManager'.
  * @package Carcass\Application
  */
 class PathManager {

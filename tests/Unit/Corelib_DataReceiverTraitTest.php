@@ -26,6 +26,11 @@ class Corelib_DataReceiverTraitTest extends PHPUnit_Framework_TestCase {
         $DataReceiver->fetchFromArray($new_array = ['a' => 'new value']);
         /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($new_array + $array, $DataReceiver->data);
+
+        $DataReceiver->fetchFromArray(['a' => 'no overwrite', 'x' => 'x value'], $no_overwrite = true);
+        $this->assertEquals('new value', $DataReceiver->data['a']);
+        $this->assertEquals('x value', $DataReceiver->data['x']);
+
         $array = [
             ['a' => 1, 'b' => 2],
             ['a' => 11, 'b' => 12],
@@ -43,6 +48,10 @@ class Corelib_DataReceiverTraitTest extends PHPUnit_Framework_TestCase {
         $DataReceiver->fetchFrom(new ArrayObject($new_array = ['a' => 'new value']));
         /** @noinspection PhpUndefinedFieldInspection */
         $this->assertEquals($new_array + $array, $DataReceiver->data);
+
+        $DataReceiver->fetchFrom(new ArrayObject(['a' => 'no overwrite', 'x' => 'x value']), $no_overwrite = true);
+        $this->assertEquals('new value', $DataReceiver->data['a']);
+        $this->assertEquals('x value', $DataReceiver->data['x']);
     }
 
     public function testSet() {

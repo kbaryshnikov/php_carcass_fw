@@ -129,9 +129,9 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
     public function getTwigUrl($route_name, array $args = []) {
         /** @noinspection PhpParamsInspection */
         if ($this->getTwigIsAbsolute($route_name)) {
-            return Injector::getRouter()->getAbsoluteUrl(Injector::getRequest(), $route_name, $args);
+            return DI::getRouter()->getAbsoluteUrl(DI::getRequest(), $route_name, $args);
         } else {
-            return Injector::getRouter()->getUrl(Injector::getRequest(), $route_name, $args);
+            return DI::getRouter()->getUrl(DI::getRequest(), $route_name, $args);
         }
     }
 
@@ -143,7 +143,7 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
     public function getTwigStaticUrl($url) {
         /** @noinspection PhpParamsInspection */
         $absolute = $this->getTwigIsAbsolute($url);
-        return Injector::getRouter()->getStaticUrl(Injector::getRequest(), $url, $absolute);
+        return DI::getRouter()->getStaticUrl(DI::getRequest(), $url, $absolute);
     }
 
     /**

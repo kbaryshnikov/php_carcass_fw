@@ -11,8 +11,6 @@ namespace Carcass\Corelib;
 /**
  * Emulates the Blitz class from blitz 0.6 extension.
  * Emulation is incomplete (e.g. no fetch), but enough for internal use as string template parsers.
- *
- * @package Carcass\Corelib
  */
 class BlitzLiteEmulator {
 
@@ -29,33 +27,6 @@ class BlitzLiteEmulator {
         $tpl = null;
 
     /**
-     * @param $file
-     * @return static
-     */
-    public static function constructFromFile($file) {
-        return new static($file);
-    }
-
-    /**
-     * @param $string
-     * @return static
-     */
-    public static function constructFromString($string) {
-        $self = new self;
-        $self->load($string);
-        return $self;
-    }
-
-    /**
-     * @param $string
-     * @param array $args
-     * @return mixed
-     */
-    public static function parseString($string, array $args = []) {
-        return self::constructFromString($string)->parse($args);
-    }
-
-    /**
      * @param null $file
      */
     public function __construct($file = null) {
@@ -66,6 +37,7 @@ class BlitzLiteEmulator {
 
     /**
      * @param $string
+     * @return void
      */
     public function load($string) {
         $this->tpl = $string;
@@ -75,6 +47,7 @@ class BlitzLiteEmulator {
 
     /**
      * @param $string
+     * @return void
      */
     public function loadFile($string) {
         $this->tpl = file_get_contents($string);
@@ -82,16 +55,17 @@ class BlitzLiteEmulator {
         $this->clean();
     }
 
-    public function cleanAll() {
-        $this->clean();
-        $this->cleanGlobals();
-    }
-
+    /**
+     * @return void
+     */
     public function clean() {
         $this->set = array();
         $this->result = null;
     }
 
+    /**
+     * @return void
+     */
     public function cleanGlobals() {
         $this->globals = array();
         $this->result = null;
@@ -99,6 +73,7 @@ class BlitzLiteEmulator {
 
     /**
      * @param array $set
+     * @return void
      */
     public function set(array $set) {
         $this->set = $set + $this->set;
@@ -107,6 +82,7 @@ class BlitzLiteEmulator {
 
     /**
      * @param array $globals
+     * @return void
      */
     public function setGlobals(array $globals) {
         $this->globals = $globals + $this->globals;
@@ -130,6 +106,7 @@ class BlitzLiteEmulator {
 
     /**
      * @param array $set
+     * @return void
      */
     public function display(array $set = null) {
         if ($set !== null) {
@@ -269,9 +246,6 @@ class BlitzLiteEmulator {
         return !$this->__if($addr);
     }
 
-    /**
-     *
-     */
     protected function __ctxEnd() {
         $this->__pop();
     }
@@ -350,3 +324,4 @@ class BlitzLiteEmulator {
     }
 
 }
+

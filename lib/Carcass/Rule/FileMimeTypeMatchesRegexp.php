@@ -48,8 +48,8 @@ class FileMimeTypeMatchesRegexp extends Base {
      * @return bool
      */
     public function validate($values) {
-        extract($values);
-        $filename = $value;
+        $filename = $values['value'];
+        $data = $values['data'];
         if (null === $filename) {
             return true;
         }

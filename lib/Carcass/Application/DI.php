@@ -27,7 +27,7 @@ use Carcass\Corelib;
  *
  * @package Carcass\Application
  */
-class Injector {
+class DI {
 
     private static $instance = null;
 
@@ -40,7 +40,14 @@ class Injector {
     }
 
     /**
-     * @return \Carcass\Corelib\Injector
+     * @return bool
+     */
+    public static function isEnabled() {
+        return self::$instance !== null;
+    }
+
+    /**
+     * @return \Carcass\Corelib\DIContainer
      * @throws \LogicException
      */
     public static function getInstance() {
@@ -51,10 +58,10 @@ class Injector {
     }
 
     /**
-     * @param \Carcass\Corelib\Injector $Injector
-     * @return \Carcass\Corelib\Injector
+     * @param \Carcass\Corelib\DIContainer $Injector
+     * @return \Carcass\Corelib\DIContainer
      */
-    public static function setInstance(Corelib\Injector $Injector = null) {
+    public static function setInstance(Corelib\DIContainer $Injector = null) {
         return self::$instance = $Injector;
     }
 

@@ -8,14 +8,15 @@
 
 namespace Carcass\Shard;
 
-use Carcass\Application\Injector;
+use Carcass\Application\DI;
 
 /**
  * Partial UnitInterface implementation
  *
  * User must implement:
  * @method int getShardId()
- * @method UnitInterface updateShard(ShardInterface $OldShard = null)
+ * @method void updateShard(ShardInterface $OldShard = null)
+ * @method void initializeShard()
  *
  * @package Carcass\Shard
  */
@@ -46,20 +47,25 @@ trait UnitTrait {
 
     /**
      * @param ShardInterface $Shard
-     * @return mixed
+     * @param bool $must_initialize_shard
+     * @return ShardInterface
      */
-    public function setShard(ShardInterface $Shard) {
+    public function setShard(ShardInterface $Shard, $must_initialize_shard = false) {
         $OldShard = $this->Shard;
         $this->Shard = $Shard;
-        return $this->updateShard($OldShard);
+        if ($must_initialize_shard) {
+            $this->initializeShard();
+        }
+        $this->updateShard($OldShard);
+        return $this;
     }
 
     /**
-     * @return Mysql_Client|null
+     * @return Mysql_Client
      */
     public function getDatabase() {
         if (null === $this->Database) {
-            /** @noinspection PhpParamsInspection */
+            /** @noinspection PhpParamsInspection ($this will actually implement UnitInterface) */
             $this->Database = new Mysql_Client($this);
         }
         return $this->Database;
@@ -71,7 +77,7 @@ trait UnitTrait {
     public function getShardManager() {
         static $ShardManager = null;
         if (null === $ShardManager) {
-            $ShardManager = new Mysql_ShardManager(Injector::getConfigReader()->get('sharding'));
+            $ShardManager = new Mysql_ShardManager(DI::getConfigReader()->get('sharding'));
         }
         return $ShardManager;
     }
@@ -81,8 +87,8 @@ trait UnitTrait {
      */
     public function getMemcachedConnection() {
         if (null === $this->MemcachedConnection) {
-            $this->MemcachedConnection = Injector::getConnectionManager()
-                ->getConnection(Injector::getConfigReader()->getPath('memcached.pool'));
+            $this->MemcachedConnection = DI::getConnectionManager()
+                ->getConnection(DI::getConfigReader()->getPath('memcached.pool'));
         }
         return $this->MemcachedConnection;
     }

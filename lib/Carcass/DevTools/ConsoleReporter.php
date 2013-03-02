@@ -47,7 +47,7 @@ class ConsoleReporter extends BaseReporter {
     public function __construct($handle = null, $colors_enabled = null) {
         $this->colors_enabled = $colors_enabled === null ? static::doesSupportColors($handle) : (bool)$colors_enabled;
         if ($handle !== null) {
-            if (substr($handle, 0, 3) === 'STD') {
+            if (0 == strncasecmp('std', $handle, 3)) {
                 $this->handle = $this->getStdHandle($handle);
             } else {
                 $this->handle = fopen($handle, 'a+');
@@ -69,19 +69,21 @@ class ConsoleReporter extends BaseReporter {
      * @return $this
      */
     public function dumpException(\Exception $Exception) {
-        $this->write(sprintf(
-            "\n" .
-            ($this->colors_enabled ? "\x1b[0m\x1b[37;41m\x1b[2K" : '') .
-            "%s in file %s line %d: %s.\n" .
-            ($this->colors_enabled ? "\x1b[0m\x1b[2K" : '' ).
-            "Stack trace:\n\t%s" .
-            "\n",
-            get_class($Exception),
-            $Exception->getFile(),
-            $Exception->getLine(),
-            $Exception->getMessage(),
-            str_replace("\n", "\n\t", $Exception->getTraceAsString())
-        ));
+        $this->write(
+            sprintf(
+                "\n" .
+                    ($this->colors_enabled ? "\x1b[0m\x1b[37;41m\x1b[2K" : '') .
+                    "%s in file %s line %d: %s.\n" .
+                    ($this->colors_enabled ? "\x1b[0m\x1b[2K" : '') .
+                    "Stack trace:\n\t%s" .
+                    "\n",
+                get_class($Exception),
+                $Exception->getFile(),
+                $Exception->getLine(),
+                $Exception->getMessage(),
+                str_replace("\n", "\n\t", $Exception->getTraceAsString())
+            )
+        );
         return $this;
     }
 
@@ -105,14 +107,16 @@ class ConsoleReporter extends BaseReporter {
      * @throws \LogicException
      */
     protected function getStdHandle($name) {
+        $name = strtoupper($name);
         if (PHP_SAPI === 'cli') {
-            return constant($name);
+            if (defined($name)) {
+                return constant($name);
+            }
         } elseif (array_key_exists($name, self::$known_non_cli_handles)) {
             $this->need_to_close_handle = true;
             return fopen(self::$known_non_cli_handles[$name], 'a');
-        } else {
-            throw new \LogicException("Unknown destination handle: '$name'");
         }
+        throw new \LogicException("Unknown destination handle: '$name'");
     }
 
     protected function write($s) {

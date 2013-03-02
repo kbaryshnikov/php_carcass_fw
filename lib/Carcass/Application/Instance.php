@@ -64,9 +64,9 @@ class Instance {
      */
     protected $PathManager;
     /**
-     * @var \Carcass\Corelib\Injector
+     * @var \Carcass\Corelib\DIContainer
      */
-    protected $Injector;
+    protected $DI;
     /**
      * @var \Carcass\Connection\Manager
      */
@@ -75,6 +75,16 @@ class Instance {
      * @var \Carcass\Corelib\Crypter
      */
     protected $Crypter = null;
+
+    /**
+     * @var bool
+     */
+    protected $finalized = false;
+
+    /**
+     * @var DevTools\Timer
+     */
+    protected $Timer = null;
 
     /**
      * @var \Carcass\Application\Instance
@@ -106,7 +116,8 @@ class Instance {
      * @return $this
      */
     public function execute() {
-        $this->Injector->FrontController->run();
+        $this->DI->FrontController->run();
+        $this->finalize();
         return $this;
     }
 
@@ -141,7 +152,7 @@ class Instance {
         if (!static::$instance) {
             return;
         }
-        Injector::setInstance(null);
+        DI::setInstance(null);
         static::$instance = null;
     }
 
@@ -156,6 +167,7 @@ class Instance {
     }
 
     protected function bootstrap() {
+        $this->startTimer();
         $this->setupErrorHandler();
         $this->loadApplicationConfiguration();
         $this->setupRunMode();
@@ -167,8 +179,31 @@ class Instance {
         $this->setupDependencies();
     }
 
+    protected function finalize() {
+        if ($this->finalized) {
+            return;
+        }
+        if ($this->Debugger && $this->Debugger->isEnabled()) {
+            if ($this->Timer) {
+                $this->Debugger->registerTimer('application', $this->Timer);
+                $this->Timer->stop();
+            }
+            $this->Debugger->finalize();
+        }
+        $this->finalized = true;
+    }
+
+    public function __destruct() {
+        $this->finalize();
+    }
+
+    protected function startTimer() {
+        require_once __DIR__ . '/../DevTools/Timer.php';
+        $this->Timer = (new DevTools\Timer('Total execution time'))->start();
+    }
+
     protected function setupDependencies() {
-        $this->Injector = Injector::setInstance(new Corelib\Injector);
+        $this->DI = DI::setInstance(new Corelib\DIContainer);
 
         $dep_config = $this->ConfigReader->exportArrayFrom('application.dependencies.' . $this->app_env['run_mode'], []);
         $dep_map    = $this->prefixNamespaces(isset($dep_config['map']) && is_array($dep_config['map']) ? $dep_config['map'] : []);
@@ -179,18 +214,18 @@ class Instance {
             $setupFn = [$this, 'setupDependencies' . $this->app_env['run_mode']];
         }
 
-        $this->Injector->dep_map = $dep_map;
-        $this->Injector->app_env = $this->app_env;
+        $this->DI->dep_map = $dep_map;
+        $this->DI->app_env = $this->app_env;
 
-        $this->Injector->Namespace = isset($this->app_env['namespace']) ? $this->app_env['namespace'] : '\\';
+        $this->DI->Namespace = isset($this->app_env['namespace']) ? $this->app_env['namespace'] : '\\';
 
-        $this->Injector->ConfigReader = $this->ConfigReader;
-        $this->Injector->PathManager  = $this->PathManager;
-        $this->Injector->Debugger     = $this->Debugger;
-        $this->Injector->Logger       = $this->Logger;
+        $this->DI->ConfigReader = $this->ConfigReader;
+        $this->DI->PathManager  = $this->PathManager;
+        $this->DI->Debugger     = $this->Debugger;
+        $this->DI->Logger       = $this->Logger;
 
-        $this->Injector->ConnectionManager = $this->Injector->reuse(
-            isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function (Corelib\Injector $I) {
+        $this->DI->ConnectionManager = $this->DI->reuse(
+            isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function (Corelib\DIContainer $I) {
                 /** @var \Carcass\Connection\Manager $ConnectionManager */
                 $class             = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
                 $ConnectionManager = new $class;
@@ -199,7 +234,7 @@ class Instance {
         );
 
         if (is_callable($setupFn)) {
-            $setupFn($this->Injector, $dep_map);
+            $setupFn($this->DI, $dep_map);
         } else {
             throw new \LogicException("Cannot setupDependencies() for {$this->app_env['run_mode']} mode: no setup function "
                 . "is defined in configuration, and mode is not supported internally");
@@ -207,57 +242,57 @@ class Instance {
     }
 
     protected function setupDependenciesCli($Injector, array $dep_map) {
-        $Injector->Request = $this->Injector->reuse(
-            isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\Injector $I) {
+        $Injector->Request = $this->DI->reuse(
+            isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\DIContainer $I) {
                 /** @var RequestBuilderInterface $class */
                 $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Cli_RequestBuilder');
                 return $class::assembleRequest($this->app_env);
             }
         );
 
-        $Injector->Response = $this->Injector->reuse(
-            isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\Injector $I) {
+        $Injector->Response = $this->DI->reuse(
+            isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\DIContainer $I) {
                 $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Cli_Response');
                 return new $class;
             }
         );
 
-        $Injector->Router = $this->Injector->reuse(
-            isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\Injector $I) {
+        $Injector->Router = $this->DI->reuse(
+            isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\DIContainer $I) {
                 $class = (isset($I->dep_map['Router']) ? $I->dep_map['Router'] : '\Carcass\Application\Cli_Router');
                 return new $class;
             }
         );
 
-        $Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\Injector $I) {
+        $Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\DIContainer $I) {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Cli_FrontController');
             return new $class($I->Request, $I->Response, $I->Router);
         };
     }
 
     protected function setupDependenciesWeb($Injector, array $dep_map) {
-        $Injector->Request = $this->Injector->reuse(
-            isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\Injector $I) {
+        $Injector->Request = $this->DI->reuse(
+            isset($dep_map['RequestFn']) ? $dep_map['RequestFn'] : function (Corelib\DIContainer $I) {
                 /** @var RequestBuilderInterface $class */
                 $class = (isset($I->dep_map['RequestBuilder']) ? $I->dep_map['RequestBuilder'] : '\Carcass\Application\Web_RequestBuilder');
                 return $class::assembleRequest($this->app_env);
             }
         );
 
-        $Injector->Response = $this->Injector->reuse(
-            isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\Injector $I) {
+        $Injector->Response = $this->DI->reuse(
+            isset($dep_map['ResponseFn']) ? $dep_map['ResponseFn'] : function (Corelib\DIContainer $I) {
                 $class = (isset($I->dep_map['Response']) ? $I->dep_map['Response'] : '\Carcass\Application\Web_Response');
                 return new $class($I->Request);
             }
         );
 
-        $Injector->Router = $this->Injector->reuse(
-            isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\Injector $I) {
+        $Injector->Router = $this->DI->reuse(
+            isset($dep_map['RouterFn']) ? $dep_map['RouterFn'] : function (Corelib\DIContainer $I) {
                 return Web_Router_Factory::assembleByConfig($I->ConfigReader->web->router);
             }
         );
 
-        $Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\Injector $I) {
+        $Injector->FrontController = isset($dep_map['FrontControllerFn']) ? $dep_map['FrontControllerFn'] : function (Corelib\DIContainer $I) {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Web_FrontController');
             return new $class($I->Request, $I->Response, $I->Router, $I->ConfigReader->web);
         };
@@ -382,7 +417,7 @@ class Instance {
 
 
     protected function setupDebugger() {
-        if ($this->ConfigReader->getPath('application.debug.enable')) {
+        if ($this->ConfigReader->getPath('application.debugger.enable')) {
             $this->Debugger = new DevTools\Debugger($this->getDebuggerReporter());
         } else {
             $this->Debugger = new DevTools\DebuggerStub;
@@ -393,7 +428,7 @@ class Instance {
      * @return DevTools\BaseReporter
      */
     protected function getDebuggerReporter() {
-        $config = $this->ConfigReader->getPath('application.debug.reporter');
+        $config = $this->ConfigReader->getPath('application.debugger.reporter');
         if (is_scalar($config)) {
             $reporter_type = $config;
         } else {

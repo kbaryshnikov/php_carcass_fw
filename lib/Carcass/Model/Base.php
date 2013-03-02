@@ -187,19 +187,21 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
 
     /**
      * @param \Traversable $Source
+     * @param bool $no_overwrite
      * @return $this
      */
-    public function fetchFrom(\Traversable $Source) {
-        $this->Fieldset->fetchFrom($Source);
+    public function fetchFrom(\Traversable $Source, $no_overwrite = false) {
+        $this->Fieldset->fetchFrom($Source, $no_overwrite);
         return $this;
     }
 
     /**
      * @param array $source
+     * @param bool $no_overwrite
      * @return $this
      */
-    public function fetchFromArray(array $source) {
-        $this->Fieldset->fetchFromArray($source);
+    public function fetchFromArray(array $source, $no_overwrite = false) {
+        $this->Fieldset->fetchFromArray($source, $no_overwrite);
         return $this;
     }
 
