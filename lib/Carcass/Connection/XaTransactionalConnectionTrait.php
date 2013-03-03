@@ -32,8 +32,6 @@ trait XaTransactionalConnectionTrait {
     public function vote($local = false) {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_STATUS_NONE:
-                throw new \LogicException('vote() should never be called outside a transaction');
-                break;
             case self::$TRANSACTION_STATUS_SCHEDULED:
                 return true;
             case self::$TRANSACTION_STATUS_STARTED:
@@ -41,10 +39,6 @@ trait XaTransactionalConnectionTrait {
                     return $this->xa_vote_result = $this->doXaVote();
                 }
                 break;
-        }
-        if (!$local && $this->ConnectionManager) {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $this->ConnectionManager->vote($this);
         }
         return true;
     }
@@ -69,11 +63,11 @@ trait XaTransactionalConnectionTrait {
                 if ($this->transaction_counter === 1) {
                     if (null === $this->xa_vote_result) {
                         if ($this->ConnectionManager) {
-                            throw new \LogicException("Should always have vote performen when managed");
+                            throw new \LogicException(get_class($this) . ": Should always have vote performen when managed");
                         }
                         $this->xa_vote_result = $this->doXaVote();
                         if (!$this->xa_vote_result) {
-                            throw new \RuntimeException("XA Vote returned false");
+                            throw new \RuntimeException(get_class($this) . ": XA Vote returned false");
                         }
                     }
                     $this->commitTransaction();
@@ -92,7 +86,7 @@ trait XaTransactionalConnectionTrait {
      * @throws \LogicException
      */
     protected function doXaVote() {
-        throw new \LogicException("Implementation required");
+        throw new \LogicException(get_class($this) . ": Implementation required");
     }
 
 }

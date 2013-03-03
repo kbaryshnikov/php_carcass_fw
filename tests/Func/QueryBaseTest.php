@@ -51,6 +51,36 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $affected_rows);
     }
 
+    public function testQueryWithBeforeCall() {
+        $Query = new Query\Base;
+        $Query->modify('drop table if exists t');
+        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $id = $Query
+            ->before(function(Query\Base $Query) {
+                $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'bar']);
+            })
+            ->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'foo']);
+        $this->assertEquals(2, $id);
+        $data = $Query->fetchCol('select s from t order by id')->execute()->getLastResult();
+        $this->assertEquals('bar', $data[0]);
+        $this->assertEquals('foo', $data[1]);
+    }
+
+    public function testQueryWithAfterCall() {
+        $Query = new Query\Base;
+        $Query->modify('drop table if exists t');
+        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $id = $Query
+            ->after(function(Query\Base $Query) {
+                $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'bar']);
+            })
+            ->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'foo']);
+        $this->assertEquals(2, $id);
+        $data = $Query->fetchCol('select s from t order by id')->execute()->getLastResult();
+        $this->assertEquals('foo', $data[0]);
+        $this->assertEquals('bar', $data[1]);
+    }
+
     public function testQueryUIDCallback() {
         $Query = new Query\Base;
         $Query->modify('drop table if exists t');

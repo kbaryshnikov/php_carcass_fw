@@ -8,7 +8,7 @@ return [
     ],
 
     'debugger' => [
-        'enable' => true,
+//        'enable' => true,
         'reporter' => 'console:stderr',
     ],
 

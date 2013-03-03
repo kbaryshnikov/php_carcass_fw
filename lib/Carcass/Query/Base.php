@@ -23,6 +23,15 @@ class Base {
     protected $last_result = [];
 
     /**
+     * @var callable|null
+     */
+    protected $before_call = null;
+    /**
+     * @var callable|null
+     */
+    protected $after_call = null;
+
+    /**
      * @var Mysql\Client
      */
     protected $Db = null;
@@ -106,9 +115,27 @@ class Base {
     }
 
     /**
+     * @param callable $fn
+     * @return $this
+     */
+    public function before(Callable $fn) {
+        $this->before_call = $fn;
+        return $this;
+    }
+
+    /**
+     * @param callable $fn
+     * @return $this
+     */
+    public function after(Callable $fn) {
+        $this->after_call = $fn;
+        return $this;
+    }
+
+    /**
      * @param string $sql_query_template
      * @param array $args
-     * @return null
+     * @return mixed
      */
     public function insert($sql_query_template, array $args = array()) {
         $this->doModify(function(Mysql\Client $Db, $args) use ($sql_query_template) {
@@ -160,6 +187,9 @@ class Base {
      * @return mixed
      */
     protected function doModify(Callable $fn, array $args, $in_transaction, Callable $finally_fn = null) {
+        if (!$in_transaction && ($this->before_call !== null || $this->after_call !== null)) {
+            $in_transaction = true;
+        }
         if ($in_transaction) {
             $result = $this->doInTransaction($fn, $this->getArgs($args), $finally_fn);
         } else {
@@ -182,7 +212,30 @@ class Base {
      * @return mixed
      */
     public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
-        return DI::getConnectionManager()->doInTransaction($fn, $this->getCallbackArgs($args), $finally_fn);
+        if (null !== $this->before_call) {
+            $before_fn = $this->before_call;
+            $this->before_call = null;
+        } else {
+            $before_fn = null;
+        }
+        if (null !== $this->after_call) {
+            $after_fn = $this->after_call;
+            $this->after_call = null;
+        } else {
+            $after_fn = null;
+        }
+        $trans_fn = function() use ($fn, $before_fn, $after_fn) {
+            $args = func_get_args();
+            if (null !== $before_fn) {
+                call_user_func_array($before_fn, array_merge([$this], $args));
+            }
+            $result = call_user_func_array($fn, $args);
+            if (null !== $after_fn) {
+                call_user_func_array($after_fn, array_merge([$this], $args));
+            }
+            return $result;
+        };
+        return DI::getConnectionManager()->doInTransaction($trans_fn, $this->getCallbackArgs($args), $finally_fn);
     }
 
     /**

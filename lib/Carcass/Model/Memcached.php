@@ -12,6 +12,9 @@ use Carcass\Query;
 
 /**
  * Memcached Model
+ *
+ * @method \Carcass\Query\Memcached getQuery()
+ *
  * @package Carcass\Model
  */
 class Memcached extends Base {
@@ -87,7 +90,7 @@ class Memcached extends Base {
      * @param string $query
      * @param array $args
      * @param string|null $id_key
-     * @return bool
+     * @return mixed
      */
     protected function doInsert($query, array $args = [], $id_key = null) {
         if (!$this->validate()) {

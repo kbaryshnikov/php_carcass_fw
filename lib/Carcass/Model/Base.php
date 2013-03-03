@@ -146,7 +146,7 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
     }
 
     /**
-     * @return \Carcass\Query\Base|null
+     * @return \Carcass\Query\Base
      */
     protected function getQuery() {
         if (null === $this->Query) {

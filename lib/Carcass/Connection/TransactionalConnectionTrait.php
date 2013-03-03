@@ -12,7 +12,7 @@ use Carcass\Corelib\UniqueId;
 
 /**
  * TransactionalConnectionInterface implementation, with support
- * for pseudo-inner transactions via transaction counter.
+ * for pseudo-inner toansactions via transaction counter.
  *
  * A user must implement protected methods: beginTransaction(), commitTransaction(), rollbackTransaction().
  *
@@ -188,15 +188,15 @@ trait TransactionalConnectionTrait {
     }
 
     protected function beginTransaction() {
-        throw new \LogicException("Implementation required");
+        throw new \LogicException(get_class($this) . ": Implementation required");
     }
 
     protected function rollbackTransaction() {
-        throw new \LogicException("Implementation required");
+        throw new \LogicException(get_class($this) . ": Implementation required");
     }
 
     protected function commitTransaction() {
-        throw new \LogicException("Implementation required");
+        throw new \LogicException(get_class($this) . ": Implementation required");
     }
 
 }

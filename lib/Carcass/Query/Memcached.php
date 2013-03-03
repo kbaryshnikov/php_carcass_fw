@@ -77,7 +77,7 @@ class Memcached extends Base {
      * @param string $sql_query_template
      * @param array $args
      * @param bool $last_insert_id_field_name
-     * @return null
+     * @return mixed
      */
     public function insert($sql_query_template, array $args = array(), $last_insert_id_field_name = false) {
         $this->last_insert_id_field_name = $last_insert_id_field_name ?: false;
