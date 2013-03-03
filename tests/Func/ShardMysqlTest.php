@@ -182,11 +182,13 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
         // test model
 
         $Model = new TestShardModel($Unit1);
+        $this->assertFalse($Model->isLoaded());
         $Model->fetchFromArray([
             'email' => '1@domain.com'
         ]);
         $this->assertTrue($Model->validate());
         $Model->insert();
+        $this->assertTrue($Model->isLoaded());
         $this->assertEquals(1, $Model->id);
 
         $seq_value = $Unit1->getDatabase()->getCell("select value from TestShardDb1.Seq1 where shardTest=1 and name='t'");
@@ -199,6 +201,7 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
 
         $Model = new TestShardModel($Unit1);
         $Model->loadById(1);
+        $this->assertTrue($Model->isLoaded());
         $this->assertEquals(1, $Model->id);
         $this->assertEquals('1@domain.com', $Model->email);
 
@@ -214,6 +217,13 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
         $Model->loadById(1);
         $this->assertEquals(1, $Model->id);
         $this->assertEquals('a@domain.com', $Model->email);
+        $Model->delete();
+
+        unset($Model);
+
+        $Model = new TestShardModel($Unit1);
+        $Model->loadById(1);
+        $this->assertFalse($Model->isLoaded());
     }
 
     protected function addServer() {
