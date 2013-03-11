@@ -146,7 +146,7 @@ class Mysql_ShardingModel {
                     ]
                 );
                 if (!$db_index_data) {
-                    throw new \RuntimeException("Could not fetch db index data for server #" . $server['database_server_id']);
+                    throw new \RuntimeException("Could not fetch db index data for server #" . $server_id);
                 }
 
                 $db_name = $this->Manager->getShardDbNameByIndex($db_index_data['idx']);

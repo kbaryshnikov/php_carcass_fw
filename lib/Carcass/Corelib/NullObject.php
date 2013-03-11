@@ -40,4 +40,13 @@ class NullObject {
         return $this;
     }
 
+    /**
+     * @param $method
+     * @param $args
+     * @return NullObject
+     */
+    public static function __callStatic($method, $args) {
+        return new self;
+    }
+
 }

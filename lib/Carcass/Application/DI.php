@@ -21,8 +21,8 @@ use Carcass\Corelib;
  * @method static \Carcass\Connection\Manager getConnectionManager()
  * @method static \Carcass\Log\Dispatcher getLogger()
  * @method static \Carcass\DevTools\Debugger getDebugger()
- * @method static PathManager getPathManager()
- * @method static Web_Router_Interface getRouter()
+ * @method static \Carcass\Application\PathManager getPathManager()
+ * @method static \Carcass\Application\Web_Router_Interface getRouter()
  * @method static \Carcass\Corelib\Request getRequest()
  *
  * @package Carcass\Application
@@ -47,12 +47,12 @@ class DI {
     }
 
     /**
+     * Returns NullObject if was not configured, so all DI:: calls are test-safe.
      * @return \Carcass\Corelib\DIContainer
-     * @throws \LogicException
      */
     public static function getInstance() {
         if (null === self::$instance) {
-            throw new \LogicException("Instance is undefined");
+            return new Corelib\NullObject;
         }
         return self::$instance;
     }

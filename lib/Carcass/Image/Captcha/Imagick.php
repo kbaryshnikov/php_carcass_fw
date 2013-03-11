@@ -180,6 +180,7 @@ class Captcha_Imagick implements Captcha_Interface {
      */
     protected function generateImage() {
         mt_srand(crc32($this->text));
+        /** @noinspection PhpParamsInspection */
         $i = new \Imagick;
         $draw = new \ImagickDraw();
         $i->newImage(380, 120, $pixel = new \ImagickPixel($this->background_color));

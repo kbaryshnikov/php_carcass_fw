@@ -28,7 +28,7 @@ class Cli_Router implements RouterInterface {
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
         $Controller->dispatch(
-            $Request->Args->get(0) ?: $this->default_dispatch_name,
+            $this->getDispatcherName($Request->Args->get(0)),
             $Request->Args
         );
     }
@@ -41,6 +41,13 @@ class Cli_Router implements RouterInterface {
     public function setDefaultDispatchName($name) {
         $this->default_dispatch_name = $name;
         return $this;
+    }
+
+    protected function getDispatcherName($argument) {
+        if (!$argument) {
+            return $this->default_dispatch_name;
+        }
+        return join('', array_map('ucfirst', explode('-', $argument)));
     }
 
 }

@@ -4,7 +4,7 @@ use \Carcass\Corelib;
 use \Carcass\Corelib\DIContainer;
 
 class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
-    
+
     public function testObjectDependency() {
         $inj = new DIContainer;
         $inj->dep = function() {
@@ -60,6 +60,7 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
         $inj->service = function($inj, $flag) {
             return new Service($inj->dependency, $flag);
         };
+        /** @noinspection PhpUndefinedMethodInspection */
         $service = $inj->service(1);
         $this->assertInstanceOf('Service', $service);
         $this->assertInstanceOf('Dependency', $service->dependency);
@@ -68,9 +69,13 @@ class Corelib_InjectorTest extends PHPUnit_Framework_TestCase {
 
     public function testClosureDependency() {
         $inj = new DIContainer;
-        $closure = function() { return true; };
-        $inj->setClosure('closure', $closure);
+
+        $inj->closure = $inj->wrapClosure(function() {
+            return true;
+        });
+
         $this->assertInstanceOf('Closure', $inj->closure);
+        /** @noinspection PhpUndefinedMethodInspection */
         $this->assertTrue($inj->closure->__invoke());
     }
 

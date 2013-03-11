@@ -45,6 +45,7 @@ class Client {
     public static function get($url, array $curl_options = array(), &$error = null, $treat_40x_50x_as_error = false) {
         /** @var Client $self */
         $self = new static;
+        /** @noinspection PhpUndefinedMethodInspection */
         return $self
             ->setUrl($url)
             ->setGet()
@@ -65,6 +66,7 @@ class Client {
     public static function post($url, $post_body, array $curl_options = array(), &$error = null, $treat_40x_50x_as_error = false) {
         /** @var Client $self */
         $self = new static;
+        /** @noinspection PhpUndefinedMethodInspection */
         return $self
             ->setUrl($url)
             ->setPost($post_body)

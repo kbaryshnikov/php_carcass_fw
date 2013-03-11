@@ -173,7 +173,9 @@ class VersionedCache {
      * @return self
      */
     public function flushNamespace($namespace) {
-        (new static($this->Connection))->setNamespace($namespace)->flush();
+        /** @var VersionedCache $self */
+        $self = new static($this->Connection);
+        $self->setNamespace($namespace)->flush();
         return $this;
     }
 
@@ -185,7 +187,9 @@ class VersionedCache {
      * @return self
      */
     public function flushNamespaceByKey(\Closure $NsKey, array $args = []) {
-        (new static($this->Connection))->setNamespaceByKey($NsKey, $args)->flush();
+        /** @var VersionedCache $self */
+        $self = new static($this->Connection);
+        $self->setNamespaceByKey($NsKey, $args)->flush();
         return $this;
     }
 

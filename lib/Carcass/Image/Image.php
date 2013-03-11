@@ -10,6 +10,7 @@ namespace Carcass\Image;
 
 /**
  * Image: pecl/imagick wrapper
+ *
  * @package Carcass\Image
  */
 class Image extends \Imagick {
@@ -21,7 +22,7 @@ class Image extends \Imagick {
      */
     public function __construct($src) {
         if (is_resource($src)) {
-            parent::__construct();
+            parent::__construct(null);
             $this->readImageFile($src);
         } else {
             parent::__construct($src);

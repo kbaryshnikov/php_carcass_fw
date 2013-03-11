@@ -2,13 +2,13 @@
 
 namespace Carcass\Tools;
 
-use Carcass\Application as Application;
-use Carcass\Corelib as Corelib;
-use Carcass\Config as Config;
+use Carcass\Application;
+use Carcass\Corelib;
+use Carcass\Config;
 
-class BuildngxScript extends Application\Controller {
+class BuildNginxConfigScript extends Application\Controller {
 
-    public function actionDefault($Args) {
+    public function actionDefault(Corelib\Hash $Args) {
         if ($Args->get('h')) {
             $this->printHelp();
             return 0;
@@ -44,44 +44,50 @@ class BuildngxScript extends Application\Controller {
     }
 
     protected function parse($file, array $args) {
-        /** @noinspection PhpUndefinedClassInspection */
         return Corelib\StringTemplate::constructFromFile($file)->parse($args);
     }
 
-    protected function buildVars($Config) {
+    protected function buildVars(Config\ItemInterface $Config) {
+        $Site = $Config->getPath('web.site');
+        if (!$Site) {
+            throw new \RuntimeException('Missing web.site configuration');
+        }
+
+        $Server = $Config->getPath('web.server');
+        if (!$Server) {
+            throw new \RuntimeException('Missing web.server configuration');
+        }
+
         $vars = [
-            'app_name' => $Config->application->name,
+            'app_name' => $Config->getPath('application.name')
         ];
+
         foreach ($this->Request->Env->exportArray() as $k => $v) {
             $vars["ENV_$k"] = $v;
         }
 
-        $vars['fcgi_addr'] = $Config->web->server->socket;
+        $vars['fcgi_addr'] = $Config->getPath('web.server.socket');
 
-        if ($Config->web->server->has('listen')) {
-            $vars['listen'] = self::assocToValArray($Config->web->server->listen);
-        }
+        $vars['listen'] = self::assocToValArray($Server->get('listen'));
 
         $server_names = [];
-        if ($Config->web->site->has('domain')) {
-            $server_names[] = $Config->web->site->domain;
+        if ($Site->has('domain')) {
+            $server_names[] = $Site->get('domain');
         }
-        if ($Config->web->site->has('aliases')) {
-            foreach ($Config->web->site->aliases as $alias) {
+        if ($Site->has('aliases')) {
+            foreach ($Site->exportArrayFrom('aliases') as $alias) {
                 $server_names[] = $alias;
             }
         }
         $vars['server_names'] = $server_names ? join(' ', $server_names) : null;
 
-        if ($Config->web->server->has('ssl')) {
-            $vars['ssl'] = static::assocToValArray($Config->web->server->ssl);
+        if ($Server->has('ssl')) {
+            $vars['ssl'] = static::assocToValArray($Server->get('ssl'));
         }
 
-        if ($Config->web->server->has('realip')) {
-            if ($Config->web->server->realip->has('header')) {
-                $vars['realip_header'] = $Config->web->server->realip->header;
-            }
-            $vars['realip_from'] = static::assocToValArray($Config->web->server->realip->from);
+        if ($Server->has('realip')) {
+            $vars['realip_header'] = $Server->get('realip.header');
+            $vars['realip_from'] = static::assocToValArray($Server->get('realip.from'));
         }
 
         foreach ($Config->exportArrayFrom('web') as $k => $v) {
@@ -94,6 +100,10 @@ class BuildngxScript extends Application\Controller {
     }
 
     protected static function assocToValArray($array) {
+        if (null === $array) {
+            return null;
+        }
+
         if (!Corelib\ArrayTools::isTraversable($array)) {
             $array = [$array];
         }
@@ -106,7 +116,7 @@ class BuildngxScript extends Application\Controller {
         return $result;
     }
 
-    protected function getConfigLocations($app_root, $AppEnv) {
+    protected function getConfigLocations($app_root, Corelib\Hash $AppEnv) {
         $config_roots = ["{$app_root}config/"];
         if ($AppEnv->has('cfg_path_extra')) {
             $config_roots = array_merge($config_roots, static::fixPathes($AppEnv->cfg_path_extra->exportArray()));
@@ -122,7 +132,7 @@ class BuildngxScript extends Application\Controller {
         return $result;
     }
 
-    protected function getConfigSubdirs($AppEnv) {
+    protected function getConfigSubdirs(Corelib\Hash $AppEnv) {
         return $AppEnv->get('configuration_name') ? ['', $AppEnv->get('configuration_name') . '/'] : [''];
     }
 

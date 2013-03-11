@@ -1813,6 +1813,7 @@ class Compiler {
      */
     protected function throwError($msg = null) {
         if ($this->sourceLoc >= 0) {
+            /** @noinspection PhpUndefinedMethodInspection */
             $this->sourceParser->throwError($msg, $this->sourceLoc);
         }
         throw new Exception($msg);

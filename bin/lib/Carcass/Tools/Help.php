@@ -8,13 +8,13 @@ use Carcass\Corelib as Corelib;
 class Help {
 
     protected $commands = [
-        'help'       => 'Show this message',
-        'buildngx'   => 'Build application nginx config',
+        'help'                 => 'Show this message',
+        'build-nginx-config'   => 'Build application nginx config',
         '' => null,
         'Use <command> -h for detailed help on a command.' => null,
     ];
 
-    protected $title = 'Usage:';
+    protected $title = 'Commands:';
 
     public function __construct(array $commands = null, $title = null) {
         if ($title) {

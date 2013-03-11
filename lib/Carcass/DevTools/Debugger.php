@@ -121,7 +121,6 @@ class Debugger {
      * @return $this
      */
     public function dumpTimers($clean_stopped = false) {
-        $group_results = [];
         foreach ($this->timers as $group => &$timers) {
             $group_total = 0;
             $group_results = [];

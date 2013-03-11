@@ -71,7 +71,7 @@ class WriterFactory {
             throw new \InvalidArgumentException('Required argument missing: "sender"');
         }
         return new MailWriter(
-            Mail\Factory::assembleMailer(),
+            Mail\Factory::createMailer(),
             $arguments['recipient'],
             $arguments['sender']
         );

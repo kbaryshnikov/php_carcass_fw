@@ -18,6 +18,7 @@ use Carcass\Application\DI;
  * @method int getLastInsertId()
  * @method string escapeString()
  * @method string getDsn()
+ * @method mixed doInTransaction()
  *
  * @package Carcass\Shard
  */

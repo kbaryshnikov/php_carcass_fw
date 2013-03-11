@@ -36,7 +36,7 @@ trait TimerTrait {
      * @return Timer
      */
     protected function develStartTimer($message) {
-        if (!DI::isEnabled() || !DI::getDebugger()->isEnabled()) {
+        if (!DI::getDebugger()->isEnabled()) {
             return new Corelib\NullObject;
         }
         return DI::getDebugger()->createTimer($this->develGetTimerGroup(), $this->develGetTimerMessage($message))->start();

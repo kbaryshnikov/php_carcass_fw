@@ -47,7 +47,9 @@ class ShellCommand {
      * @return int
      */
     public static function run($cmd, $args_template = null, array $args = [], &$stdout = null, &$stderr = null) {
-        return (new static($cmd, $args_template))->prepare($args)->execute($stdout, $stderr);
+        /** @var ShellCommand $self */
+        $self = new static($cmd, $args_template);
+        return $self->prepare($args)->execute($stdout, $stderr);
     }
 
     /**

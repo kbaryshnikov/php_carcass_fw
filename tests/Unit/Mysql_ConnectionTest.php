@@ -107,6 +107,7 @@ class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
             
         $Conn->executeQuery("INSERT INTO test (s) VALUES ('1')");
         $Manager->begin();
+        $e = null;
         try {
             $Conn->executeQuery("INSERT INTO test (s) VALUES ('2')");
             $ConnMock->executeQuery('foo');
@@ -114,7 +115,6 @@ class Mysql_ConnectionTest extends PHPUnit_Framework_TestCase {
         } catch (Exception $e) {
             $Manager->rollback();
         }
-        $this->assertTrue(isset($e));
         $this->assertInstanceOf('\Carcass\Connection\ManagerXaVotedNoException', $e);
 
         $Conn->executeQuery("SELECT count(*) c FROM test");

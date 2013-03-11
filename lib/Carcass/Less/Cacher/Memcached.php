@@ -65,7 +65,8 @@ class Cacher_Memcached implements Cacher_Interface {
      * @return mixed
      */
     public function get($less_key) {
-        return $this->MemcachedConnection->get($this->MemcachedKey->__invoke(compact('less_key')));
+        $Key = $this->MemcachedKey;
+        return $this->MemcachedConnection->get($Key(compact('less_key')));
     }
 
     /**
@@ -74,7 +75,8 @@ class Cacher_Memcached implements Cacher_Interface {
      * @return $this
      */
     public function put($less_key, $value) {
-        $this->MemcachedConnection->set($this->MemcachedKey->__invoke(compact('less_key')), $value);
+        $Key = $this->MemcachedKey;
+        $this->MemcachedConnection->set($Key(compact('less_key')), $value);
         return $this;
     }
 

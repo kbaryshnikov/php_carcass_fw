@@ -62,7 +62,7 @@ class Base implements RuleInterface {
      * @param $value
      * @return bool
      */
-    public function validateValue($value) {
+    public function validateValue(/** @noinspection PhpUnusedParameterInspection */ $value) {
         return false;
     }
 

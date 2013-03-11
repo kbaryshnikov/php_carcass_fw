@@ -9,6 +9,7 @@
 namespace Carcass\Memcached;
 
 use Carcass\Corelib;
+use Carcass\Application\DI;
 
 /**
  * Tagged memcached cacher
@@ -226,11 +227,11 @@ class TaggedCache {
             }
             $mc_item = $mc_result[$key];
             if (!is_array($mc_item)) {
-                Corelib\DIContainer::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' is not an array");
+                DI::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' is not an array");
                 continue;
             }
             if (!isset($mc_item[self::SUBKEY_TAGS], $mc_item[self::SUBKEY_DATA]) || !is_array($mc_item[self::SUBKEY_TAGS])) {
-                Corelib\DIContainer::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' has broken structure");
+                DI::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' has broken structure");
             }
             $key_tag_values = $mc_item[self::SUBKEY_TAGS];
             foreach ($tag_values as $tag_key => $tag_value) {

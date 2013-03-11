@@ -28,7 +28,7 @@ class Factory {
     ];
 
     /**
-     * @param null $sender_type
+     * @param string|null $sender_type
      * @return Sender_Interface
      */
     public static function createMailer($sender_type = null) {

@@ -857,7 +857,7 @@ class Parser {
     // list of tags of specifying mixin path
     // optionally separated by > (lazy, accepts extra >)
     protected function mixinTags(&$tags) {
-        $s = $this->seek();
+        $this->seek();
         $tags = array();
         while ($this->tag($tt, true)) {
             $tags[] = $tt;

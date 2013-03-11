@@ -48,6 +48,7 @@ class Sender_Swift implements Sender_Interface {
             $to = $to instanceof Corelib\ExportableInterface ? $to->exportArray() : array($to);
         }
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $SwiftMessage = Swift_Message::newInstance()
             ->setSubject($Message->subject)
             ->setFrom(array($Message->sender))
@@ -64,11 +65,13 @@ class Sender_Swift implements Sender_Interface {
                     throw new \LogicException("Invalid attachment");
                 }
                 $SwiftAttachment->setContentType($attachment->mime_type);
+                /** @noinspection PhpUndefinedMethodInspection */
                 $SwiftMessage->attach($SwiftAttachment);
             }
         }
 
         if ($Message->has('encoding')) {
+            /** @noinspection PhpUndefinedMethodInspection */
             $SwiftMessage->setCharset($Message->encoding);
         }
 
@@ -118,6 +121,7 @@ class Sender_Swift implements Sender_Interface {
                     $SwiftTransport->setEncryption($this->params['encryption']);
                 }
                 if (!empty( $this->params['auth'] )) {
+                    /** @noinspection PhpUndefinedMethodInspection */
                     $SwiftTransport->setUsername($this->params['username'])->setPassword($this->params['password']);
                 }
                 return $SwiftTransport;

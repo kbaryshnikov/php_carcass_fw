@@ -54,6 +54,7 @@ trait RenderableTrait {
         } else {
             $renderer = $this->renderer;
             if ($renderer instanceof \Closure) {
+                /** @noinspection PhpUndefinedMethodInspection */
                 $renderer = $renderer->bindTo($this);
             }
             $renderer($Result, $this);

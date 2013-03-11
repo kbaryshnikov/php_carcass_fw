@@ -221,7 +221,7 @@ class Converter {
         $target_w = $this->resize_w ?: ( $this->resize_h * $source_ratio );
         $target_h = $this->resize_h ?: ( $this->resize_w / $source_ratio );
 
-        $this->ResultImage = $this->SourceImage->clone();
+        $this->ResultImage = clone $this->SourceImage;
 
         switch ($this->thumbnail_mode) {
             case self::THUMBNAIL_MODE_CROP_CENTERED:

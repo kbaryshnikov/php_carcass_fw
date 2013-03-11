@@ -38,25 +38,13 @@ class DIContainer {
     /**
      * Reuse the instance created by $ctor
      *
-     * @param callable $ctor
-     * @return callable
+     * @param Closure $ctor
+     * @return Closure
      */
     public function reuse(Closure $ctor) {
         return function($self) use ($ctor) {
             static $instance = null;
             return null === $instance ? $instance = $ctor($self) : $instance;
-        };
-    }
-
-    /**
-     * Register a closure as closure itself, not a ctor function
-     *
-     * @param string $name
-     * @param callable $value
-     */
-    public function setClosure($name, Closure $value) {
-        $this->$name = function() use ($value) {
-            return $value;
         };
     }
 
@@ -68,6 +56,19 @@ class DIContainer {
      */
     public function __set($name, $value) {
         $this->registry[$name] = $value;
+    }
+
+    /**
+     * Returns a closure wrapped for usage as a dependency,
+     * do distinguish from a ctor-closure.
+     *
+     * @param Closure $value
+     * @return Closure
+     */
+    public function wrapClosure(Closure $value) {
+        return function() use ($value) {
+            return $value;
+        };
     }
 
     /**

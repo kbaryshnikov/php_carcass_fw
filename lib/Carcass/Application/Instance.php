@@ -167,11 +167,11 @@ class Instance {
     }
 
     protected function bootstrap() {
-        $this->startTimer();
         $this->setupErrorHandler();
         $this->loadApplicationConfiguration();
         $this->setupRunMode();
         $this->setupAutoloader();
+        $this->startTimer();
         $this->setupConfigReader();
         $this->setupLogger();
         $this->setupDebugger();
@@ -198,7 +198,6 @@ class Instance {
     }
 
     protected function startTimer() {
-        require_once __DIR__ . '/../DevTools/Timer.php';
         $this->Timer = (new DevTools\Timer('Total execution time'))->start();
     }
 
