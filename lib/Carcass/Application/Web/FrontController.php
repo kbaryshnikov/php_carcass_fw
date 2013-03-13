@@ -42,11 +42,13 @@ class Web_FrontController implements FrontControllerInterface {
 
     public function run() {
         $debugger_is_enabled = DI::getDebugger()->isEnabled();
-        register_shutdown_function(function() use ($debugger_is_enabled) {
-            if ($e = error_get_last()) {
-                $this->showInternalError($debugger_is_enabled ? "$e[message] in $e[file] line $e[line]" : null);
+        register_shutdown_function(
+            function () use ($debugger_is_enabled) {
+                if ($e = error_get_last()) {
+                    $this->showInternalError($debugger_is_enabled ? "$e[message] in $e[file] line $e[line]" : null);
+                }
             }
-        });
+        );
         try {
             $this->Router->route($this->Request, $this);
         } catch (\Exception $e) {
@@ -71,19 +73,22 @@ class Web_FrontController implements FrontControllerInterface {
         list ($controller, $action) = Corelib\StringTools::split($fq_action, '.', [null, 'Default']);
 
         $page_class = "{$controller}Page";
-
-        $page_php_file = DI::getPathManager()->getPathToPhpFile('pages', $page_class);
-        if (!file_exists($page_php_file)) {
-            throw new ImplementationNotFoundException("No implementation of $fq_action found");
-        }
-
-        include_once $page_php_file;
-
-        $page_fq_class = Instance::getFqClassName($page_class);
+        $page_fq_class = $this->requirePageClass($page_class);
 
         /** @var ControllerInterface $Page */
         $Page = new $page_fq_class($this->Request, $this->Response, $this->Router);
         $this->displayResult($Page->dispatch($action, $Args));
+    }
+
+    protected function requirePageClass($page_class) {
+        $page_php_file = DI::getPathManager()->getPathToPhpFile('pages', $page_class);
+        if (!file_exists($page_php_file)) {
+            throw new ImplementationNotFoundException("No implementation for $page_class found");
+        }
+
+        include_once $page_php_file;
+
+        return Instance::getFqClassName($page_class);
     }
 
     /**

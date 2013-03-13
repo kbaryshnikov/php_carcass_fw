@@ -18,7 +18,7 @@ use Carcass\Application\DI;
 class JsonRpc_Server {
 
     /**
-     * @var callable (string $method, Corelib\Hash $Args) -> array|bool
+     * @var callable (string $method, Corelib\Hash $Args, JsonRpc_Server $Server) -> array|bool
      */
     protected $DispatcherFn = null;
 
@@ -118,12 +118,19 @@ class JsonRpc_Server {
      * @param Corelib\ResponseInterface $Response
      */
     public function displayTo(Corelib\ResponseInterface $Response) {
+        $Response->write(Corelib\JsonTools::encode($this->getCollectedResponse()));
+    }
+
+    /**
+     * @return array
+     */
+    public function getCollectedResponse() {
         if ($this->batch_mode) {
             $result = $this->response_collector;
         } else {
             $result = reset($this->response_collector);
         }
-        $Response->write(Corelib\JsonTools::encode($result));
+        return $result ?: [];
     }
 
     /**
@@ -133,7 +140,7 @@ class JsonRpc_Server {
      */
     protected function dispatchRequest(JsonRpc_Request $Request) {
         $DispatcherFn = $this->DispatcherFn;
-        $response = $DispatcherFn($Request->getMethod(), new Corelib\Hash($Request->getParams()));
+        $response = $DispatcherFn($Request->getMethod(), new Corelib\Hash($Request->getParams()), $this);
         if (is_bool($response)) {
             $response = ['success' => $response];
         } elseif (!is_array($response)) {

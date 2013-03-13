@@ -24,9 +24,10 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                 )
             );
 
-        $DispatcherFn = function ($method, Corelib\Hash $Args) {
+        $DispatcherFn = function ($method, Corelib\Hash $Args, $Server) {
             $this->assertEquals('test', $method);
             $this->assertEquals(['test_key' => 'test_value'], $Args->exportArray());
+            $this->assertInstanceOf('\Carcass\Http\JsonRpc_Server', $Server);
             return ['success' => true];
         };
 
@@ -521,5 +522,31 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                 )
             )
             ->displayTo($Response);
+    }
+
+    public function testGetCollectedResponse() {
+        $DispatcherFn = function ($method, Corelib\Hash $Args, $Server) {
+            return ['success' => true];
+        };
+
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'test',
+                    'params'  => ['test_key' => 'test_value'],
+                    'id'      => 1,
+                ]
+            )
+        );
+
+        $expected = [
+            'jsonrpc' => '2.0',
+            'id' => 1,
+            'result' => ['success' => true]
+        ];
+
+        $this->assertEquals($expected, $Server->getCollectedResponse());
     }
 }
