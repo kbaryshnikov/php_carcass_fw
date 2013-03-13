@@ -30,6 +30,8 @@ class Web_Router_Factory {
                 return static::assembleMapRouter($RouteConfig);
             case 'simple':
                 return static::assembleSimpleRouter($RouteConfig);
+            case 'jsonrpc':
+                return static::assembleJsonRpcRouter($RouteConfig);
             default:
                 throw new \LogicException("Unknown router name: '{$RouteConfig->get('name')}'");
         }
@@ -51,6 +53,21 @@ class Web_Router_Factory {
     public static function assembleSimpleRouter($Config) {
         return (new Web_Router_Simple)
             ->setStatic($Config->getPath('static.uri'), $Config->getPath('static.host'), $Config->getPath('static.scheme'));
+    }
+
+    /**
+     * @param \Carcass\Config\Item $Config
+     * @return \Carcass\Application\Web_Router_JsonRpc
+     */
+    public static function assembleJsonRpcRouter($Config) {
+        $Router = new Web_Router_JsonRpc($Config->get('api_url', '/'));
+        if ($Config->has('api_class_template')) {
+            $Router->setApiClassTemplate($Config->get('api_class_template'));
+        }
+        if ($Config->has('request_body_provider_fn')) {
+            $Router->setRequestBodyProvider($Config->get('request_body_provider_fn'));
+        }
+        return $Router;
     }
 
 }
