@@ -6,6 +6,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
+/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
 namespace Carcass\Shard;
 
 use \Carcass\Model\Memcached as MemcachedModel;

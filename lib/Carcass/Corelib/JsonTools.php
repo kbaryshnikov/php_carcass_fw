@@ -30,7 +30,7 @@ class JsonTools {
      * @return string
      */
     public static function encode($in_data, $encode_flags = null) {
-        return json_encode($in_data, $encode_flags === null ? static::getEncodeFlags() : $flags);
+        return json_encode($in_data, $encode_flags === null ? static::getEncodeFlags() : $encode_flags);
     }
 
     /**
