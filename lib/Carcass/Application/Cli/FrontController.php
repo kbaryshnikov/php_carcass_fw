@@ -14,7 +14,7 @@ use Carcass\Corelib;
  * Cli application front controller.
  * @package Carcass\Application
  */
-class Cli_FrontController implements ControllerInterface {
+class Cli_FrontController implements FrontControllerInterface {
 
     const INPUT_ERROR = 1;
     const INTERNAL_ERROR = 255;

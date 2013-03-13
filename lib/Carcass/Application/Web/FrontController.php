@@ -16,7 +16,7 @@ use Carcass\Config;
  *
  * @package Carcass\Application
  */
-class Web_FrontController implements ControllerInterface {
+class Web_FrontController implements FrontControllerInterface {
 
     /** @var \Carcass\Corelib\Request */
     protected $Request;
@@ -64,6 +64,7 @@ class Web_FrontController implements ControllerInterface {
     /**
      * @param $fq_action
      * @param \Carcass\Corelib\Hash $Args
+     * @throws ImplementationNotFoundException
      * @return void
      */
     public function dispatch($fq_action, Corelib\Hash $Args) {
@@ -71,7 +72,12 @@ class Web_FrontController implements ControllerInterface {
 
         $page_class = "{$controller}Page";
 
-        include_once DI::getPathManager()->getPathToPhpFile('pages', $page_class);
+        $page_php_file = DI::getPathManager()->getPathToPhpFile('pages', $page_class);
+        if (!file_exists($page_php_file)) {
+            throw new ImplementationNotFoundException("No implementation of $fq_action found");
+        }
+
+        include_once $page_php_file;
 
         $page_fq_class = Instance::getFqClassName($page_class);
 

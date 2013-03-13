@@ -38,13 +38,13 @@ abstract class Controller {
     /**
      * @param string $action Action name
      * @param \Carcass\Corelib\Hash $Args Action arguments
+     * @throws ImplementationNotFoundException
      * @return mixed action results
-     * @throws \RuntimeException
      */
     public function dispatch($action, Corelib\Hash $Args) {
         $method = 'action' . $action;
         if (!method_exists($this, $method)) {
-            throw new \RuntimeException("Action not implemented: '$action'");
+            throw new ImplementationNotFoundException("Action not implemented: '$action'");
         }
         return $this->$method($Args);
     }
