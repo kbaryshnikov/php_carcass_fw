@@ -215,7 +215,7 @@ class Manager {
                 function ($Connection) use ($Source) {
                     /** @var XaTransactionalConnectionInterface $Connection */
                     try {
-                        if (!$Connection->vote(true)) {
+                        if (!$Connection->vote()) {
                             throw new ManagerXaVotedNoException;
                         }
                     } catch (\Exception $e) {

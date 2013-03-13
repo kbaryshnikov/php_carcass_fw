@@ -17,9 +17,8 @@ namespace Carcass\Connection;
 interface XaTransactionalConnectionInterface extends TransactionalConnectionInterface {
 
     /**
-     * @param bool $local
      * @return bool
      */
-    public function vote($local = false);
+    public function vote();
 
 }

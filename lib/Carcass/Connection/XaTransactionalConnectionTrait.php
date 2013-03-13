@@ -25,11 +25,10 @@ trait XaTransactionalConnectionTrait {
      * For inner transactions, always agree.
      * For before-real-commit situations, do the first phase, and return false if cannot commit.
      *
-     * @param bool $local
      * @throws \LogicException
      * @return bool
      */
-    public function vote($local = false) {
+    public function vote() {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_STATUS_NONE:
             case self::$TRANSACTION_STATUS_SCHEDULED:
