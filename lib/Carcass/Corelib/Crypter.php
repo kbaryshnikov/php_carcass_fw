@@ -121,7 +121,7 @@ class Crypter {
      * @return string
      */
     public function obfuscate($s) {
-        return StringTools::webSafeBase64Encode($this->xorString(ArrayTools::jsonEncode($s)));
+        return StringTools::webSafeBase64Encode($this->xorString(JsonTools::encode($s)));
     }
 
     /**
@@ -132,7 +132,7 @@ class Crypter {
      */
     public function deobfuscate($s) {
         try {
-            return StringTools::jsonDecode($this->xorString(StringTools::webSafeBase64Decode($s)), true);
+            return JsonTools::decode($this->xorString(StringTools::webSafeBase64Decode($s)), true);
         } catch (\Exception $e) {
             return null;
         }

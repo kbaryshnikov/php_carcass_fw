@@ -12,7 +12,6 @@ namespace Carcass\Corelib;
  * Datasource trait implementation for an array object.
  *
  * User must implement:
- *
  * @method bool has($key)
  * @method mixed getRef($key) (must return by reference)
  *

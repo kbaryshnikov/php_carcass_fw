@@ -83,35 +83,6 @@ class ArrayTools {
     }
 
     /**
-     * Serializes $s to a json string.
-     * Converts numeric values to strings to avoid data loss between 32bit and 64bit architectures.
-     *
-     * @param mixed $s
-     * @return string json encoded
-     */
-    public static function jsonEncode($s) {
-        return json_encode(self::numbersToStringsRecursive($s));
-    }
-
-    /**
-     * Converts numeric values to strings to avoid data loss between 32bit and 64bit architectures.
-     *
-     * @param mixed $data
-     * @return mixed
-     */
-    public static function numbersToStringsRecursive($data) {
-        if (is_array($data) || (is_object($data) && $data instanceof \Traversable)) {
-            $result = [];
-            foreach ($data as $k => $v) {
-                $result[$k] = self::numbersToStringsRecursive($v);
-            }
-            return $result;
-        } else {
-            return ( is_int($data) || is_float($data) ) ? (string)$data : $data;
-        }
-    }
-
-    /**
      * Filters an associative array.
      * 
      * @param array    $array            Array to filter 

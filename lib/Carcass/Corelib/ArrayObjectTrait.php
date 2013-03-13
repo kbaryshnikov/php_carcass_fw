@@ -9,7 +9,7 @@
 namespace Carcass\Corelib;
 
 /**
- * ArrayObject trait implementation. Implements the ArrayAccess interface.
+ * ArrayObject trait implementation. Implements ArrayAccess and Iterator interfaces.
  *
  * User must implement:
  * @method array getDataArrayPtr() must return reference to internal values storage

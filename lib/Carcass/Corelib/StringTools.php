@@ -32,14 +32,6 @@ class StringTools {
     }
 
     /**
-     * @param string $s
-     * @return mixed
-     */
-    public static function jsonDecode($s) {
-        return json_decode($s, true);
-    }
-
-    /**
      * @param string $packed
      * @param string $pack_mode
      * @return array

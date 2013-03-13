@@ -110,7 +110,7 @@ class Assert {
         });
     }
 
-    public function closure($value, Callable $Closure) {
+    public function withClosure($value, Callable $Closure) {
         return $this->dispatch(function() use ($value, $Closure) {
             return $Closure($value);
         });
