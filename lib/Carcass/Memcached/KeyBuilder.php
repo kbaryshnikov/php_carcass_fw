@@ -11,7 +11,7 @@ namespace Carcass\Memcached;
 use Carcass\Corelib;
 use /** @noinspection PhpUndefinedClassInspection */
     Carcass\Corelib\StringTemplate;
-use Carcass\Corelib\ArrayTools;
+use Carcass\Corelib\JsonTools;
 use Carcass\Corelib\Assert;
 
 /**
@@ -133,7 +133,7 @@ class KeyBuilder extends StringTemplate {
      * @return string
      */
     public function json($value) {
-        return ArrayTools::jsonEncode($value);
+        return JsonTools::encode($value);
     }
 
     /**

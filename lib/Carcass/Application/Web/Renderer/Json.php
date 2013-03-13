@@ -74,7 +74,7 @@ class Web_Renderer_Json extends Web_Renderer_Base {
             }
         }
         unset($render_data[self::CROSS_ORIGIN_POLICY_KEY]);
-        return Corelib\ArrayTools::jsonEncode($render_data);
+        return Corelib\JsonTools::encode($render_data);
     }
 
     protected function displayErrorBodyTo(Web_Response $Response) {

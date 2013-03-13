@@ -4,7 +4,7 @@ namespace Carcass\Mysql;
 
 use Carcass\Corelib;
 use  Carcass\Corelib\StringTemplate;
-use Carcass\Corelib\ArrayTools;
+use Carcass\Corelib\JsonTools;
 use Carcass\Corelib\TimeTools;
 use Carcass\Corelib\Assert;
 
@@ -80,7 +80,7 @@ class QueryTemplate extends StringTemplate {
     }
 
     public function json($value) {
-        return ArrayTools::jsonEncode($value);
+        return JsonTools::encode($value);
     }
 
     public function jsonNul($value) {

@@ -44,7 +44,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     use TransactionalConnectionTrait;
     use DevTools\TimerTrait;
     use Corelib\UniqueObjectIdTrait {
-    Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
+        Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
     }
 
     protected static $mc_methods = [

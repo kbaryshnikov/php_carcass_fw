@@ -155,7 +155,7 @@ class Set extends Corelib\Hash implements FieldInterface {
      * @return string
      */
     public function __toString() {
-        return Corelib\ArrayTools::jsonEncode($this->exportArray());
+        return Corelib\JsonTools::encode($this->exportArray());
     }
 
     /**
