@@ -35,7 +35,7 @@ class Instance {
 
     protected static $debug_reporter_defaults = [
         'cli' => 'console',
-        'web' => 'firebug',
+        'web' => 'firephp',
     ];
 
     protected $app_root;
@@ -189,6 +189,9 @@ class Instance {
                 $this->Timer->stop();
             }
             $this->Debugger->finalize();
+        }
+        if ($this->DI->Response && $this->DI->Response->isBuffering()) {
+            $this->DI->Response->commit();
         }
         $this->finalized = true;
     }

@@ -20,6 +20,7 @@ class ReporterFactory {
     private static $output_mode_to_implementation_map = [
         'stderr'    => ['ConsoleReporter', 'STDERR'],
         'console'   => ['ConsoleReporter', null],
+        'firephp'   => ['FirephpReporter', null],
         'firebug'   => ['FirebugReporter', null],
         'file'      => ['ConsoleReporter', null],
     ];

@@ -60,7 +60,6 @@ class Web_FrontController implements FrontControllerInterface {
                 $this->showInternalError();
             }
         }
-        $this->Response->isBuffering() and $this->Response->commit();
     }
 
     /**

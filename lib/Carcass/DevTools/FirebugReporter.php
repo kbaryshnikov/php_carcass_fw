@@ -22,12 +22,12 @@ class FirebugReporter extends BaseReporter {
     protected $FireLogger;
 
     protected static $markers = [
-        'exception'     => 'critical',
-        'critical'      => 'critical',
-        'error'         => 'error',
-        'failed'        => 'error',
-        'warning'       => 'warning',
-        'timers'        => 'info',
+        'exception' => 'critical',
+        'critical'  => 'critical',
+        'error'     => 'error',
+        'failed'    => 'error',
+        'warning'   => 'warning',
+        'timers'    => 'info',
     ];
 
     protected static $marker_letters = [
@@ -110,9 +110,9 @@ class FirebugReporter extends BaseReporter {
 
     private static $firelogger_definitions = [
         'FIRELOGGER_NO_EXCEPTION_HANDLER' => true,
-        'FIRELOGGER_NO_ERROR_HANDLER' => true,
-        'FIRELOGGER_NO_DEFAULT_LOGGER' => true,
-        'FIRELOGGER_NO_CONFLICT' => true,
+        'FIRELOGGER_NO_ERROR_HANDLER'     => true,
+        'FIRELOGGER_NO_DEFAULT_LOGGER'    => true,
+        'FIRELOGGER_NO_CONFLICT'          => true,
     ];
 
 }
