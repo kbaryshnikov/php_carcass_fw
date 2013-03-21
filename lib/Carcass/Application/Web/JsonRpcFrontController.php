@@ -14,8 +14,7 @@ use Carcass\Http;
 
 class Web_JsonRpcFrontController extends Web_FrontController {
 
-    /** @var Http\JsonRpc_Server */
-    protected $JsonRpcServer = null;
+    protected $displayed = false;
 
     /**
      * @param \Carcass\Corelib\Request $Request
@@ -27,26 +26,18 @@ class Web_JsonRpcFrontController extends Web_FrontController {
         parent::__construct($Request, $Response, $Router, $WebConfig);
     }
 
-    public function setJsonRpcServer(Http\JsonRpc_Server $Server) {
-        $this->JsonRpcServer = $Server;
+    public function displayJsonRpcResults(Http\JsonRpc_Server $Server) {
+        $this->Response->sendHeader('Content-Type', 'application/json; charset=utf8');
+        $Server->displayTo($this->Response);
     }
 
-    public function dispatchJsonRpc(Http\JsonRpc_Server $Server, $method, Corelib\Hash $Args) {
-        $this->setJsonRpcServer($Server);
-        $this->dispatch($method, $Args);
-    }
-
-    protected function route() {
-        if (!parent::route()) {
-            $this->displayResult('');
-        }
+    protected function dispatchPageAction(ControllerInterface $Page, $action, Corelib\Hash $Args) {
+        return $Page->dispatch($action, $Args);
     }
 
     protected function displayResult($result) {
-        if (null !== $this->JsonRpcServer) {
-            $this->JsonRpcServer->displayTo($this->Response);
-        } else {
-            parent::displayResult($result);
+        if (!$this->displayed) {
+            parent::displayResult($result ?: 500);
         }
     }
 

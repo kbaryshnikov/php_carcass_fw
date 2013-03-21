@@ -69,8 +69,8 @@ class Web_FrontController implements FrontControllerInterface {
     /**
      * @param $fq_action
      * @param \Carcass\Corelib\Hash $Args
+     * @return mixed
      * @throws ImplementationNotFoundException
-     * @return void
      */
     public function dispatch($fq_action, Corelib\Hash $Args) {
         list ($controller, $action) = Corelib\StringTools::split($fq_action, '.', [null, 'Default']);
@@ -80,7 +80,12 @@ class Web_FrontController implements FrontControllerInterface {
 
         /** @var ControllerInterface $Page */
         $Page = new $page_fq_class($this->Request, $this->Response, $this->Router);
+        return $this->dispatchPageAction($Page, $action, $Args);
+    }
+
+    protected function dispatchPageAction(ControllerInterface $Page, $action, Corelib\Hash $Args) {
         $this->displayResult($Page->dispatch($action, $Args));
+        return true;
     }
 
     protected function requirePageClass($page_class) {

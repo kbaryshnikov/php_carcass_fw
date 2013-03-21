@@ -14,7 +14,7 @@ use Carcass\Corelib;
  * Base controller implementation
  * @package Carcass\Application
  */
-abstract class Controller {
+abstract class Controller implements ControllerInterface {
 
     /** @var \Carcass\Corelib\Request */
     protected $Request;

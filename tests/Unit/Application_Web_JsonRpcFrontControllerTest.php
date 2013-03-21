@@ -14,13 +14,11 @@ class Application_Web_JsonRpcFrontControllerTest extends PHPUnit_Framework_TestC
 
         $Server = $this->getMockBuilder('\Carcass\Http\JsonRpc_Server')->disableOriginalConstructor()->getMock();
         $Server->expects($this->once())
-            ->method('displayTo')
-            ->with(
-                $this->identicalTo($Response)
-            );
+            ->method('displayTo');
 
         $Ctrl = new TestJsonRpcFrontController($Request, $Response, $Router, $Config);
-        $Ctrl->dispatchJsonRpc($Server, 'TestJsonRpcController.Test', new Corelib\Hash);
+        $Ctrl->dispatch('TestJsonRpcController.Test', new Corelib\Hash);
+        $Ctrl->displayJsonRpcResults($Server);
     }
 
 }

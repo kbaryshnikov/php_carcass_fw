@@ -53,10 +53,7 @@ class JsonRpc_Server {
             $this->addErrorResponseFromException($JsonRpcException);
             return false;
         }
-        if ($Request) {
-            $this->batch_mode ? $this->processBatch($Request) : $this->processRequest($Request);
-        }
-        return true;
+        return true === ($this->batch_mode ? $this->processBatch($Request) : $this->processRequest($Request));
     }
 
     /**
@@ -71,19 +68,22 @@ class JsonRpc_Server {
     /**
      * @param JsonRpc_Request $Request
      * @throws \Exception
-     * @return JsonRpc_Exception|null abort exception, only for batch mode internals
+     * @return JsonRpc_Exception|bool|null  result, or abort exception (only for batch mode internals)
      */
     protected function processRequest(JsonRpc_Request $Request) {
+        $result = false;
         try {
-            $result = $this->dispatchRequest($Request);
+            $response = $this->dispatchRequest($Request);
             if ($Request->getId()) {
-                $this->addResultResponse($result, $Request->getId());
+                $this->addResultResponse($response, $Request->getId());
             }
+            $result = true;
         } catch (JsonRpc_Exception $JsonRpcException) {
             $this->addErrorResponseFromException($JsonRpcException->setId($Request->getId()));
             if ($this->batch_mode && $JsonRpcException->abortsBatchProcessing()) {
                 return $JsonRpcException;
             }
+            $result = false;
         } catch (\Exception $e) {
             if (!$this->catch_all) {
                 throw $e;
@@ -95,11 +95,12 @@ class JsonRpc_Server {
                 DI::getDebugger()->isEnabled() ? $e->getMessage() . "\n" . $e->getTraceAsString() : "Internal Server Error"
             );
         }
-        return null;
+        return $result;
     }
 
     /**
      * @param JsonRpc_BatchRequest $Batch
+     * @return bool
      */
     protected function processBatch(JsonRpc_BatchRequest $Batch) {
         /** @var JsonRpc_Exception $AbortException */
@@ -109,9 +110,11 @@ class JsonRpc_Server {
             if ($AbortException) {
                 $this->addErrorResponseFromException($AbortException->setId($Request->getId()));
             } else {
-                $AbortException = $this->processRequest($Request);
+                $result = $this->processRequest($Request);
+                $AbortException = $result instanceof \Exception ? $result : null;
             }
         }
+        return false;
     }
 
     /**
@@ -143,7 +146,10 @@ class JsonRpc_Server {
         $response = $DispatcherFn($Request->getMethod(), new Corelib\Hash($Request->getParams()), $this);
         if (is_bool($response)) {
             $response = ['success' => $response];
-        } elseif (!is_array($response)) {
+        } elseif ($response instanceof Corelib\ExportableInterface) {
+            $response = $response->exportArray();
+        }
+        if (!is_array($response)) {
             DI::getLogger()->logWarning("Invalid response received from JSONRPC dispatcher function: " . var_export($response, true));
             throw JsonRpc_Exception::constructServerErrorException("Invalid method response received");
         }

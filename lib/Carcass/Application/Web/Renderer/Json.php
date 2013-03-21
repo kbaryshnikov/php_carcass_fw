@@ -43,6 +43,7 @@ class Web_Renderer_Json extends Web_Renderer_Base {
 
     /**
      * @param array $settings
+     * @throws \InvalidArgumentException
      * @return $this
      */
     public function configure(array $settings) {

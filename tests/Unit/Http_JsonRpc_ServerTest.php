@@ -152,7 +152,6 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                 ]
             )
         );
-        $this->assertTrue($dispatcher_function_was_called);
         $Server->displayTo($Response);
     }
 
@@ -371,7 +370,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
         };
 
         $Server = new Http\JsonRpc_Server($DispatcherFn);
-        $dispatcher_function_was_called = $Server
+        $Server
             ->catchAllExceptions()
             ->dispatchJsonString(
                 json_encode(
@@ -382,7 +381,6 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                     ]
                 )
             );
-        $this->assertTrue($dispatcher_function_was_called);
         $Server->displayTo($Response);
     }
 
@@ -399,7 +397,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
         $this->setExpectedException('\Exception');
 
         $Server = new Http\JsonRpc_Server($DispatcherFn);
-        $dispatcher_function_was_called = $Server->dispatchJsonString(
+        $Server->dispatchJsonString(
             json_encode(
                 [
                     'jsonrpc' => '2.0',
@@ -446,7 +444,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
         };
 
         $Server = new Http\JsonRpc_Server($DispatcherFn);
-        $dispatcher_function_was_called = $Server->dispatchJsonString(
+        $Server->dispatchJsonString(
             json_encode(
                 [
                     [
@@ -463,7 +461,6 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                 ]
             )
         );
-        $this->assertTrue($dispatcher_function_was_called);
         $Server->displayTo($Response);
     }
 
@@ -512,7 +509,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
         };
 
         $Server = new Http\JsonRpc_Server($DispatcherFn);
-        $dispatcher_function_was_called = $Server->dispatchJsonString(
+        $Server->dispatchJsonString(
             json_encode(
                 [
                     [
@@ -534,7 +531,6 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                 ]
             )
         );
-        $this->assertTrue($dispatcher_function_was_called);
         $Server->displayTo($Response);
     }
 
