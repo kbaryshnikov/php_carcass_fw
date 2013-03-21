@@ -32,6 +32,11 @@ class Base {
     protected $after_call = null;
 
     /**
+     * @var callable|null
+     */
+    protected $result_converter_fn = null;
+
+    /**
      * @var Mysql\Client
      */
     protected $Db = null;
@@ -45,9 +50,11 @@ class Base {
      * @return $this
      */
     public function fetchRow($sql_query_template) {
-        return $this->setFetchWith(function(Mysql\Client $Db, array $args) use ($sql_query_template) {
-            return $Db->getRow($sql_query_template, $this->getArgs($args));
-        });
+        return $this->setFetchWith(
+            function (Mysql\Client $Db, array $args) use ($sql_query_template) {
+                return $Db->getRow($sql_query_template, $this->getArgs($args));
+            }
+        );
     }
 
     /**
@@ -56,9 +63,11 @@ class Base {
      * @return $this
      */
     public function fetchAll($sql_query_template, array $keys = []) {
-        return $this->setFetchWith(function(Mysql\Client $Db, array $args) use ($sql_query_template, $keys) {
-            return $Db->getAll($sql_query_template, $this->getArgs($args), $keys);
-        });
+        return $this->setFetchWith(
+            function (Mysql\Client $Db, array $args) use ($sql_query_template, $keys) {
+                return $Db->getAll($sql_query_template, $this->getArgs($args), $keys);
+            }
+        );
     }
 
     /**
@@ -68,9 +77,21 @@ class Base {
      * @return $this
      */
     public function fetchCol($sql_query_template, $col = null, $valcol = null) {
-        return $this->setFetchWith(function(Mysql\Client $Db, array $args) use ($sql_query_template, $col, $valcol) {
-            return $Db->getCol($sql_query_template, $this->getArgs($args), $col, $valcol);
-        });
+        return $this->setFetchWith(
+            function (Mysql\Client $Db, array $args) use ($sql_query_template, $col, $valcol) {
+                return $Db->getCol($sql_query_template, $this->getArgs($args), $col, $valcol);
+            }
+        );
+    }
+
+    /**
+     * Sets the result converter function: mixed $fn(mixed query result)
+     * @param callable $fn
+     * @return $this
+     */
+    public function setResultsConverter(Callable $fn = null) {
+        $this->result_converter_fn = $fn;
+        return $this;
     }
 
     /**
@@ -79,9 +100,11 @@ class Base {
      * @return $this
      */
     public function fetchWith(Callable $fn, Callable $finally_fn = null) {
-        return $this->setFetchWith(function() use ($fn, $finally_fn) {
-            return DI::getConnectionManager()->doInTransaction($fn, func_get_args(), $finally_fn);
-        });
+        return $this->setFetchWith(
+            function () use ($fn, $finally_fn) {
+                return DI::getConnectionManager()->doInTransaction($fn, func_get_args(), $finally_fn);
+            }
+        );
     }
 
     /**
@@ -111,6 +134,7 @@ class Base {
         if (false === $result) {
             throw new \LogicException('Database result is === false, this should never happen');
         }
+        $result = $this->convertResult($result);
         return $result;
     }
 
@@ -138,11 +162,13 @@ class Base {
      * @return mixed
      */
     public function insert($sql_query_template, array $args = array()) {
-        $this->doModify(function(Mysql\Client $Db, $args) use ($sql_query_template) {
-            $affected_rows = $Db->query($sql_query_template, $this->getArgs($args));
-            $this->last_insert_id = $affected_rows ? $Db->getLastInsertId() : null;
-            return $affected_rows;
-        }, $args, false);
+        $this->doModify(
+            function (Mysql\Client $Db, $args) use ($sql_query_template) {
+                $affected_rows        = $Db->query($sql_query_template, $this->getArgs($args));
+                $this->last_insert_id = $affected_rows ? $Db->getLastInsertId() : null;
+                return $affected_rows;
+            }, $args, false
+        );
         return $this->last_insert_id;
     }
 
@@ -152,9 +178,11 @@ class Base {
      * @return mixed
      */
     public function modify($sql_query_template, array $args = array()) {
-        return $this->doModify(function(Mysql\Client $Db, $args) use ($sql_query_template) {
-            return $Db->query($sql_query_template, $this->getArgs($args));
-        }, $args, false);
+        return $this->doModify(
+            function (Mysql\Client $Db, $args) use ($sql_query_template) {
+                return $Db->query($sql_query_template, $this->getArgs($args));
+            }, $args, false
+        );
     }
 
     /**
@@ -213,18 +241,18 @@ class Base {
      */
     public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
         if (null !== $this->before_call) {
-            $before_fn = $this->before_call;
+            $before_fn         = $this->before_call;
             $this->before_call = null;
         } else {
             $before_fn = null;
         }
         if (null !== $this->after_call) {
-            $after_fn = $this->after_call;
+            $after_fn         = $this->after_call;
             $this->after_call = null;
         } else {
             $after_fn = null;
         }
-        $trans_fn = function() use ($fn, $before_fn, $after_fn) {
+        $trans_fn = function () use ($fn, $before_fn, $after_fn) {
             $args = func_get_args();
             if (null !== $before_fn) {
                 call_user_func_array($before_fn, array_merge([$this], $args));
@@ -243,7 +271,7 @@ class Base {
      * @return $this
      */
     public function sendTo(Corelib\ImportableInterface $Target) {
-        $Target->import($this->getLastResult() ?: []);
+        $Target->import($this->getLastResult() ? : []);
         return $this;
     }
 
@@ -255,6 +283,18 @@ class Base {
             $this->Db = $this->assembleDatabaseClient();
         }
         return $this->Db;
+    }
+
+    /**
+     * @param $result
+     * @return array|mixed|null
+     */
+    protected function convertResult($result) {
+        if (null !== $result && $this->result_converter_fn) {
+            $fn = $this->result_converter_fn;
+            return $fn($result);
+        }
+        return $result;
     }
 
     /**

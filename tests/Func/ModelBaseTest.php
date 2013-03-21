@@ -8,8 +8,8 @@ class TestBaseModel extends Model\Base {
 
     public static function getModelRules() {
         return [
-            'id'        => [ 'isValidId' ],
-            'email'     => [ 'isNotEmpty', 'isValidEmail' ]
+            'id'    => ['isValidId'],
+            'email' => ['isNotEmpty', 'isValidEmail']
         ];
     }
 
@@ -26,6 +26,18 @@ class TestBaseModel extends Model\Base {
 
     public function loadById($id) {
         $this->doFetch('SELECT id, email FROM t WHERE id = {{ i(id) }}', compact('id'));
+        return $this->isLoaded();
+    }
+
+    public function loadByIdUppercasedEmail($id) {
+        $this->doFetch(
+            'SELECT id, email FROM t WHERE id = {{ i(id) }}', compact('id'), function ($row) {
+                if (isset($row['email'])) {
+                    $row['email'] = strtoupper($row['email']);
+                }
+                return $row;
+            }
+        );
         return $this->isLoaded();
     }
 
@@ -55,9 +67,9 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testModel() {
-        $M = new TestBaseModel;
+        $M        = new TestBaseModel;
         $M->email = 'test@test.com';
-        $id = $M->insert();
+        $id       = $M->insert();
         $this->assertEquals(1, $id);
         $this->assertTrue($M->loadById(1));
         $this->assertEquals(1, $M->id);
@@ -71,8 +83,18 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
         $this->assertFalse($M->loadById(1));
     }
 
+    public function testModelQueryResultsConverter() {
+        $M        = new TestBaseModel;
+        $M->email = 'test@test.com';
+        $id       = $M->insert();
+        $this->assertEquals(1, $id);
+        $this->assertTrue($M->loadByIdUppercasedEmail(1));
+        $this->assertEquals(1, $M->id);
+        $this->assertEquals('TEST@TEST.COM', $M->email);
+    }
+
     public function testModelValidation() {
-        $M = new TestBaseModel;
+        $M        = new TestBaseModel;
         $M->email = 'wrong';
         $this->assertFalse($M->insert());
         $errors = $M->getErrors();
@@ -84,11 +106,13 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
 
     public function testModelFetchExport() {
         $Request = new \Carcass\Corelib\Request;
-        $Request->import([
-            'Post' => [
-                'email' => 'some@mail.com',
+        $Request->import(
+            [
+                'Post' => [
+                    'email' => 'some@mail.com',
+                ]
             ]
-        ]);
+        );
         $M = new TestBaseModel;
         $M->fetchFrom($Request->Post);
         $this->assertEquals(1, $M->insert());
@@ -100,7 +124,7 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
     public function testModelRender() {
         $Result = new \Carcass\Corelib\Result;
 
-        $M = new TestBaseModel;
+        $M        = new TestBaseModel;
         $M->email = 'test@test.com';
         $M->loadById($M->insert());
 
