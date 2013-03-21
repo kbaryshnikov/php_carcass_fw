@@ -513,6 +513,67 @@ class Memcached_TaggedListCacheTest extends PHPUnit_Framework_TestCase {
         $this->assertTrue($TLC->set($args, range(1, 10), 1));
     }
 
+    public function testPartialSetUsesCountValueFromLastGetCall() {
+        $TCMock = $this->getTaggedCacheMock();
+
+        $key_tpl = 'foo_{{ i(id) }}';
+        $args    = ['id' => 1];
+
+        $TCMock->expects($this->at(0))
+            ->method('getMulti')
+            ->with(
+                [
+                    0       => $key_value = '|' . $key_tpl . '|0',
+                    'count' => $key_count = '|' . $key_tpl . '|#'
+                ],
+                $args
+            )->will(
+                $this->returnCallback(
+                    function () use ($key_value, $key_count) {
+                        return [
+                            $key_value => range(0, 9),
+                            $key_count => 10,
+                        ];
+                    }
+                )
+            );
+
+        $TCMock->expects($this->at(1))
+            ->method('getMulti')
+            ->with(
+                [
+                    0       => $key_value = '|' . $key_tpl . '|0',
+                ],
+                $args
+            )->will(
+                $this->returnCallback(
+                    function () use ($key_value, $key_count) {
+                        return [
+                            $key_value => range(0, 9),
+                        ];
+                    }
+                )
+            );
+
+        $TCMock->expects($this->once())
+            ->method('setMulti')
+            ->with(
+                [
+                    '|' . $key_tpl . '|0' => [1 => 'new 1'] + range(0, 9),
+                    '|' . $key_tpl . '|#' => 10,
+                ],
+                $args
+            )->will(
+                $this->returnValue(true)
+            );
+
+        /** @var $TCMock \Carcass\Memcached\TaggedCache */
+        $TLC = new Memcached\TaggedListCache($TCMock, $key_tpl);
+
+        $TLC->get($args, 0, 10);
+        $TLC->set($args, [1 => 'new 1'], 1);
+    }
+
     public function testDelete() {
         $TCMock = $this->getTaggedCacheMock();
 
