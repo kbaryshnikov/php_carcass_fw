@@ -10,6 +10,11 @@ namespace Carcass\Memcached;
 
 use Carcass\Corelib;
 
+/**
+ * TaggedListCache: caches lists via TaggedCache by splitting list data into to chunks.
+ *
+ * @package Carcass\Memcached
+ */
 class TaggedListCache {
 
     const
@@ -26,22 +31,45 @@ class TaggedListCache {
         $count = null,
         $chunk_size = self::DEFAULT_CHUNK_SIZE;
 
-    public function __construct(TaggedCache $TaggedCache, $key, $chunk_size = null) {
+    /**
+     * @param TaggedCache $TaggedCache
+     * @param string $key_template
+     * @param int|null $chunk_size defaults to DEFAULT_CHUNK_SIZE
+     */
+    public function __construct(TaggedCache $TaggedCache, $key_template, $chunk_size = null) {
         $this->TaggedCache  = $TaggedCache;
-        $this->key_template = $key;
+        $this->key_template = $key_template;
         $chunk_size and $this->setChunkSize($chunk_size);
     }
 
+    /**
+     * Set total count of items in list
+     *
+     * @param int $count
+     * @return $this
+     */
     public function setCount($count) {
         $this->count = $count;
         return $this;
     }
 
+    /**
+     * Sets chunk size
+     *
+     * @param int $size
+     * @return $this
+     */
     public function setChunkSize($size) {
         $this->chunk_size = $size;
         return $this;
     }
 
+    /**
+     * Returns count of items in list
+     *
+     * @return int
+     * @throws \LogicException
+     */
     public function getCount() {
         if (null === $this->count) {
             throw new \LogicException('Count is undefined');
@@ -49,6 +77,15 @@ class TaggedListCache {
         return $this->count;
     }
 
+    /**
+     * Returns a part of the list delimited with $offset and $limit.
+     *
+     * @param array $args key template arguments
+     * @param int $offset
+     * @param int $limit
+     * @param bool $return_incomplete If true, will return incomplete lists when some chunks are missing from cache. Otherwise will return false for incomplete lists.
+     * @return array|bool false
+     */
     public function get(array $args, $offset, $limit, $return_incomplete = false) {
         $this->is_incomplete = false;
 
@@ -99,6 +136,10 @@ class TaggedListCache {
         return $result;
     }
 
+    /**
+     * @return bool is the last get() result incomplete. Makes sense with get(return_incomplete => true).
+     * @throws \LogicException
+     */
     public function isIncomplete() {
         if ($this->is_incomplete === null) {
             throw new \LogicException('get() was not called before');
@@ -106,6 +147,16 @@ class TaggedListCache {
         return $this->is_incomplete;
     }
 
+    /**
+     * Sets a part of the list, or a whole list if offset is null.
+     * When setting a part of the list, count of items must be defined: directly by setCount() call, or non-directly by previous get() call.
+     * In case of chunk intersection, merges with data existing in cache.
+     *
+     * @param array $args key template arguments
+     * @param array $values array of (index => value)
+     * @param int|null $offset If null, $values array is treated as full list contents, and count is defined by array size. Otherwise, $values array is a part of (offset ... offset+count($values))
+     * @return bool
+     */
     public function set(array $args, array $values, $offset = null) {
         if ($offset === null) {
             $offset = 0;
@@ -144,11 +195,23 @@ class TaggedListCache {
         return true;
     }
 
+    /**
+     * Forces expiration of list without expiring tags
+     *
+     * @param array $args key template arguments
+     * @return $this
+     */
     public function delete(array $args) {
         $this->TaggedCache->set($this->getCountKeyTemplate(), false, $args);
         return $this;
     }
 
+    /**
+     * Flushes TaggedCache
+     *
+     * @param array $args key template arguments
+     * @return $this
+     */
     public function flush(array $args) {
         $this->TaggedCache->flush($args);
         return $this;
