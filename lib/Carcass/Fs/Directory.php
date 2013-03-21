@@ -108,7 +108,9 @@ class Directory {
         foreach (new \RecursiveIteratorIterator($Iterator, \RecursiveIteratorIterator::CHILD_FIRST) as $file) {
             /** @var \SplFileInfo $file */
             if ($file->isDir()) {
-                rmdir($file->getPathname());
+                if (!in_array($file->getBasename(), ['.', '..'], true)) {
+                    rmdir($file->getPathname());
+                }
             } else {
                 unlink($file->getPathname());
             }
