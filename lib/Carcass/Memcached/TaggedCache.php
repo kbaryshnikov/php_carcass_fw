@@ -45,6 +45,16 @@ class TaggedCache {
     }
 
     /**
+     * @param $key_template
+     * @param int|null $chunk_size
+     * @internal param mixed $key
+     * @return TaggedListCache
+     */
+    public function getListCache($key_template, $chunk_size = null) {
+        return new TaggedListCache($this, $key_template, $chunk_size);
+    }
+
+    /**
      * @return Connection
      */
     public function getConnection() {
@@ -164,7 +174,7 @@ class TaggedCache {
 
     /**
      * @param callable $Key
-     * @param $value
+     * @param $value, false to delete
      * @param array $args
      * @return $this
      */
@@ -174,7 +184,7 @@ class TaggedCache {
 
     /**
      * @param array $Keys
-     * @param array $values
+     * @param array $values, false value to delete
      * @param array $args
      * @return $this
      */
@@ -279,7 +289,11 @@ class TaggedCache {
         }
 
         foreach ($mc_set as $key => $value) {
-            $this->Connection->set($key, $value, null, $this->expiration);
+            if (false === $value) {
+                $this->Connection->delete($key);
+            } else {
+                $this->Connection->set($key, $value, null, $this->expiration);
+            }
         }
     }
 
