@@ -37,4 +37,10 @@ interface ItemInterface extends Corelib\DatasourceInterface {
      */
     public function exportHashFrom($path, $default_value = []);
 
+    /**
+     * @param string $key
+     * @return ItemInterface|mixed
+     */
+    public function __get($key);
+
 }

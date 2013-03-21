@@ -10,6 +10,7 @@ class Help {
     protected $commands = [
         'help'                 => 'Show this message',
         'build-nginx-config'   => 'Build application nginx config',
+        'fetch-dependencies'   => 'Fetch application dependencies',
         '' => null,
         'Use <command> -h for detailed help on a command.' => null,
     ];

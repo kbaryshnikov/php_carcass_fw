@@ -82,8 +82,8 @@ trait TransactionalConnectionTrait {
     public function begin($local = false) {
         switch ($this->transaction_status) {
             case self::$TRANSACTION_STATUS_NONE:
-                $this->transaction_id = null;
-                $this->transaction_status = self::$TRANSACTION_STATUS_SCHEDULED;
+                $this->transaction_id      = null;
+                $this->transaction_status  = self::$TRANSACTION_STATUS_SCHEDULED;
                 $this->transaction_counter = 1;
                 break;
             case self::$TRANSACTION_STATUS_SCHEDULED:
@@ -134,7 +134,7 @@ trait TransactionalConnectionTrait {
             /** @noinspection PhpMissingBreakStatementInspection */
             case self::$TRANSACTION_STATUS_STARTED:
                 $this->rollbackTransaction();
-                // no break intentionally
+            // no break intentionally
             case self::$TRANSACTION_STATUS_NONE:
             case self::$TRANSACTION_STATUS_SCHEDULED:
                 $this->transaction_counter = 0;
@@ -158,7 +158,7 @@ trait TransactionalConnectionTrait {
      * @throws \Exception                rollbacks if $fn throws a transaction, and throws it again after the "finally" code
      */
     public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
-        $e = null;
+        $e      = null;
         $result = null;
         try {
             $this->begin();

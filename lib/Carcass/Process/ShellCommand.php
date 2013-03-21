@@ -90,7 +90,7 @@ class ShellCommand {
     public function prepare(array $args = []) {
         $this->args = [];
         foreach ($args as $k => $v) {
-            $this->args[$k] = escapeshellarg($v);
+            is_null($v) or $this->args[$k] = escapeshellarg($v);
         }
         return $this;
     }
@@ -104,11 +104,13 @@ class ShellCommand {
     public function execute(&$stdout = null, &$stderr = null) {
         $args = Corelib\StringTools::parseTemplate($this->args_template, $this->args);
         $command = escapeshellcmd($this->cmd) . ' ' . $args;
+
         $descriptorspec = [
             self::STDIN  => ["pipe", "r"],
-            self::STDOUT => null === $stdout ? ['file', '/dev/null', 'a'] : ["pipe", "w"],
-            self::STDERR => null === $stderr ? ['file', '/dev/null', 'a'] : ["pipe", "w"],
+            self::STDOUT => $this->getDescriptor($stdout),
+            self::STDERR => $this->getDescriptor($stderr),
         ];
+
         $process = proc_open($command, $descriptorspec, $pipes, $this->cwd, $this->env);
         if (!is_resource($process)) {
             throw new \RuntimeException("Cannot execute command: [{$command}]");
@@ -119,15 +121,25 @@ class ShellCommand {
             }
         }
         fclose($pipes[self::STDIN]);
-        if (null !== $stdout) {
+        if (null !== $stdout && !is_resource($stdout)) {
             $stdout = stream_get_contents($pipes[self::STDOUT]);
             fclose($pipes[self::STDOUT]);
         }
-        if (null !== $stderr) {
+        if (null !== $stderr && !is_resource($stderr)) {
             $stderr = stream_get_contents($pipes[self::STDERR]);
             fclose($pipes[self::STDERR]);
         }
         return proc_close($process);
+    }
+
+    protected function getDescriptor($arg) {
+        if ($arg === null) {
+            return ['file', '/dev/null', 'a'];
+        } elseif (is_resource($arg)) {
+            return $arg;
+        } else {
+            return ['pipe', 'w'];
+        }
     }
 
 }
