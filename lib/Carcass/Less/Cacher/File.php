@@ -13,8 +13,16 @@ use Carcass\Application\DI;
 use Carcass\Fs;
 use Carcass\Corelib;
 
+/**
+ * File system cacher
+ *
+ * @package Carcass\Less
+ */
 class Cacher_File implements Cacher_Interface {
 
+    /**
+     * @param $cache_dir
+     */
     public function __construct($cache_dir) {
         $this->cache_dir = rtrim($cache_dir, '/');
     }
