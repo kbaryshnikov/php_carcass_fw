@@ -19,6 +19,7 @@ class PathManager {
         'application' => '',
         'pages'       => 'pages/',
         'scripts'     => 'scripts/',
+        'templates'   => 'templates/',
         'var'         => 'var/',
     ];
 
