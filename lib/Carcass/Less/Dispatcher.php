@@ -60,14 +60,15 @@ class Dispatcher {
     /**
      * @param string $file
      * @param int|null $mtime
-     * @return string
+     * @param string|null $target_file_name
      * @throws \LogicException
+     * @return string
      */
-    public function compile($file, &$mtime = null) {
+    public function compile($file, &$mtime = null, $target_file_name = null) {
         if (!$this->target_path) {
             throw new \LogicException("target path is undefined");
         }
-        $target_file_name = '/' . md5($file) . '.css';
+        $target_file_name = '/' . $target_file_name ?: (md5($file) . '.css');
         $result = $this->compileFileToLessString($file, $mtime);
         if (!$result) {
             throw new \LogicException("Empty less compilation result");
