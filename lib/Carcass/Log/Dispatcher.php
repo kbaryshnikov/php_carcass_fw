@@ -40,7 +40,7 @@ class Dispatcher {
                 throw new \InvalidArgumentException('Invalid list format: list items must be arrays');
             }
             $level = array_shift($config);
-            $args  = array_shift($config);
+            $args = array_shift($config);
             $Writer = WriterFactory::assemble($writer_name, is_array($args) ? $args : []);
             $this->addDestination($Writer, $level);
         }
@@ -58,11 +58,12 @@ class Dispatcher {
     }
 
     /**
-     * @param $e
+     * @param \Exception $e
+     * @param null $level
      * @return $this
      */
-    public function logException($e) {
-        $this->logEvent(static::getExceptionLevel($e), static::formatExceptionMessage($e));
+    public function logException(\Exception $e, $level = null) {
+        $this->logEvent($level ? : static::getExceptionLevel($e), static::formatExceptionMessage($e));
         return $this;
     }
 
