@@ -30,7 +30,6 @@ class Cacher_File implements Cacher_Interface {
         }
         try {
             $cache_data = file_get_contents($cache_file);
-            var_dump($cache_file, ".");
             return Corelib\JsonTools::decode($cache_data);
         } catch (WarningException $e) {
             DI::getDebugger()->dumpException($e);
@@ -48,7 +47,6 @@ class Cacher_File implements Cacher_Interface {
         Fs\Directory::mkdirIfNotExists($this->cache_dir);
         $cache_data = Corelib\JsonTools::encode($value);
         $cache_file = $this->getCacheFile($key);
-        var_dump($cache_file,  "!");
         file_put_contents($cache_file, $cache_data, LOCK_EX);
         return $this;
     }
