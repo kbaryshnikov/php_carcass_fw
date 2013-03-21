@@ -86,14 +86,10 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
     /**
      * @param Corelib\Request $Request
      * @param ControllerInterface $Controller
-     * @return bool
      * @throws \Carcass\Http\JsonRpc_Exception
-     * @throws \InvalidArgumentException
+     * @return bool
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
-        if (!$Controller instanceof Web_JsonRpcFrontController) {
-            throw new \InvalidArgumentException('Web_JsonRpcFrontController required');
-        }
         $uri = $Request->Env->get('REQUEST_URI');
 
         if (0 != strncmp($uri, $this->api_url, strlen($this->api_url))) {
@@ -114,7 +110,9 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
                 }
             }
         );
-        $Controller->setJsonRpcServer($Server);
+        if ($Controller instanceof Web_JsonRpcFrontController) {
+            $Controller->setJsonRpcServer($Server);
+        }
         return $Server->dispatchRequestBody($this->body_provider);
     }
 
