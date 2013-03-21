@@ -82,6 +82,14 @@ class BuildNginxConfigScript extends Controller {
         }
         $vars['server_names'] = $server_names ? join(' ', $server_names) : null;
 
+        foreach ($Site->exportArrayFrom('vars') as $key => $value) {
+            $vars['site_' . $key] = is_array($value) ? static::assocToValArray($value) : $value;
+        }
+
+        foreach ($Server->exportArrayFrom('vars') as $key => $value) {
+            $vars['server_' . $key] = is_array($value) ? static::assocToValArray($value) : $value;
+        }
+
         if ($Server->has('ssl')) {
             $vars['ssl'] = static::assocToValArray($Server->get('ssl'));
         }
