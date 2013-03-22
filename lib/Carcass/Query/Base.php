@@ -38,6 +38,10 @@ class Base {
      * @var callable|null
      */
     protected $result_converter_fn = null;
+    /**
+     * @var bool
+     */
+    protected $apply_converter_fn_to_inner_elements = false;
 
     /**
      * @var Mysql\Client
@@ -133,7 +137,19 @@ class Base {
      * @param callable $fn
      * @return $this
      */
-    public function setResultsConverter(Callable $fn = null) {
+    public function setResultConverter(Callable $fn = null) {
+        $this->apply_converter_fn_to_inner_elements = false;
+        $this->result_converter_fn = $fn;
+        return $this;
+    }
+
+    /**
+     * Sets the result rows converter function: mixed $fn(mixed query result)
+     * @param callable $fn
+     * @return $this
+     */
+    public function setRowsConverter(Callable $fn = null) {
+        $this->apply_converter_fn_to_inner_elements = true;
         $this->result_converter_fn = $fn;
         return $this;
     }
@@ -365,9 +381,11 @@ class Base {
      * @return array|mixed|null
      */
     protected function convertResult($result) {
-        if (null !== $result && $this->result_converter_fn) {
+        if ($result && is_array($result) && $this->result_converter_fn) {
             $fn = $this->result_converter_fn;
-            return $fn($result);
+            return $this->apply_converter_fn_to_inner_elements
+                ? array_map($fn, $result)
+                : $fn($result);
         }
         return $result;
     }
