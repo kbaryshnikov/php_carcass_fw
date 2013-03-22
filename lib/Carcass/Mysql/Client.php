@@ -138,8 +138,8 @@ class Client {
                 $r = &$result;
                 foreach ($keys as $key_name => $num_of_values) {
                     if (is_string($num_of_values) && '1' !== $num_of_values) {
-                        $r = $row[$num_of_values];
-                        break;
+                        $r[$row[$key_name]] = $row[$num_of_values];
+                        continue 2;
                     }
                     $r = &$r[$row[$key_name]];
                     if ($num_of_values === INF) {

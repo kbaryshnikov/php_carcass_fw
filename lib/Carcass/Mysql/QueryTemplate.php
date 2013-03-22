@@ -87,6 +87,17 @@ class QueryTemplate extends StringTemplate {
         return $this->nullOr('json', $value);
     }
 
+    public function limit($limit, $offset = 0) {
+        $tokens = [];
+        if ($limit >= 0) {
+            $tokens[] = 'LIMIT ' . $this->lim($limit);
+        }
+        if ($offset >= 0) {
+            $tokens[] = 'OFFSET ' . $this->lim($offset);
+        }
+        return join(' ', $tokens);
+    }
+
     public function lim($i, $default = 0) {
         if ($i < 1) {
             $i = $default;
