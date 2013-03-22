@@ -18,9 +18,12 @@ use Carcass\Mysql;
  */
 class Base {
 
+    const DEFAULT_COUNT_MODIFIER = 'COUNT';
+
     protected $db_dsn = null;
     protected $last_insert_id = null;
     protected $last_result = [];
+    protected $last_count = null;
 
     /**
      * @var callable|null
@@ -44,6 +47,9 @@ class Base {
      * @var callable|null
      */
     protected $FetchFn = null;
+
+    protected $limit = 0;
+    protected $offset = 0;
 
     /**
      * @param string $sql_query_template
@@ -80,6 +86,44 @@ class Base {
         return $this->setFetchWith(
             function (Mysql\Client $Db, array $args) use ($sql_query_template, $col, $valcol) {
                 return $Db->getCol($sql_query_template, $this->getArgs($args), $col, $valcol);
+            }
+        );
+    }
+
+    /**
+     * @param $limit
+     * @param null $offset
+     * @return $this
+     */
+    public function setLimit($limit, $offset = null) {
+        $this->limit = null === $limit ? null : max(1, intval($limit));
+        null === $offset or $this->setOffset($offset);
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     * @return $this
+     */
+    public function setOffset($offset) {
+        $this->offset = max(0, intval($offset));
+        return $this;
+    }
+
+    /**
+     * @param $sql_query_template
+     * @param array $keys
+     * @param $count_modifier
+     * @return $this
+     */
+    public function fetchList($sql_query_template, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
+        return $this->setFetchWith(
+            function ($Db, $args) use ($sql_query_template, $keys, $count_modifier) {
+                return DI::getConnectionManager()->doInTransaction(
+                    function () use ($sql_query_template, $keys, $count_modifier, $args) {
+                        return $this->doFetchList($sql_query_template, $args, $keys, $count_modifier);
+                    }
+                );
             }
         );
     }
@@ -234,6 +278,13 @@ class Base {
     }
 
     /**
+     * @return int|null
+     */
+    public function getLastCount() {
+        return $this->last_count;
+    }
+
+    /**
      * @param callable $fn
      * @param array $args
      * @param callable $finally_fn
@@ -283,6 +334,30 @@ class Base {
             $this->Db = $this->assembleDatabaseClient();
         }
         return $this->Db;
+    }
+
+    protected function doFetchList($sql_query_template, array $args, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
+        $result = null;
+        $count  = null;
+
+        $args += [
+            'limit' => $this->limit,
+            'offset' => $this->offset,
+        ];
+
+        if ($count_modifier) {
+            $count = $this->getDatabase()->getCell($sql_query_template, [$count_modifier => true] + $args);
+            if (!$count) {
+                $result = [];
+            }
+        }
+
+        if (null === $result) {
+            $result = $this->getDatabase()->getAll($sql_query_template, $args, $keys);
+        }
+
+        $this->last_count = $count;
+        return $result;
     }
 
     /**

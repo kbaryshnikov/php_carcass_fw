@@ -114,4 +114,98 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('bar', $Result[1]->s);
     }
 
+    public function testFetchList() {
+        $Query = new Query\Base;
+        $Query->modify('drop table if exists t');
+        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');
+        $Query
+            ->fetchList(
+                'SELECT
+                    {{ IF COUNT }}
+                        count(id)
+                    {{ END }}
+                    {{ UNLESS COUNT }}
+                        id, s
+                    {{ END }}
+                FROM t
+                {{ UNLESS COUNT }}
+                    ORDER BY id
+                    {{ limit(limit, offset) }}
+                {{ END }}'
+            )
+            ->setLimit(2)
+            ->setOffset(1)
+            ->execute();
+
+        $count = $Query->getLastCount();
+        $this->assertEquals(3, $count);
+
+        $result = $Query->getLastResult();
+        $expected = [ ['id' => 2, 's' => 'bar'], ['id' => 3, 's' => 'baz'] ];
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testFetchListWithKeysArg() {
+        $Query = new Query\Base;
+        $Query->modify('drop table if exists t');
+        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');
+        $Query
+            ->fetchList(
+                'SELECT
+                    {{ IF COUNT }}
+                        count(id)
+                    {{ END }}
+                    {{ UNLESS COUNT }}
+                        id, s
+                    {{ END }}
+                FROM t
+                {{ UNLESS COUNT }}
+                    ORDER BY id
+                    {{ limit(limit, offset) }}
+                {{ END }}',
+                ['id' => 's']
+            )
+            ->setLimit(2)
+            ->setOffset(1)
+            ->execute();
+
+        $count = $Query->getLastCount();
+        $this->assertEquals(3, $count);
+
+        $result = $Query->getLastResult();
+        $expected = [ 2 => 'bar', 3 => 'baz' ];
+        $this->assertEquals($expected, $result);
+
+    }
+
+    public function testFetchListWithCustomCountModifier() {
+        $Query = new Query\Base;
+        $Query->modify('drop table if exists t');
+        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');
+        $Query
+            ->fetchList(
+                'SELECT
+                    {{ IF C }}
+                        count(id)
+                    {{ END }}
+                    {{ UNLESS C }}
+                        id, s
+                    {{ END }}
+                FROM t
+                {{ UNLESS C }}
+                    ORDER BY id
+                    {{ limit(limit, offset) }}
+                {{ END }}',
+                [],
+                'C'
+            )
+            ->execute();
+
+        $count = $Query->getLastCount();
+        $this->assertEquals(3, $count);
+    }
+
 }
