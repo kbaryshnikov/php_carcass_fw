@@ -161,6 +161,13 @@ trait DataReceiverTrait {
 
     /**
      * @param mixed $key
+     */
+    public function __unset($key) {
+        $this->delete($key);
+    }
+
+    /**
+     * @param mixed $key
      * @param mixed $value
      * @return bool
      */
