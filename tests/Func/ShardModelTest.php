@@ -12,7 +12,7 @@ class TestShardUnit extends Corelib\Hash implements Shard\UnitInterface {
     public $initialize_shard_called = false;
 
     public function __construct($id) {
-        $this->id       = $id;
+        $this->id = $id;
         self::$map[$id] = ['id' => $id];
     }
 
@@ -86,7 +86,7 @@ class TestListShardModel extends Shard\ListModel {
 
     protected static
         $cache_key = 'tList',
-        $cache_tags = [ self::MC_TAG ];
+        $cache_tags = [self::MC_TAG];
 
     public $chunk_size = null;
 
@@ -126,14 +126,14 @@ class TestShardModel extends Shard\Model {
 
     protected static
         $cache_key = 't_{{ i(id) }}',
-        $cache_tags = [ 'T_{{ i(id) }}', TestListShardModel::MC_TAG ];
+        $cache_tags = ['T_{{ i(id) }}', TestListShardModel::MC_TAG];
 
     protected static $sequence = ['t' => 'id'];
 
     public static function getModelRules() {
         return [
-            'id'        => [ 'isValidId' ],
-            'email'     => [ 'isNotEmpty', 'isValidEmail' ]
+            'id'    => ['isValidId'],
+            'email' => ['isNotEmpty', 'isValidEmail']
         ];
     }
 
@@ -195,7 +195,7 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
 
     public function setUp() {
         init_app();
-        $this->ShardConfig  = DI::getConfigReader()->get('sharding');
+        $this->ShardConfig = DI::getConfigReader()->get('sharding');
         $this->ShardManager = new Shard\Mysql_ShardManager($this->ShardConfig);
     }
 
@@ -259,9 +259,11 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
 
         $Model = new TestShardModel($Unit1);
         $this->assertFalse($Model->isLoaded());
-        $Model->fetchFromArray([
-            'email' => '1@domain.com'
-        ]);
+        $Model->fetchFromArray(
+            [
+                'email' => '1@domain.com'
+            ]
+        );
         $this->assertTrue($Model->validate());
         $Model->insert();
         $this->assertTrue($Model->isLoaded());
@@ -281,9 +283,11 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $Model->id);
         $this->assertEquals('1@domain.com', $Model->email);
 
-        $Model->fetchFromArray([
-            'email' => 'a@domain.com'
-        ]);
+        $Model->fetchFromArray(
+            [
+                'email' => 'a@domain.com'
+            ]
+        );
         $Model->update();
         $this->assertEquals('a@domain.com', $Model->email);
 
@@ -303,7 +307,7 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
 
         // test list model
 
-        for ($i=1; $i<=20; ++$i) {
+        for ($i = 1; $i <= 20; ++$i) {
             (new TestShardModel($Unit1))->fetchFromArray(['email' => "$i@domain.com"])->insert();
         }
 
@@ -318,15 +322,39 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
             $i++;
             $this->assertEquals("$i@domain.com", $ItemModel->email);
         }
+
+        // test server iterator
+
+        /** @var $Servers Shard\Mysql_Server[] */
+        $Servers = [$Server, $this->addServer(2, false), $this->addServer(3, false)];
+
+        for ($i = 0; $i < 2; ++$i) {
+            /** @var $Server Shard\Mysql_Server */
+            $idx = 0;
+            foreach ($this->ShardManager->getServerIterator() as $idx => $Server) {
+                $this->assertInstanceOf('\Carcass\Shard\Mysql_Server', $Server);
+                $this->assertEquals($Servers[$idx]->getId(), $Server->getId());
+            }
+            $this->assertEquals(2, $idx);
+        }
+
+        // test shard iterator
+        for ($i = 0; $i < 2; ++$i) {
+            foreach ($this->ShardManager->getShardIterator($Server) as $idx => $Shard) {
+                $this->assertInstanceOf('\Carcass\Shard\Mysql_Shard', $Shard);
+                $this->assertEquals($idx+1, $Shard->getId());
+                $this->assertEquals($Server->getDsn(), $Shard->getServer()->getDsn());
+            }
+        }
     }
 
-    protected function addServer() {
+    protected function addServer($id = 1, $delete_databases = true) {
         $Server = new Shard\Mysql_Server(['ip_address' => '127.0.0.1'] + self::$pw);
         $Server = $this->ShardManager->addServer($Server);
 
-        $this->assertEquals(1, $Server->getId());
+        $this->assertEquals($id, $Server->getId());
 
-        $this->deleteAllShardingDatabasesFrom($Server);
+        $delete_databases and $this->deleteAllShardingDatabasesFrom($Server);
 
         return $Server;
     }

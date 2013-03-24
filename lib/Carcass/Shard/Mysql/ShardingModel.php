@@ -289,6 +289,25 @@ class Mysql_ShardingModel {
         return $this->getServerById($server_id, true);
     }
 
+    public function getNextServer($prev_server_id = 0) {
+        $server_result = $this->getServerIndex()->find('>', ['database_server_id' => $prev_server_id], ['limit' => 1]) ? : null;
+        if ($server_result) {
+            $server_result = $this->parseServerRow($server_result[0]);
+            $server_id = $server_result['database_server_id'];
+            return $this->cache['servers'][$server_id] = new Mysql_Server($server_result);
+        }
+        return null;
+    }
+
+    public function getNextShard($server_id, $prev_shard_id = 0) {
+        $shard_result = $this->getShardIndex()->find('>', ['database_shard_id' => $prev_shard_id], ['database_server_id' => $server_id, 'limit' => 1]) ? : null;
+        if ($shard_result) {
+            $shard_id = $shard_result[0]['database_shard_id'];
+            return $this->cache['shards'][$shard_id] = new Mysql_Shard($this->Manager, $shard_result[0]);
+        }
+        return null;
+    }
+
     /**
      * @param $server_id
      * @return array|null
@@ -296,8 +315,13 @@ class Mysql_ShardingModel {
     protected function fetchServerFromHsById($server_id) {
         $server_result = $this->getServerIndex()->find('==', ['database_server_id' => $server_id]) ? : null;
         if ($server_result) {
-            $server_result['ip_address'] = long2ip($server_result['ip_address']);
+            $server_result = $this->parseServerRow($server_result);
         }
+        return $server_result;
+    }
+
+    protected function parseServerRow(array $server_result) {
+        $server_result['ip_address'] = long2ip($server_result['ip_address']);
         return $server_result;
     }
 

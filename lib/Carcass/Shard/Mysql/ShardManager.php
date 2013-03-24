@@ -84,6 +84,14 @@ class Mysql_ShardManager {
         return $this->ShardingDb;
     }
 
+    public function getServerIterator() {
+        return new Mysql_ServerIterator($this->getModel());
+    }
+
+    public function getShardIterator(Mysql_Server $Server) {
+        return new Mysql_ShardIterator($this->getModel(), $Server->getId());
+    }
+
     /**
      * Allocates shard for $Unit. Tries to find the best shard, or if there's no shard
      * available, creates a new shard.
