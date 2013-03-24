@@ -89,10 +89,10 @@ class QueryTemplate extends StringTemplate {
 
     public function limit($limit, $offset = 0) {
         $tokens = [];
-        if ($limit >= 0) {
+        if ($limit > 0) {
             $tokens[] = 'LIMIT ' . $this->lim($limit);
         }
-        if ($offset >= 0) {
+        if ($offset > 0) {
             $tokens[] = 'OFFSET ' . $this->lim($offset);
         }
         return join(' ', $tokens);

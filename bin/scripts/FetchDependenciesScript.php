@@ -45,7 +45,9 @@ class FetchDependenciesScript extends Controller {
         $this->force = $Args->get('f');
 
         foreach ($libs as $name => $config) {
-            $this->updateDependency($name, $config);
+            if (!empty($config['source'])) {
+                $this->updateDependency($name, $config);
+            }
         }
 
         return 0;

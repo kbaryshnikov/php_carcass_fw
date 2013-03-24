@@ -17,6 +17,7 @@ use Carcass\Corelib;
  * @package Carcass\Model
  */
 abstract class Base implements Corelib\DataReceiverInterface, Corelib\ExportableInterface, Corelib\RenderableInterface {
+    use QueryTrait;
     use Corelib\RenderableTrait;
 
     /**
@@ -28,10 +29,7 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
      * @var Field\Set|null
      */
     protected $Fieldset = null;
-    /**
-     * @var Query\Base|null
-     */
-    protected $Query = null;
+
 
     public function __construct() {
         $this->initFieldset();
@@ -146,22 +144,6 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         });
     }
 
-    /**
-     * @return \Carcass\Query\Base
-     */
-    protected function getQuery() {
-        if (null === $this->Query) {
-            $this->Query = $this->assembleQuery();
-        }
-        return $this->Query;
-    }
-
-    /**
-     * @return \Carcass\Query\Base
-     */
-    protected function assembleQuery() {
-        return new Query\Base;
-    }
 
     /**
      * @return Field\Set|null

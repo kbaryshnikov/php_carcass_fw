@@ -34,4 +34,10 @@ interface ResultInterface extends ExportableInterface {
      */
     public function displayTo(ResponseInterface $Response);
 
+    /**
+     * @param string $key
+     * @return $this
+     */
+    public function __get($key);
+
 }

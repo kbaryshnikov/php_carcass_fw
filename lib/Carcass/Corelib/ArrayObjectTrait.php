@@ -9,14 +9,23 @@
 namespace Carcass\Corelib;
 
 /**
- * ArrayObject trait implementation. Implements ArrayAccess and Iterator interfaces.
+ * ArrayObject trait implementation. Implements Countable, ArrayAccess and Iterator interfaces.
  *
  * User must implement:
- * @method array getDataArrayPtr() must return reference to internal values storage
+ * getDataArrayPtr() must return reference to internal values storage
  *
  * @package Carcass\Corelib
  */
 trait ArrayObjectTrait {
+
+    /**
+     * @return array
+     */
+    protected function &getDataArrayPtr() {
+        throw new \LogicException("Must be implemented by ArrayObjectTrait user");
+        /** @noinspection PhpUnreachableStatementInspection */
+        return [];
+    }
 
     /**
      * @param mixed $key

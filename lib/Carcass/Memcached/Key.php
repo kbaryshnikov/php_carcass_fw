@@ -17,9 +17,6 @@ use Carcass\Corelib;
 /** @noinspection PhpUndefinedClassInspection */
 class Key {
 
-    /**
-     * @var Corelib\StringTemplate
-     */
     protected $Builder;
 
     /**
@@ -31,9 +28,9 @@ class Key {
     ];
 
     /**
-     * @param \Carcass\Corelib\StringTemplate $Builder
+     * @param \Carcass\Memcached\KeyBuilder $Builder
      */
-    private function __construct(/** @noinspection PhpUndefinedClassInspection */Corelib\StringTemplate $Builder) {
+    private function __construct(KeyBuilder $Builder) {
         $this->Builder = $Builder;
     }
 
@@ -46,6 +43,10 @@ class Key {
         $this->Builder->cleanAll();
         $opts += $this->opts;
         return $opts['prefix'] . $this->Builder->parse($args) . $opts['suffix'];
+    }
+
+    public function getTemplate() {
+        return $this->Builder->getTemplate();
     }
 
     /**
@@ -104,7 +105,7 @@ class Key {
      */
     public static function create($template, array $opts = []) {
         $Key = new self(new KeyBuilder($template, $opts));
-        return function() use ($Key) {
+        return function() use ($Key, $template) {
             $args = func_get_args();
             if (empty($args)) {
                 $args = [[]];

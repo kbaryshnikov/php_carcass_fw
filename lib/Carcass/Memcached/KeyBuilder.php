@@ -31,6 +31,11 @@ class KeyBuilder extends StringTemplate {
     ];
 
     /**
+     * @var string
+     */
+    protected $template = null;
+
+    /**
      * @param $template
      * @param array $config
      */
@@ -38,7 +43,15 @@ class KeyBuilder extends StringTemplate {
         /** @noinspection PhpUndefinedClassInspection */
         parent::__construct();
         $this->config = $config + $this->config;
+        $this->template = $template;
         $template and $this->load($template);
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getTemplate() {
+        return $this->template;
     }
 
     /**

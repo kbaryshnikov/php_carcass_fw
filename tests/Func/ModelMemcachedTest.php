@@ -59,9 +59,11 @@ class ModelMemcachedTest extends PHPUnit_Framework_TestCase {
 
     public function setUp() {
         init_app();
-        $this->Db = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.database'));
-        $this->Db->executeQuery('drop table if exists t');
-        $this->Db->executeQuery('create table t (id integer auto_increment, email varchar(255) not null, primary key(id)) engine=innodb');
+        /** @var $Db \Carcass\Mysql\Connection */
+        $Db = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.database'));
+        $Db->executeQuery('drop table if exists t');
+        $Db->executeQuery('create table t (id integer auto_increment, email varchar(255) not null, primary key(id)) engine=innodb');
+        $this->Db = $Db;
     }
 
     public function testModel() {

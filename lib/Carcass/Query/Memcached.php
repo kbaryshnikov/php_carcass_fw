@@ -9,6 +9,7 @@
 namespace Carcass\Query;
 
 use Carcass\Corelib;
+use Carcass\Mysql;
 use Carcass\Memcached\TaggedCache;
 use Carcass\Memcached\Key as MemcachedKey;
 use Carcass\Application\DI;
@@ -19,11 +20,15 @@ use Carcass\Application\DI;
  */
 class Memcached extends Base {
 
+    /** @var callable|null */
+    protected $key = null;
+
     protected
-        $key = null,
         $tags = [],
         $key_options = [],
+        $chunk_size = null,
         $mc_dsn = null,
+        $is_own_fetch_fn = false,
         $last_insert_id_field_name = null;
 
     /**
@@ -63,6 +68,11 @@ class Memcached extends Base {
     public function useCache($key) {
         $this->key = $key ? $this->assembleCacheKey($key) : null;
         return $this;
+    }
+
+    public function fetchList($sql_query_template, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
+        $this->is_own_fetch_fn = true;
+        return parent::fetchList($sql_query_template, $keys, $count_modifier);
     }
 
     /**
@@ -108,22 +118,28 @@ class Memcached extends Base {
      * @param array $args
      * @return $this
      */
-    public function execute(array $args = []) {
-        if (null === $this->key) {
-            return parent::execute($args);
+    protected function doFetch(array $args) {
+        $is_own_fetch_fn = false;
+        if ($this->is_own_fetch_fn) {
+            $is_own_fetch_fn       = true;
+            $this->is_own_fetch_fn = false;
         }
-
+        if (null === $this->key || $is_own_fetch_fn) {
+            return parent::doFetch($args);
+        }
         /** @noinspection PhpUnusedParameterInspection */
-        $this->doInTransaction(function($Db, $args) {
-            $result = $this->getMct()->getKey($this->key, $args);
-            if (false === $result) {
-                $result = $this->doFetch($args);
-                $this->getMct()->setKey($this->key, $result, $args);
-            }
-            $this->last_result = $result;
-        }, $args);
-
-        return $this;
+        $this->doInTransaction(
+            function (Mysql\Client $DbUnused, $args) {
+                $result = $this->getMct()->getKey($this->key, $args);
+                if (false === $result) {
+                    $result = parent::doFetch($args);
+                    $this->getMct()->setKey($this->key, $result, $args);
+                }
+                $this->last_result = $result;
+            },
+            $args
+        );
+        return $this->last_result;
     }
 
     /**
@@ -136,20 +152,22 @@ class Memcached extends Base {
     protected function doModify(Callable $fn, array $args, $in_transaction, Callable $finally_fn = null) {
         return null === $this->key
             ? parent::doModify($fn, $args, $in_transaction, $finally_fn)
-            : parent::doModify(function($Db, array $args) use ($fn) {
-                $affected_rows = $fn($Db, $args);
-                if ($affected_rows) {
-                    if ($this->last_insert_id_field_name !== null) {
-                        if ($this->last_insert_id_field_name !== false && $this->last_insert_id) {
-                            $args[$this->last_insert_id_field_name] = $this->last_insert_id;
-                            $this->getMct()->flush($args, [$this->key]);
+            : parent::doModify(
+                function ($Db, array $args) use ($fn) {
+                    $affected_rows = $fn($Db, $args);
+                    if ($affected_rows) {
+                        if ($this->last_insert_id_field_name !== null) {
+                            if ($this->last_insert_id_field_name !== false && $this->last_insert_id) {
+                                $args[$this->last_insert_id_field_name] = $this->last_insert_id;
+                                $this->getMct()->flush($args, [$this->key]);
+                            }
+                        } else {
+                            $this->getMct()->flush($args);
                         }
-                    } else {
-                        $this->getMct()->flush($args);
                     }
-                }
-                return $affected_rows;
-            }, $args, true, $finally_fn);
+                    return $affected_rows;
+                }, $args, true, $finally_fn
+            );
     }
 
     /**
@@ -191,7 +209,7 @@ class Memcached extends Base {
      * @return \Carcass\Config\ItemInterface|null|string
      */
     protected function getMemcachedDsn() {
-        return $this->mc_dsn ?: DI::getConfigReader()->getPath('application.connections.memcached');
+        return $this->mc_dsn ? : DI::getConfigReader()->getPath('application.connections.memcached');
     }
 
     /**
@@ -201,6 +219,50 @@ class Memcached extends Base {
     public function setMemcachedDsn($mc_dsn) {
         $this->mc_dsn = $mc_dsn;
         return $this;
+    }
+
+    /**
+     * @param int|null $chunk_size
+     * @return $this
+     */
+    public function setListChunkSize($chunk_size = null) {
+        $this->chunk_size = $chunk_size ? intval($chunk_size) : null;
+        return $this;
+    }
+
+    /**
+     * @param int|null $count
+     * @return $this
+     */
+    public function setListCount($count = null) {
+        $this->last_count = $count ? intval($count) : null;
+        return $this;
+    }
+
+    protected function doFetchList($sql_query_template, array $args, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
+        if (null === $this->key) {
+            return parent::doFetchList($sql_query_template, $args, $keys, $count_modifier);
+        }
+
+        if (!$this->limit) {
+            throw new \LogicException('setLimit() was not called or defined no limit');
+        }
+
+        $key = $this->key;
+
+        $ListCache = $this->getMct()->getListCache($key('getTemplate'), $this->chunk_size);
+
+        $result = $ListCache->get($args, $this->offset, $this->limit);
+
+        if (false !== $result) {
+            $this->last_count = $ListCache->getCount();
+        } else {
+            $result = parent::doFetchList($sql_query_template, $args, $keys, $count_modifier);
+            $ListCache->setCount($this->last_count);
+            $ListCache->set($args, array_values($result), intval($this->offset));
+        }
+
+        return $result;
     }
 
 }

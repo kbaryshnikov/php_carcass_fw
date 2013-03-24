@@ -1,6 +1,7 @@
 <?php
 
 use Carcass\Query;
+use Carcass\Mysql;
 
 class QueryBaseTest extends PHPUnit_Framework_TestCase {
 
@@ -34,7 +35,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     public function testQueryFetchWithCallback() {
         $Query  = new Query\Base;
         $result = $Query->fetchWith(
-            function ($Db, array $args) {
+            function (\Carcass\Mysql\Client $Db, array $args) {
                 return [$Db->getCell('select ' . $args[0]), $result[1] = $Db->getCell('select ' . $args[1])];
             }
         )->execute([1, 2])->getLastResult();
@@ -92,7 +93,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $id = $Query->insertWith(
-            function ($Db, $args) {
+            function (Mysql\Client $Db, $args) {
                 $Db->query('insert into t (s) values ({{ s(s) }})', $args);
                 $Db->query('insert into t (s) values ({{ s(s) }})', $args);
                 return $Db->getLastInsertId();
@@ -100,7 +101,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
         );
         $this->assertEquals(2, $id);
         $affected_rows = $Query->modifyWith(
-            function ($Db, $args) {
+            function (Mysql\Client $Db, $args) {
                 $Db->query('update t set s = {{ s(s) }} where id = {{ i(id) }}', $args);
                 return $Db->getAffectedRows();
             }, ['id' => 2, 's' => 'bar']

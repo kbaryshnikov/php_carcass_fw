@@ -10,6 +10,7 @@ namespace Carcass\Query;
 
 use Carcass\Corelib;
 use Carcass\Application\DI;
+use Carcass\Model;
 use Carcass\Mysql;
 
 /**
@@ -121,8 +122,9 @@ class Base {
      * @return $this
      */
     public function fetchList($sql_query_template, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
+        /** @noinspection PhpUnusedParameterInspection */
         return $this->setFetchWith(
-            function ($Db, $args) use ($sql_query_template, $keys, $count_modifier) {
+            function ($DbUnused, $args) use ($sql_query_template, $keys, $count_modifier) {
                 return DI::getConnectionManager()->doInTransaction(
                     function () use ($sql_query_template, $keys, $count_modifier, $args) {
                         return $this->doFetchList($sql_query_template, $args, $keys, $count_modifier);
@@ -339,6 +341,11 @@ class Base {
      */
     public function sendTo(Corelib\ImportableInterface $Target) {
         $Target->import($this->getLastResult() ? : []);
+        return $this;
+    }
+
+    public function sendListTo(ListReceiverInterface $Target) {
+        $Target->importList($this->getLastCount(), $this->getLastResult() ?: []);
         return $this;
     }
 

@@ -49,7 +49,7 @@ class TaggedListCache {
      * @return $this
      */
     public function setCount($count) {
-        $this->count = $count;
+        $this->count = (int)$count;
         return $this;
     }
 
