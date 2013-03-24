@@ -24,6 +24,8 @@ use Carcass\Corelib;
  * @method static \Carcass\Application\PathManager getPathManager()
  * @method static \Carcass\Application\Web_Router_Interface getRouter()
  * @method static \Carcass\Corelib\Request getRequest()
+ * @method static \Carcass\Corelib\Crypter getCrypter()
+ * @method static \Carcass\Event\Dispatcher getEventDispatcher()
  *
  * @package Carcass\Application
  */

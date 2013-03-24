@@ -108,7 +108,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
 
     /**
      * @param string $tablename
-     * @param string $indexname
+     * @param string $indexname 'PRIMARY' for PK, or index name
      * @param array $cols
      * @param array $fcols
      * @param int|string|null $index_id

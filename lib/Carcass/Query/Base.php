@@ -289,7 +289,7 @@ class Base {
     }
 
     /**
-     * @return array
+     * @return array|mixed
      */
     public function getLastResult() {
         return $this->last_result;

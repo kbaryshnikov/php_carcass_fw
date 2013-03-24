@@ -94,6 +94,22 @@ class Crypter {
     }
 
     /**
+     * Calculates a salted $algo hash, optionally - double-salted (with public and private salt)
+     *
+     * @param string $algo hash() function algo
+     * @param string $s string to hash
+     * @param string $public_salt optional public salt
+     * @param string|null $secret_salt secret salt, defaults to crypter secret
+     * @param bool $raw true = raw binary result, false (default) = lowercase hex-encoded result
+     * @return string
+     */
+    public function hashWithAlgo($algo, $s, $public_salt = '', $secret_salt = null, $raw = false) {
+        $s .= $public_salt;
+        $s .= ($secret_salt ?: $this->getSecret());
+        return hash($algo, $s, $raw);
+    }
+
+    /**
      * Encodes/decodes the string with offset-modified XOR. The implementation is symmetric.
      *
      * @param string $s source string

@@ -161,8 +161,8 @@ class Instance {
             throw new \LogicException('Application already created');
         }
         static::$instance = $this;
-        $this->app_root   = static::fixPath($app_root);
-        $this->options    = $overrides + static::$opt_defaults;
+        $this->app_root = static::fixPath($app_root);
+        $this->options = $overrides + static::$opt_defaults;
         $this->bootstrap();
     }
 
@@ -208,7 +208,7 @@ class Instance {
         $this->DI = DI::setInstance(new Corelib\DIContainer);
 
         $dep_config = $this->ConfigReader->exportArrayFrom('application.bootstrap.' . $this->app_env['run_mode'], []);
-        $dep_map    = $this->prefixNamespaces(isset($dep_config['map']) && is_array($dep_config['map']) ? $dep_config['map'] : []);
+        $dep_map = $this->prefixNamespaces(isset($dep_config['map']) && is_array($dep_config['map']) ? $dep_config['map'] : []);
 
         if (isset($dep_config['fn']) && $dep_config['fn'] instanceof \Closure) {
             $setupFn = $dep_config['fn'];
@@ -222,14 +222,32 @@ class Instance {
         $this->DI->Namespace = isset($this->app_env['namespace']) ? $this->app_env['namespace'] : '\\';
 
         $this->DI->ConfigReader = $this->ConfigReader;
-        $this->DI->PathManager  = $this->PathManager;
-        $this->DI->Debugger     = $this->Debugger;
-        $this->DI->Logger       = $this->Logger;
+        $this->DI->PathManager = $this->PathManager;
+        $this->DI->Debugger = $this->Debugger;
+        $this->DI->Logger = $this->Logger;
+
+        $this->DI->Crypter = $this->DI->reuse(
+            isset($dep_map['CrypterFn']) ? $dep_map['CrypterFn'] : function (Corelib\DIContainer $I) {
+                $class = (isset($I->dep_map['Crypter']) ? $I->dep_map['Crypter'] : '\Carcass\Corelib\Crypter');
+                $crypter_settings = $I->ConfigReader->getPath('application.secret', null);
+                if (is_object($crypter_settings)) {
+                    $crypter_settings = $crypter_settings->exportArray();
+                }
+                $this->Crypter = new $class($crypter_settings);
+            }
+        );
+
+        $this->DI->EventDispatcher = $this->DI->reuse(
+            isset($dep_map['EventDispatcherFn']) ? $dep_map['EventDispatcherFn'] : function (Corelib\DIContainer $I) {
+                $class = (isset($I->dep_map['EventDispatcher']) ? $I->dep_map['EventDispatcher'] : '\Carcass\Event\Dispatcher');
+                return new $class;
+            }
+        );
 
         $this->DI->ConnectionManager = $this->DI->reuse(
             isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function (Corelib\DIContainer $I) {
                 /** @var \Carcass\Connection\Manager $ConnectionManager */
-                $class             = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
+                $class = (isset($I->dep_map['ConnectionManager']) ? $I->dep_map['ConnectionManager'] : '\Carcass\Connection\Manager');
                 $ConnectionManager = new $class;
                 return $ConnectionManager->registerTypes($I->ConfigReader->exportArrayFrom('connections.types', []));
             }
@@ -360,7 +378,7 @@ class Instance {
                 }
             }
         }
-        $this->app_env             = $env_data + static::$env_defaults;
+        $this->app_env = $env_data + static::$env_defaults;
         $this->app_env['app_root'] = & $this->app_root;
         if (!isset($this->app_env['configuration_name'])) {
             $this->app_env['configuration_name'] = null;
@@ -496,17 +514,6 @@ class Instance {
             }
         }
         return rtrim($dirname, '/') . '/';
-    }
-
-    protected function getApplicationCrypter() {
-        if (null === $this->Crypter) {
-            $crypter_settings = $this->ConfigReader->getPath('application.secret', null);
-            if (is_object($crypter_settings)) {
-                $crypter_settings = $crypter_settings->exportArray();
-            }
-            $this->Crypter = new Corelib\Crypter($crypter_settings);
-        }
-        return $this->Crypter;
     }
 
     protected static function getCarcassLibDirs() {

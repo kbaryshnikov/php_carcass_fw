@@ -138,10 +138,12 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
     }
 
     protected function fetchResults() {
-        $this->Fieldset->dynamic(function() {
-            $this->Fieldset->clean();
-            $this->Query->sendTo($this->Fieldset);
-        });
+        $this->Fieldset->dynamic(
+            function () {
+                $this->Fieldset->clean();
+                $this->Query->sendTo($this->Fieldset);
+            }
+        );
     }
 
     /**
@@ -149,6 +151,18 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      */
     public function getFieldset() {
         return $this->Fieldset;
+    }
+
+    /**
+     * @return $this
+     */
+    public function clean() {
+        $this->Fieldset->dynamic(
+            function () {
+                $this->Fieldset->clean();
+            }
+        );
+        return $this;
     }
 
     /**
@@ -162,6 +176,7 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
     /**
      * @param $key
      * @param $value
+     * @return void
      */
     public function __set($key, $value) {
         $this->Fieldset->set($key, $value);
@@ -170,10 +185,33 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
     /**
      * @param mixed $key
      * @param mixed $default_value
-     * @return mixed
+     * @return mixed|null
      */
     public function get($key, $default_value = null) {
-        return $this->Fieldset->get($key, $default_value);
+        return $this->Fieldset->getFieldValue($key, $default_value);
+    }
+
+    /**
+     * @param $field_name
+     * @return Field\FieldInterface
+     */
+    public function getField($field_name) {
+        return $this->Fieldset->getField($field_name);
+    }
+
+    /**
+     * @param $field_name
+     * @param $error
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
+    public function setError($field_name, $error) {
+        $Field = $this->getField($key);
+        if (!$Field) {
+            throw new \InvalidArgumentException("Unknown field: '$field_name");
+        }
+        $Field->setError($error);
+        return $this;
     }
 
     /**
@@ -209,7 +247,8 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      * @param bool $no_overwrite
      * @return $this
      */
-    public function import(/* Traversable */ $data, $no_overwrite = false) {
+    public function import( /* Traversable */
+        $data, $no_overwrite = false) {
         $this->Fieldset->import($data, $no_overwrite);
         return $this;
     }
