@@ -289,6 +289,11 @@ class Mysql_ShardingModel {
         return $this->getServerById($server_id, true);
     }
 
+    /**
+     * Used by ServerIterator
+     * @param int $prev_server_id
+     * @return Mysql_Server|null
+     */
     public function getNextServer($prev_server_id = 0) {
         $server_result = $this->getServerIndex()->find('>', ['database_server_id' => $prev_server_id], ['limit' => 1]) ? : null;
         if ($server_result) {
@@ -299,6 +304,12 @@ class Mysql_ShardingModel {
         return null;
     }
 
+    /**
+     * Used by ShardIterator
+     * @param $server_id
+     * @param int $prev_shard_id
+     * @return Mysql_Shard|null
+     */
     public function getNextShard($server_id, $prev_shard_id = 0) {
         $shard_result = $this->getShardIndex()->find('>', ['database_shard_id' => $prev_shard_id], ['database_server_id' => $server_id, 'limit' => 1]) ? : null;
         if ($shard_result) {

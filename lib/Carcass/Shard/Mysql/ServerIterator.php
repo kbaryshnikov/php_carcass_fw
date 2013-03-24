@@ -8,6 +8,11 @@
 
 namespace Carcass\Shard;
 
+/**
+ * Server iterator, should be instantiated by Manager->getServerIterator(), and NOT directly
+ *
+ * @package Carcass\Shard
+ */
 class Mysql_ServerIterator implements \Iterator {
 
     /** @var Mysql_ShardingModel */
