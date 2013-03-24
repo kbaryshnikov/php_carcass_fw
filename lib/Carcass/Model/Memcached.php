@@ -18,15 +18,30 @@ use Carcass\Query;
  *
  * @package Carcass\Model
  */
-class Memcached extends Base {
+abstract class Memcached extends Base {
 
-    protected static
-        $cache_key = null, // null: undefined, false: no cache, or key template
-        $cache_tags = [];
+    /**
+     * @var string|bool|null  null: undefined, false: no cache, or key template
+     */
+    protected static $cache_key = null;
+    /**
+     * @var array
+     */
+    protected static $cache_tags = [];
 
-    protected
-        $override_cache_key = null,
-        $override_cache_tags = null;
+    /**
+     * @var string ID key for insert queries
+     */
+    protected $id_key = null;
+
+    /**
+     * @var string|bool|null  if not null, overrides static::$cache_key
+     */
+    protected $override_cache_key = null;
+    /**
+     * @var array|null  if not null, overrides static::$cache_tags
+     */
+    protected $override_cache_tags = null;
 
     /**
      * @return $this
@@ -88,16 +103,24 @@ class Memcached extends Base {
     }
 
     /**
+     * @param $id_key
+     * @return $this
+     */
+    protected function setIdKey($id_key) {
+        $this->id_key = $id_key;
+        return $this;
+    }
+
+    /**
      * @param string $query
      * @param array $args
-     * @param string|null $id_key
      * @return mixed
      */
-    protected function doInsert($query, array $args = [], $id_key = null) {
+    protected function doInsert($query, array $args = []) {
         if (!$this->validate()) {
             return false;
         }
-        return $this->getQuery()->insert($query, $args + $this->exportArray(), $id_key);
+        return $this->getQuery()->setLastInsertIdFieldName($this->id_key)->insert($query, $args + $this->exportArray());
     }
 
 }

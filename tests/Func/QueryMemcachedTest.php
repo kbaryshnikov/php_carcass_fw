@@ -6,13 +6,23 @@ use Carcass\Application\DI;
 
 class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
 
-    protected $Db, $Mc;
+    /**
+     * @var \Carcass\Mysql\Connection
+     */
+    protected $Db;
+    /**
+     * @var \Carcass\Memcached\Connection
+     */
+    protected $Mc;
 
     public function setUp() {
         init_app();
         $this->Db = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.database'));
-        $this->Mc = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.memcached'));
-        $this->Mc->flush();
+
+        /** @var $Mc \Carcass\Memcached\Connection */
+        $Mc = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.memcached'));
+        $Mc->flush();
+        $this->Mc = $Mc;
     }
 
     public function testQueryFetchRow() {
@@ -63,7 +73,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
         $Query = new Query\Memcached;
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $result = $Query->useCache('id_{{ i(id) }}')
-            ->fetchWith(function($Db, array $args) {
+            ->fetchWith(function(\Carcass\Mysql\Client $Db, array $args) {
                 return [1, $Db->getCell('SELECT 2')];
             })->execute(['id' => 1])->getLastResult();
         $this->assertEquals([1, 2], $result);
@@ -81,7 +91,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
         $this->Mc->set('&tag_id_1', 1);
         $this->Mc->set('id_1', 1);
 
-        $id = $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'foo'], 'id');
+        $id = $Query->setLastInsertIdFieldName('id')->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'foo']);
 
         $this->assertEquals(1, $id);
         $this->assertFalse($this->Mc->get('&tag_id_1'));

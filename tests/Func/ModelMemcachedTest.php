@@ -6,6 +6,8 @@ use Carcass\Application\DI;
 
 class TestMemcachedModel extends Model\Memcached {
 
+    protected $id_key = 'id';
+
     protected static
         $cache_key = 'test_{{ i(id) }}',
         $cache_tags = [ 'Test_{{ i(id) }}' ];
@@ -38,7 +40,7 @@ class TestMemcachedModel extends Model\Memcached {
     }
 
     public function insert() {
-        return $this->doInsert('INSERT INTO t SET email = {{ s(email) }}', [], 'id');
+        return $this->doInsert('INSERT INTO t SET email = {{ s(email) }}');
     }
 
     public function update() {

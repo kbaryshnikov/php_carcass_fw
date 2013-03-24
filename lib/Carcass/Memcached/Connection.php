@@ -37,6 +37,7 @@ use Carcass\DevTools;
  * @method mixed set()
  * @method mixed getServerStatus()
  * @method mixed getExtendedStats()
+ * @method mixed flush()
  *
  * @package Carcass\Memcached
  */

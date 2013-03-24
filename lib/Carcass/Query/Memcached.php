@@ -76,17 +76,6 @@ class Memcached extends Base {
     /**
      * @param string $sql_query_template
      * @param array $args
-     * @param bool $last_insert_id_field_name
-     * @return mixed
-     */
-    public function insert($sql_query_template, array $args = array(), $last_insert_id_field_name = false) {
-        $this->last_insert_id_field_name = $last_insert_id_field_name ?: false;
-        return parent::insert($sql_query_template, $args);
-    }
-
-    /**
-     * @param string $sql_query_template
-     * @param array $args
      * @return mixed
      */
     public function modify($sql_query_template, array $args = array()) {
@@ -95,16 +84,12 @@ class Memcached extends Base {
     }
 
     /**
-     * @param callable $fn
-     * @param array $args
-     * @param bool $last_insert_id_field_name
-     * @param bool $in_transaction
-     * @param callable $finally_fn
-     * @return mixed
+     * @param string $field_name
+     * @return $this
      */
-    public function insertWith(Callable $fn, array $args, $last_insert_id_field_name = false, $in_transaction = true, Callable $finally_fn = null) {
-        $this->last_insert_id_field_name = $last_insert_id_field_name ?: false;
-        return parent::insertWith($fn, $args, $in_transaction, $finally_fn);
+    public function setLastInsertIdFieldName($field_name) {
+        $this->last_insert_id_field_name = $field_name ? (string)$field_name : false;
+        return $this;
     }
 
     /**

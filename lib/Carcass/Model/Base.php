@@ -103,7 +103,7 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
      * @param callable $convert_fn
      */
     protected function doFetch($query, array $args, callable $convert_fn = null) {
-        $this->getQuery()->setResultsConverter($convert_fn)->fetchRow($query);
+        $this->getQuery()->setResultConverter($convert_fn)->fetchRow($query);
         $this->executeQuery($args);
     }
 

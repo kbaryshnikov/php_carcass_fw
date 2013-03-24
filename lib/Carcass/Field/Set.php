@@ -18,7 +18,7 @@ use Carcass\Corelib;
  * @package Carcass\Field
  */
 class Set extends Corelib\Hash implements FieldInterface {
-    use Corelib\RenderableTrait, FilterTrait, RuleTrait {
+    use FilterTrait, RuleTrait {
         RuleTrait::validate as validateOwnRules;
     }
 
@@ -138,10 +138,20 @@ class Set extends Corelib\Hash implements FieldInterface {
 
     /**
      * @param array|\Traversable $value
+     * @param bool $no_overwrite
      * @return $this
      */
-    public function import($value) {
-        return $this->merge($value);
+    public function import($value, $no_overwrite = false) {
+        $value = $this->filterValue($value);
+        if (!$no_overwrite) {
+            return $this->merge($value);
+        }
+        foreach ($value as $key => $item) {
+            if (!$this->has($key)) {
+                $this->set($key, $item);
+            }
+        }
+        return $this;
     }
 
     /**
