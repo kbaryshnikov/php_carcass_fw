@@ -6,11 +6,17 @@ use Carcass\Application\DI;
 
 class TestBaseModel extends Model\Base {
 
+    public static $default_field_values = [];
+
     public static function getModelRules() {
         return [
             'id'    => ['isValidId'],
             'email' => ['isNotEmpty', 'isValidEmail']
         ];
+    }
+
+    public function getModelFieldDefaultValues() {
+        return self::$default_field_values;
     }
 
     public function isLoaded() {
@@ -61,15 +67,16 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
 
     public function setUp() {
         init_app();
+        TestBaseModel::$default_field_values = [];
         $this->Db = DI::getConnectionManager()->getConnection(DI::getConfigReader()->getPath('application.connections.database'));
         $this->Db->executeQuery('drop table if exists t');
         $this->Db->executeQuery('create table t (id integer auto_increment, email varchar(255) not null, primary key(id)) engine=innodb');
     }
 
     public function testModel() {
-        $M        = new TestBaseModel;
+        $M = new TestBaseModel;
         $M->email = 'test@test.com';
-        $id       = $M->insert();
+        $id = $M->insert();
         $this->assertEquals(1, $id);
         $this->assertTrue($M->loadById(1));
         $this->assertEquals(1, $M->id);
@@ -84,9 +91,9 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testModelQueryResultsConverter() {
-        $M        = new TestBaseModel;
+        $M = new TestBaseModel;
         $M->email = 'test@test.com';
-        $id       = $M->insert();
+        $id = $M->insert();
         $this->assertEquals(1, $id);
         $this->assertTrue($M->loadByIdUppercasedEmail(1));
         $this->assertEquals(1, $M->id);
@@ -94,7 +101,7 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testModelValidation() {
-        $M        = new TestBaseModel;
+        $M = new TestBaseModel;
         $M->email = 'wrong';
         $this->assertFalse($M->insert());
         $errors = $M->getErrors();
@@ -124,7 +131,7 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
     public function testModelRender() {
         $Result = new \Carcass\Corelib\Result;
 
-        $M        = new TestBaseModel;
+        $M = new TestBaseModel;
         $M->email = 'test@test.com';
         $M->loadById($M->insert());
 
@@ -134,5 +141,12 @@ class ModelBaseTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, $result_array['Test']['id']);
         $this->assertEquals('test@test.com', $result_array['Test']['email']);
     }
+
+    public function testDefaultFieldValuesAreSet() {
+        TestBaseModel::$default_field_values = ['email' => 'foo@bar.com'];
+        $M = new TestBaseModel;
+        $this->assertEquals('foo@bar.com', $M->email);
+    }
+
 
 }

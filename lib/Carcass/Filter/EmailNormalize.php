@@ -19,6 +19,9 @@ class EmailNormalize implements FilterInterface {
      * @throws \InvalidArgumentException
      */
     public function filter(&$value) {
+        if (null === $value) {
+            return;
+        }
         $tokens = explode('@', trim($value));
         if (count($tokens) != 2 || !$tokens[0] || !$tokens[1]) {
             throw new \InvalidArgumentException("Argument does not look like a e-mail address");
