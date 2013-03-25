@@ -13,9 +13,6 @@ use Carcass\Model\MemcachedList;
 abstract class ListModel extends MemcachedList {
     use ModelTrait;
 
-    /** @var UnitInterface */
-    protected $Unit;
-
     /**
      * @param UnitInterface $Unit
      */

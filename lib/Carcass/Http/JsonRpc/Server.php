@@ -35,16 +35,15 @@ class JsonRpc_Server {
 
     /**
      * @param callable $RequestBodyProvider
-     * @return $this
+     * @return bool
      */
     public function dispatchRequestBody(callable $RequestBodyProvider = null) {
-        $this->dispatchJsonString($RequestBodyProvider ? $RequestBodyProvider() : file_get_contents('php://input'));
-        return $this;
+        return $this->dispatchJsonString($RequestBodyProvider ? $RequestBodyProvider() : file_get_contents('php://input'));
     }
 
     /**
      * @param $json_string
-     * @return $this
+     * @return bool
      */
     public function dispatchJsonString($json_string) {
         $Request = null;
@@ -52,11 +51,12 @@ class JsonRpc_Server {
             $Request = JsonRpc_Request::factory($json_string, $this->batch_mode);
         } catch (JsonRpc_Exception $JsonRpcException) {
             $this->addErrorResponseFromException($JsonRpcException);
+            return false;
         }
         if ($Request) {
             $this->batch_mode ? $this->processBatch($Request) : $this->processRequest($Request);
         }
-        return $this;
+        return true;
     }
 
     /**

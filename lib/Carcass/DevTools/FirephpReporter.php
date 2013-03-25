@@ -29,11 +29,18 @@ class FirephpReporter extends BaseReporter {
     public function __construct(\FirePHP $FirePhp = null) {
         if (null !== $FirePhp) {
             $this->setFirePhp($FirePhp);
-        } else {
+        }
+    }
+
+    /**
+     * @return \FirePHP
+     */
+    protected function getFirePhp() {
+        if (null === $this->FirePhp) {
             self::ensureFirePhpLibraryIsLoaded();
             $this->setFirePhp(new \FirePHP);
         }
-        $this->FirePhp->setEnabled(true);
+        return $this->FirePhp;
     }
 
     /**
@@ -42,7 +49,7 @@ class FirephpReporter extends BaseReporter {
      * @return $this
      */
     public function dump($value, $severity = null) {
-        $this->FirePhp->fb($value, null, self::getFirePhpLevel($severity, $value));
+        $this->getFirePhp()->fb($value, null, self::getFirePhpLevel($severity, $value));
         return $this;
     }
 
@@ -51,7 +58,7 @@ class FirephpReporter extends BaseReporter {
      * @return $this
      */
     public function dumpException(\Exception $Exception) {
-        $this->FirePhp->error($Exception);
+        $this->getFirePhp()->error($Exception);
         return $this;
     }
 
@@ -61,6 +68,7 @@ class FirephpReporter extends BaseReporter {
      */
     public function setFirePhp(\FirePhp $FirePhp) {
         $this->FirePhp = $FirePhp;
+        $this->FirePhp->setEnabled(true);
         return $this;
     }
 
@@ -93,9 +101,6 @@ class FirephpReporter extends BaseReporter {
         return false;
     }
 
-    /**
-     *
-     */
     protected static function ensureFirePhpLibraryIsLoaded() {
         if (!class_exists('\FirePHP', true)) {
             include_once 'FirePHP/FirePHP.class.php';

@@ -19,13 +19,22 @@ class Autoloader {
     protected $collector = [];
 
     /**
-     * @param array $lib_path   search pathes
+     * @param array $lib_pathes  search pathes
      * @param string $extension  override php extension, starting with '.', e.g. '.phtml'
      */
-    public function __construct(array $lib_path = [], $extension = null) {
-        $lib_path and set_include_path(join(':', array_unique(array_merge(explode(':', get_include_path()), $lib_path))));
+    public function __construct(array $lib_pathes = [], $extension = null) {
+        $lib_pathes and $this->addToIncludePath($lib_pathes);
         $extension and $this->extension = $extension;
         spl_autoload_register([$this, 'resolve']);
+    }
+
+    /**
+     * @param array $lib_pathes  additional search pathes
+     * @return $this
+     */
+    public function addToIncludePath(array $lib_pathes) {
+        set_include_path(join(':', array_unique(array_merge(explode(':', get_include_path()), $lib_pathes))));
+        return $this;
     }
 
     /**

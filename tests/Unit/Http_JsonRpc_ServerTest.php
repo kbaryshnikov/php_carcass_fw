@@ -18,7 +18,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                             'id'      => 1,
                             'result'  => ['success' => true],
                         ];
-                        $actual   = json_decode($output, true);
+                        $actual = json_decode($output, true);
                         $this->assertEquals($expected, $actual);
                     }
                 )
@@ -31,18 +31,19 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             return ['success' => true];
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => 'test',
-                        'params'  => ['test_key' => 'test_value'],
-                        'id'      => 1,
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'test',
+                    'params'  => ['test_key' => 'test_value'],
+                    'id'      => 1,
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testDispatcherFunctionReturnsBooleanTrue() {
@@ -58,7 +59,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                             'id'      => 1,
                             'result'  => ['success' => true],
                         ];
-                        $actual   = json_decode($output, true);
+                        $actual = json_decode($output, true);
                         $this->assertEquals($expected, $actual);
                     }
                 )
@@ -68,18 +69,19 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             return true;
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => 'test',
-                        'params'  => ['test_key' => 'test_value'],
-                        'id'      => 1,
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'test',
+                    'params'  => ['test_key' => 'test_value'],
+                    'id'      => 1,
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testDispatcherFunctionReturnsBooleanFalse() {
@@ -95,7 +97,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                             'id'      => 1,
                             'result'  => ['success' => false],
                         ];
-                        $actual   = json_decode($output, true);
+                        $actual = json_decode($output, true);
                         $this->assertEquals($expected, $actual);
                     }
                 )
@@ -105,18 +107,19 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             return false;
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => 'test',
-                        'params'  => ['test_key' => 'test_value'],
-                        'id'      => 1,
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'test',
+                    'params'  => ['test_key' => 'test_value'],
+                    'id'      => 1,
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testDispatcherFunctionReturnsGarbage() {
@@ -138,18 +141,19 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             return 'foo';
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => 'test',
-                        'params'  => ['test_key' => 'test_value'],
-                        'id'      => 1,
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'test',
+                    'params'  => ['test_key' => 'test_value'],
+                    'id'      => 1,
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testDispatchRequestBody() {
@@ -165,7 +169,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                             'id'      => 1,
                             'result'  => ['success' => true],
                         ];
-                        $actual   = json_decode($output, true);
+                        $actual = json_decode($output, true);
                         $this->assertEquals($expected, $actual);
                     }
                 )
@@ -177,20 +181,21 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             return ['success' => true];
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchRequestBody(
-                function () {
-                    return
-                        json_encode(
-                            [
-                                'jsonrpc' => '2.0',
-                                'method'  => 'test',
-                                'id'      => 1,
-                            ]
-                        );
-                }
-            )
-            ->displayTo($Response);
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchRequestBody(
+            function () {
+                return
+                    json_encode(
+                        [
+                            'jsonrpc' => '2.0',
+                            'method'  => 'test',
+                            'id'      => 1,
+                        ]
+                    );
+            }
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testMissingJsonRpcVersion() {
@@ -211,15 +216,16 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             throw new \Exception("Must not be called");
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'method' => 'test',
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'method' => 'test',
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertFalse($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testMissingMethod() {
@@ -240,15 +246,16 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             throw new \Exception("Must not be called");
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertFalse($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testInvalidMethod() {
@@ -269,16 +276,17 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             throw new \Exception("Must not be called");
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => [1, 2, 3]
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => [1, 2, 3]
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertFalse($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testNoOutputIfIdIsMissing() {
@@ -299,16 +307,17 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             return ['success' => true];
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => 'notify',
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'notify',
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testNoOutputIfIdIsNull() {
@@ -329,17 +338,18 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             return ['success' => true];
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => 'notify',
-                        'id'      => null,
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'notify',
+                    'id'      => null,
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testCatchAllExceptionMode() {
@@ -360,7 +370,8 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             throw new \Exception;
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server
             ->catchAllExceptions()
             ->dispatchJsonString(
                 json_encode(
@@ -370,8 +381,9 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                         'id'      => 1,
                     ]
                 )
-            )
-            ->displayTo($Response);
+            );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testCatchAllExceptionModeDisabled() {
@@ -386,17 +398,17 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
 
         $this->setExpectedException('\Exception');
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
-                    [
-                        'jsonrpc' => '2.0',
-                        'method'  => 'test',
-                        'id'      => 1,
-                    ]
-                )
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'test',
+                    'id'      => 1,
+                ]
             )
-            ->displayTo($Response);
+        );
+        $Server->displayTo($Response);
     }
 
     public function testBatch() {
@@ -419,39 +431,40 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                                 'result'  => ['success' => 'b', 'args' => ['x' => 'y']],
                             ],
                         ];
-                        $actual   = json_decode($output, true);
+                        $actual = json_decode($output, true);
                         $this->assertEquals($expected, $actual);
                     }
                 )
             );
 
         $DispatcherFn = function ($method, Corelib\Hash $Args) {
-            $result = ['success' => $method];
+            $dispatcher_function_was_called = ['success' => $method];
             if (count($Args)) {
-                $result['args'] = $Args->exportArray();
+                $dispatcher_function_was_called['args'] = $Args->exportArray();
             }
-            return $result;
+            return $dispatcher_function_was_called;
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
                     [
-                        [
-                            'jsonrpc' => '2.0',
-                            'method'  => 'a',
-                            'id'      => 1,
-                        ],
-                        [
-                            'jsonrpc' => '2.0',
-                            'method'  => 'b',
-                            'id'      => 2,
-                            'params'  => ['x' => 'y'],
-                        ]
+                        'jsonrpc' => '2.0',
+                        'method'  => 'a',
+                        'id'      => 1,
+                    ],
+                    [
+                        'jsonrpc' => '2.0',
+                        'method'  => 'b',
+                        'id'      => 2,
+                        'params'  => ['x' => 'y'],
                     ]
-                )
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testBatchAbortException() {
@@ -485,7 +498,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
                                 ]
                             ],
                         ];
-                        $actual   = json_decode($output, true);
+                        $actual = json_decode($output, true);
                         $this->assertEquals($expected, $actual);
                     }
                 )
@@ -498,30 +511,31 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             throw Http\JsonRpc_Exception::constructAbortBatch('Batch aborted');
         };
 
-        (new Http\JsonRpc_Server($DispatcherFn))
-            ->dispatchJsonString(
-                json_encode(
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
                     [
-                        [
-                            'jsonrpc' => '2.0',
-                            'method'  => 'a',
-                            'id'      => 1,
-                        ],
-                        [
-                            'jsonrpc' => '2.0',
-                            'method'  => 'fail',
-                            'id'      => 2,
-                            'params'  => ['x' => 'y'],
-                        ],
-                        [
-                            'jsonrpc' => '2.0',
-                            'method'  => 'c',
-                            'id'      => 3,
-                        ]
+                        'jsonrpc' => '2.0',
+                        'method'  => 'a',
+                        'id'      => 1,
+                    ],
+                    [
+                        'jsonrpc' => '2.0',
+                        'method'  => 'fail',
+                        'id'      => 2,
+                        'params'  => ['x' => 'y'],
+                    ],
+                    [
+                        'jsonrpc' => '2.0',
+                        'method'  => 'c',
+                        'id'      => 3,
                     ]
-                )
+                ]
             )
-            ->displayTo($Response);
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
     }
 
     public function testGetCollectedResponse() {
@@ -543,8 +557,8 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
 
         $expected = [
             'jsonrpc' => '2.0',
-            'id' => 1,
-            'result' => ['success' => true]
+            'id'      => 1,
+            'result'  => ['success' => true]
         ];
 
         $this->assertEquals($expected, $Server->getCollectedResponse());

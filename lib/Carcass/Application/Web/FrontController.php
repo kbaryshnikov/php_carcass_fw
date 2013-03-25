@@ -50,7 +50,7 @@ class Web_FrontController implements FrontControllerInterface {
             }
         );
         try {
-            $this->Router->route($this->Request, $this);
+            $this->route();
         } catch (\Exception $e) {
             DI::getLogger()->logException($e);
             if ($debugger_is_enabled) {
@@ -62,6 +62,10 @@ class Web_FrontController implements FrontControllerInterface {
         }
     }
 
+    protected function route() {
+        return $this->Router->route($this->Request, $this);
+    }
+
     /**
      * @param $fq_action
      * @param \Carcass\Corelib\Hash $Args
@@ -71,7 +75,7 @@ class Web_FrontController implements FrontControllerInterface {
     public function dispatch($fq_action, Corelib\Hash $Args) {
         list ($controller, $action) = Corelib\StringTools::split($fq_action, '.', [null, 'Default']);
 
-        $page_class = "{$controller}Page";
+        $page_class    = "{$controller}Page";
         $page_fq_class = $this->requirePageClass($page_class);
 
         /** @var ControllerInterface $Page */

@@ -45,7 +45,7 @@ class FetchDependenciesScript extends Controller {
         $this->force = $Args->get('f');
 
         foreach ($libs as $name => $config) {
-            if (!empty($config['source'])) {
+            if (!empty($config['source']) && !$this->isLocal($config['source'])) {
                 $this->updateDependency($name, $config);
             }
         }
@@ -53,7 +53,11 @@ class FetchDependenciesScript extends Controller {
         return 0;
     }
 
-    protected function updateDependency($name, $config) {
+    protected function isLocal(array $config) {
+        return $config['type'] === 'local';
+    }
+
+    protected function updateDependency($name, array $config) {
         $this->quiet or $this->Response->writeLn(">>> Updating '$name'...");
 
         $clone_target = $this->vcs_clone_dir . '/' . trim($config['target'], '/');

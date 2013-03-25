@@ -19,7 +19,6 @@ interface RouterInterface {
     /**
      * @param \Carcass\Corelib\Request $Request
      * @param ControllerInterface $Controller
-     * @return void
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller);
 

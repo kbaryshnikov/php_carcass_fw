@@ -84,20 +84,24 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
     }
 
     /**
-     * @param \Carcass\Corelib\Request $Request
-     * @param \Carcass\Application\ControllerInterface $Controller
+     * @param Corelib\Request $Request
+     * @param ControllerInterface $Controller
+     * @return bool
      * @throws \Carcass\Http\JsonRpc_Exception
-     * @return void
+     * @throws \InvalidArgumentException
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
+        if (!$Controller instanceof Web_JsonRpcFrontController) {
+            throw new \InvalidArgumentException('Web_JsonRpcFrontController required');
+        }
         $uri = $Request->Env->get('REQUEST_URI');
 
         if (0 != strncmp($uri, $this->api_url, strlen($this->api_url))) {
             $Controller->dispatchNotFound("Request URI '$uri' does not belong to API route prefix, '{$this->api_url}'");
-            return;
+            return true;
         }
 
-        (new Http\JsonRpc_Server(
+        $Server = new Http\JsonRpc_Server(
             function ($method, Corelib\Hash $Args, Http\JsonRpc_Server $Server) use ($Controller) {
                 try {
                     if ($Controller instanceof Web_JsonRpcFrontController) {
@@ -109,7 +113,9 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
                     throw Http\JsonRpc_Exception::constructMethodNotFoundException($method);
                 }
             }
-        ))->dispatchRequestBody($this->body_provider);
+        );
+        $Controller->setJsonRpcServer($Server);
+        return $Server->dispatchRequestBody($this->body_provider);
     }
 
     /**

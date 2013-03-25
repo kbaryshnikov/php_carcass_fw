@@ -207,7 +207,7 @@ class Instance {
     protected function setupDependencies() {
         $this->DI = DI::setInstance(new Corelib\DIContainer);
 
-        $dep_config = $this->ConfigReader->exportArrayFrom('application.dependencies.' . $this->app_env['run_mode'], []);
+        $dep_config = $this->ConfigReader->exportArrayFrom('application.bootstrap.' . $this->app_env['run_mode'], []);
         $dep_map    = $this->prefixNamespaces(isset($dep_config['map']) && is_array($dep_config['map']) ? $dep_config['map'] : []);
 
         if (isset($dep_config['fn']) && $dep_config['fn'] instanceof \Closure) {
@@ -241,6 +241,8 @@ class Instance {
             throw new \LogicException("Cannot setupDependencies() for {$this->app_env['run_mode']} mode: no setup function "
                 . "is defined in configuration, and mode is not supported internally");
         }
+
+        $this->setupApplicationDependencies();
     }
 
     protected function setupDependenciesCli($Injector, array $dep_map) {
@@ -298,6 +300,34 @@ class Instance {
             $class = (isset($I->dep_map['FrontController']) ? $I->dep_map['FrontController'] : '\Carcass\Application\Web_FrontController');
             return new $class($I->Request, $I->Response, $I->Router, $I->ConfigReader->web);
         };
+    }
+
+    protected function setupApplicationDependencies() {
+        $DependenciesConfig = $this->ConfigReader->get('dependencies');
+        if (!$DependenciesConfig) {
+            return;
+        }
+
+        $dependencies = Dependencies::getApplicationDependencies($lib_path, $DependenciesConfig);
+        if (!$lib_path) {
+            throw new \LogicException('dependencies.path is undefined in application configuration');
+        }
+
+        $lib_path = realpath($lib_path);
+
+        $lib_pathes[$lib_path] = true;
+
+        foreach ($dependencies as $dependency) {
+            if (isset($dependency['source']['path'])) {
+                $path = rtrim($dependency['source']['path'], '/');
+                if (substr($path, 0, 1) != '/') {
+                    $path = $lib_path . '/' . $path;
+                }
+                $lib_pathes[realpath($path)] = true;
+            }
+        }
+
+        $this->Autoloader->addToIncludePath(array_keys($lib_pathes));
     }
 
     protected static function prefixNamespaces(array $list) {
@@ -480,9 +510,7 @@ class Instance {
     }
 
     protected static function getCarcassLibDirs() {
-        $carcass_lib_dir = dirname(dirname(__DIR__)) . '/';
-        $vendor_lib_dir  = dirname($carcass_lib_dir) . '/vendor/';
-        return [$carcass_lib_dir, $vendor_lib_dir];
+        return [dirname(dirname(__DIR__)) . '/'];
     }
 
     protected function __clone() {

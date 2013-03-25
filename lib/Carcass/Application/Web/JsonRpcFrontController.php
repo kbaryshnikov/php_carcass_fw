@@ -27,9 +27,19 @@ class Web_JsonRpcFrontController extends Web_FrontController {
         parent::__construct($Request, $Response, $Router, $WebConfig);
     }
 
-    public function dispatchJsonRpc(Http\JsonRpc_Server $Server, $method, Corelib\Hash $Args) {
+    public function setJsonRpcServer(Http\JsonRpc_Server $Server) {
         $this->JsonRpcServer = $Server;
+    }
+
+    public function dispatchJsonRpc(Http\JsonRpc_Server $Server, $method, Corelib\Hash $Args) {
+        $this->setJsonRpcServer($Server);
         $this->dispatch($method, $Args);
+    }
+
+    protected function route() {
+        if (!parent::route()) {
+            $this->displayResult('');
+        }
     }
 
     protected function displayResult($result) {

@@ -79,6 +79,28 @@ class Application_Web_Router_JsonRpcTest extends PHPUnit_Framework_TestCase {
         $Router->route($this->getRequestStub('/'), $Controller);
     }
 
+    public function testApiClassTemplate() {
+        $Controller = $this->getControllerMock();
+        $Controller->expects($this->once())
+            ->method('dispatch')
+            ->with(
+                $this->equalTo('Api_ControllerName'),
+                $this->equalTo(new Corelib\Hash(['a', 'b']))
+            );
+        $Router = new Web_Router_JsonRpc('/api/');
+        $Router->setApiClassTemplate('Api_%s');
+        $Router->setRequestBodyProvider(
+            $this->getRequestBodyProvider(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'controller-name',
+                    'params'  => ['a', 'b'],
+                ]
+            )
+        );
+        $Router->route($this->getRequestStub('/api/'), $Controller);
+    }
+
     protected function getRequestBodyProvider(array $json_data) {
         $json = json_encode($json_data);
         return function () use ($json) {
