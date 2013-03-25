@@ -25,7 +25,6 @@ class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Inter
      * @return string
      */
     protected function doRender(array $render_data) {
-        exit("!!!!!!!!!!!");
         $this->rendered_array = $render_data;
         return print_r($render_data, true);
     }

@@ -11,12 +11,13 @@ namespace Carcass\Http;
 use Carcass\Application\Web_Response;
 use Carcass\Corelib;
 use Carcass\Application\DI;
+use Carcass\Corelib\ResultInterface;
 
 /**
  * Class JsonRpc_Server
  * @package Carcass\Http
  */
-class JsonRpc_Server {
+class JsonRpc_Server implements Corelib\RenderableInterface {
 
     /**
      * @var callable (string $method, Corelib\Hash $Args, JsonRpc_Server $Server) -> array|bool
@@ -204,4 +205,12 @@ class JsonRpc_Server {
         $this->addErrorResponse($e->getCode(), $e->getMessage(), $id);
     }
 
+    /**
+     * @param ResultInterface $View
+     * @return $this
+     */
+    public function renderTo(ResultInterface $View) {
+        $View->assign($this->getCollectedResponse());
+        return $this;
+    }
 }

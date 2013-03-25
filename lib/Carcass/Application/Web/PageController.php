@@ -36,13 +36,13 @@ abstract class Web_PageController extends Controller {
     /**
      * @param string $action
      * @param \Carcass\Corelib\Hash $Args
+     * @throws ImplementationNotFoundException
      * @return mixed
-     * @throws \RuntimeException
      */
     public function dispatch($action, Corelib\Hash $Args) {
         $method = 'action' . $action;
         if (!method_exists($this, $method)) {
-            throw new \RuntimeException("Action not implemented: '$action'");
+            throw new ImplementationNotFoundException("Action not implemented: '$action'");
         }
         $this->initBeforeAction();
         return $this->handleActionResult($this->$method($Args));
