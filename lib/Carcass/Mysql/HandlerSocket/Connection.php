@@ -22,13 +22,13 @@ use \Carcass\DevTools;
 class HandlerSocket_Connection implements ConnectionInterface {
     use DevTools\TimerTrait;
     use Corelib\UniqueObjectIdTrait {
-    Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
+        Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
     }
 
     const
-        DEFAULT_PORT    = 9998,
-        CONN_TIMEOUT    = 1,
-        SOCK_TIMEOUT    = 1,
+        DEFAULT_PORT = 9998,
+        CONN_TIMEOUT = 1,
+        SOCK_TIMEOUT = 1,
         SOCK_TIMEOUT_MS = 0;
 
     /**
@@ -37,7 +37,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
     protected $Dsn;
 
     protected
-        $exception_on_errors = false,
+        $exception_on_errors = true,
         $next_dbname = null,
         $socket = null,
         $indexes = [],
@@ -80,8 +80,8 @@ class HandlerSocket_Connection implements ConnectionInterface {
         if ($this->socket !== null) {
             fclose($this->socket);
             $this->next_dbname = null;
-            $this->indexes     = array();
-            $this->socket      = null;
+            $this->indexes = [];
+            $this->socket = null;
         }
     }
 
@@ -121,7 +121,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
         }
         $dbname = null;
         if (null !== $this->next_dbname) {
-            $dbname            = $this->next_dbname;
+            $dbname = $this->next_dbname;
             $this->next_dbname = null;
         }
         if (null === $dbname) {
@@ -130,11 +130,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
         if (null === $dbname) {
             throw new \LogicException('Database not selected');
         }
-        $args = array('P', $index_id, $dbname, $tablename, $indexname, join(',', $cols));
-        if ($fcols) {
-            $args[] = $fcols;
-        }
-        return new HandlerSocket_Index($this, $index_id, $cols, $args);
+        return new HandlerSocket_Index($this, $dbname, $tablename, $indexname, $index_id, $cols, $fcols);
     }
 
     /**
@@ -148,7 +144,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
         if ($Index) {
             $this->ensureIndexIsOpened($Index);
         }
-        $query  = join("\t", $tokens);
+        $query = join("\t", $tokens);
         $h = $this->h();
         $result = $this->develCollectExecutionTime(
             $query,

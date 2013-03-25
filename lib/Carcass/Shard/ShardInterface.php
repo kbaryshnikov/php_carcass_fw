@@ -29,4 +29,9 @@ interface ShardInterface {
      */
     public function getDatabaseName();
 
+    /**
+     * @return mixed
+     */
+    public function getServer();
+
 }

@@ -311,7 +311,16 @@ class Mysql_ShardingModel {
      * @return Mysql_Shard|null
      */
     public function getNextShard($server_id, $prev_shard_id = 0) {
-        $shard_result = $this->getShardIndex()->findOne('>', ['database_shard_id' => $prev_shard_id], ['database_server_id' => $server_id, 'limit' => 1]) ? : null;
+        $shard_result = $this->getShardIndex()->findOne(
+            '>',
+            ['database_shard_id' => $prev_shard_id],
+            [
+                'filter' => [
+                    ['F', '=', 'database_server_id', $server_id]
+                ],
+                'limit'   => 1
+            ]
+        ) ? : null;
         if ($shard_result) {
             $shard_id = $shard_result['database_shard_id'];
             return $this->cache['shards'][$shard_id] = new Mysql_Shard($this->Manager, $shard_result);
@@ -369,7 +378,8 @@ class Mysql_ShardingModel {
                 'DatabaseShards',
                 'PRIMARY',
                 ['database_shard_id', 'database_server_id', 'database_idx',
-                    'units_allocated', 'units_free', 'is_available']
+                    'units_allocated', 'units_free', 'is_available'],
+                ['database_server_id']
             );
         }
         return $this->cache['HsShardIndex'];

@@ -193,6 +193,8 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
      */
     protected $ShardManager;
 
+    protected $ShardingDb;
+
     public function setUp() {
         init_app();
         $this->ShardConfig = DI::getConfigReader()->get('sharding');
@@ -207,6 +209,8 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
         /** @var $ShardingDbConn \Carcass\Mysql\Connection */
         $ShardingDbConn = DI::getConnectionManager()->getConnection($ShardingConfig->getPath('sharding_database.mysql_dsn'));
         $ShardingDb = new \Carcass\Mysql\Client($ShardingDbConn);
+
+        $this->ShardingDb = $ShardingDb;
 
         $Server = $this->addServer();
 
@@ -323,28 +327,46 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
             $this->assertEquals("$i@domain.com", $ItemModel->email);
         }
 
+        // add fake servers and shards to test iterators
+        $Servers = [$Server, $Server2 = $this->addServer(2, false), $this->addServer(3, false)];
+
+        $this->ShardingDb->query("INSERT INTO DatabaseShards (database_server_id, database_idx, units_free) VALUES (1, 1, 100)");
+        $this->ShardingDb->query("INSERT INTO DatabaseShards (database_server_id, database_idx, units_free) VALUES (2, 1, 100)");
+        $this->ShardingDb->query("INSERT INTO DatabaseShards (database_server_id, database_idx, units_free) VALUES (2, 1, 100)");
+        $this->ShardingDb->query("INSERT INTO DatabaseShards (database_server_id, database_idx, units_free) VALUES (2, 1, 100)");
+        $this->ShardingDb->query("INSERT INTO DatabaseShards (database_server_id, database_idx, units_free) VALUES (3, 1, 100)");
+
         // test server iterator
-
         /** @var $Servers Shard\Mysql_Server[] */
-        $Servers = [$Server, $this->addServer(2, false), $this->addServer(3, false)];
-
         for ($i = 0; $i < 2; ++$i) {
-            /** @var $Server Shard\Mysql_Server */
+            /** @var $Srv Shard\Mysql_Server */
             $idx = 0;
-            foreach ($this->ShardManager->getServerIterator() as $idx => $Server) {
-                $this->assertInstanceOf('\Carcass\Shard\Mysql_Server', $Server);
-                $this->assertEquals($Servers[$idx]->getId(), $Server->getId());
+            foreach ($this->ShardManager->getServerIterator() as $idx => $Srv) {
+                $this->assertInstanceOf('\Carcass\Shard\Mysql_Server', $Srv);
+                $this->assertEquals($Servers[$idx]->getId(), $Srv->getId());
             }
             $this->assertEquals(2, $idx);
         }
 
         // test shard iterator
         for ($i = 0; $i < 2; ++$i) {
+            $idx = null;
             foreach ($this->ShardManager->getShardIterator($Server) as $idx => $Shard) {
                 $this->assertInstanceOf('\Carcass\Shard\Mysql_Shard', $Shard);
-                $this->assertEquals($idx+1, $Shard->getId());
-                $this->assertEquals($Server->getDsn(), $Shard->getServer()->getDsn());
+                $this->assertEquals($idx+1, $Shard->getId(), $i);
+                $this->assertEquals(1, $Shard->getServer()->getId(), $i);
             }
+            $this->assertEquals(1, $idx);
+        }
+
+        for ($i = 0; $i < 2; ++$i) {
+            $idx2 = null;
+            foreach ($this->ShardManager->getShardIterator($Server2) as $idx2 => $Shard) {
+                $this->assertInstanceOf('\Carcass\Shard\Mysql_Shard', $Shard);
+                $this->assertEquals($Server2->getDsn(), $Shard->getServer()->getDsn(), $i);
+                $this->assertEquals($Server2->getId(), $Shard->getServer()->getId(), $i);
+            }
+            $this->assertEquals(2, $idx2);
         }
     }
 
