@@ -60,7 +60,7 @@ class DIContainer {
 
     /**
      * Returns a closure wrapped for usage as a dependency,
-     * do distinguish from a ctor-closure.
+     * to distinguish from a ctor-closure.
      *
      * @param Closure $value
      * @return Closure

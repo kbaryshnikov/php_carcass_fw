@@ -78,11 +78,55 @@ class TestShardUnit extends Corelib\Hash implements Shard\UnitInterface {
     public static $map = [];
 }
 
+class TestListShardModel extends Shard\ListModel {
+
+    const MC_TAG = 'TList';
+
+    const DEFAULT_LIMIT = 100;
+
+    protected static
+        $cache_key = 'tList',
+        $cache_tags = [ self::MC_TAG ];
+
+    public $chunk_size = null;
+
+    protected static function getItemModelClass() {
+        return '\TestShardModel';
+    }
+
+    public function load($limit = self::DEFAULT_LIMIT, $offset = 0) {
+        $this->getQuery()
+            ->setListChunkSize($this->chunk_size)
+            ->setLimit($limit, $offset)
+            ->fetchList(
+                "SELECT
+                    {{ IF COUNT }}
+                        COUNT(id)
+                    {{ END }}
+                    {{ UNLESS COUNT }}
+                        id, email
+                    {{ END }}
+                FROM
+                    {{ t('t') }}
+                {{ where() }}
+                    1 = 1
+                {{ UNLESS COUNT }}
+                    ORDER BY id
+                    {{ limit(limit, offset) }}
+                {{ END }}"
+            )
+            ->execute()
+            ->sendListTo($this);
+        return $this;
+    }
+
+}
+
 class TestShardModel extends Shard\Model {
 
     protected static
         $cache_key = 't_{{ i(id) }}',
-        $cache_tags = [ 'T_{{ i(id) }}' ];
+        $cache_tags = [ 'T_{{ i(id) }}', TestListShardModel::MC_TAG ];
 
     protected static $sequence = ['t' => 'id'];
 
@@ -224,6 +268,24 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
         $Model = new TestShardModel($Unit1);
         $Model->loadById(1);
         $this->assertFalse($Model->isLoaded());
+
+        // test list model
+
+        for ($i=1; $i<=20; ++$i) {
+            (new TestShardModel($Unit1))->fetchFromArray(['email' => "$i@domain.com"])->insert();
+        }
+
+        $ListModel = new TestListShardModel($Unit1);
+        $ListModel->load(15);
+
+        $this->assertEquals(20, $ListModel->getCount());
+        $this->assertEquals(15, count($ListModel));
+
+        $i = 0;
+        foreach ($ListModel as $ItemModel) {
+            $i++;
+            $this->assertEquals("$i@domain.com", $ItemModel->email);
+        }
     }
 
     protected function addServer() {

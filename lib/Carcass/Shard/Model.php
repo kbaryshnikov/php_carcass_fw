@@ -19,11 +19,7 @@ use \Carcass\Model\Memcached as MemcachedModel;
  * @package Carcass\Shard
  */
 class Model extends MemcachedModel {
-
-    /**
-     * @var UnitInterface
-     */
-    protected $Unit;
+    use ModelTrait;
 
     /**
      * @var array|null [ sequence name => sequence field ]
@@ -34,7 +30,7 @@ class Model extends MemcachedModel {
      * @param UnitInterface $Unit
      */
     public function __construct(UnitInterface $Unit) {
-        $this->Unit = $Unit;
+        $this->setUnit($Unit);
         parent::__construct();
     }
 
@@ -54,13 +50,6 @@ class Model extends MemcachedModel {
         );
         $result and $this->setSequenceFieldValue($result);
         return $result;
-    }
-
-    /**
-     * @return Query
-     */
-    protected function createQueryInstance() {
-        return new Query($this->Unit);
     }
 
     protected function setSequenceFieldValue($value) {

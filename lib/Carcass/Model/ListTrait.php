@@ -132,7 +132,7 @@ trait ListTrait {
      * @return $this
      */
     protected function assembleItemModel(array $item_data = []) {
-        return static::constructItemModel()->fetchFromArray($item_data);
+        return $this->constructItemModel()->fetchFromArray($item_data);
     }
 
     /**
@@ -167,7 +167,7 @@ trait ListTrait {
      * @return Base
      */
     protected function constructItem(array $data) {
-        $Item = static::constructItemModel();
+        $Item = $this->constructItemModel();
         $data and $Item->fetchFromArray($data);
         return $Item;
     }
@@ -185,7 +185,7 @@ trait ListTrait {
     /**
      * @return Base
      */
-    protected static function constructItemModel() {
+    protected function constructItemModel() {
         $class = static::getItemModelClass();
         return new $class;
     }
@@ -195,7 +195,7 @@ trait ListTrait {
      * @return string class name
      */
     protected static function getItemModelClass() {
-        throw new \LogicException("Must be overridden in descendants of " . __CLASS__);
+        throw new \LogicException(__METHOD__ . " must be overridden in " . get_called_class());
         /** @noinspection PhpUnreachableStatementInspection */
         return '';
     }

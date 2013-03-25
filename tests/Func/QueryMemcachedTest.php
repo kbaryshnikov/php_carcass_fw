@@ -63,21 +63,90 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, $result[0]['y']);
         $this->assertEquals(3, $result[1]['x']);
         $this->assertEquals(4, $result[1]['y']);
-        $this->assertEquals([
-            ['x' => 1, 'y' => 2],
-            ['x' => 3, 'y' => 4],
-        ], $this->Mc->get('id_1')['d']);
+        $this->assertEquals(
+            [
+                ['x' => 1, 'y' => 2],
+                ['x' => 3, 'y' => 4],
+            ], $this->Mc->get('id_1')['d']
+        );
     }
 
     public function testQueryFetchWithCallback() {
         $Query = new Query\Memcached;
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $result = $Query->useCache('id_{{ i(id) }}')
-            ->fetchWith(function(\Carcass\Mysql\Client $Db, array $args) {
-                return [1, $Db->getCell('SELECT 2')];
-            })->execute(['id' => 1])->getLastResult();
+            ->fetchWith(
+                function (\Carcass\Mysql\Client $Db, array $args) {
+                    return [1, $Db->getCell('SELECT 2')];
+                }
+            )->execute(['id' => 1])->getLastResult();
         $this->assertEquals([1, 2], $result);
         $this->assertEquals([1, 2], $this->Mc->get('id_1')['d']);
+    }
+
+    public function testQueryFetchList() {
+        $this->Db->executeQuery('drop table if exists t');
+        $this->Db->executeQuery('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $this->Db->executeQuery(
+            "insert into t (s) values " . join(
+                ', ', array_reduce(
+                    range(1, 20), function ($result, $item) {
+                        $result[] = "('$item')";
+                        return $result;
+                    }, []
+                )
+            )
+        );
+
+        $Query = new Query\Memcached;
+        $Query
+            ->setTags(['tag'])
+            ->useCache('items');
+
+        $result = $Query
+            ->fetchList(
+                "SELECT
+                    {{ IF COUNT }}
+                        COUNT(id)
+                    {{ END }}
+                    {{ UNLESS COUNT }}
+                        id, s
+                    {{ END }}
+                FROM
+                    t
+                {{ UNLESS COUNT }}
+                    ORDER BY id
+                    {{ limit(limit, offset) }}
+                {{ END }}"
+            )
+            ->setLimit(15)
+            ->execute()
+            ->getLastResult();
+
+        $count  = $Query->getLastCount();
+        $this->assertEquals(20, $count);
+        $this->assertEquals(15, count($result));
+        $this->assertEquals(['id' => '10', 's' => '10'], $result[9]);
+
+        $mc_count_key = $this->Mc->get('|items|#');
+        $this->assertEquals(20, $mc_count_key['d']);
+        $this->assertNotEmpty($mc_count_key['t']['&tag']);
+        $mc_data0 = $this->Mc->get('|items|0');
+        $this->assertEquals(10, count($mc_data0['d']));
+        $this->assertEquals($mc_count_key['t']['&tag'], $mc_data0['t']['&tag']);
+        $mc_data10 = $this->Mc->get('|items|10');
+        $this->assertEquals(5, count($mc_data10['d']));
+        $this->assertEquals($mc_count_key['t']['&tag'], $mc_data10['t']['&tag']);
+
+        $Query->setLimit(20)->execute();
+
+        $mc_data10 = $this->Mc->get('|items|10');
+        $this->assertEquals(10, count($mc_data10['d']));
+
+        (new Query\Memcached)->setTags(['tag'])->modify("delete from t where id=1");
+
+        $result = $Query->setLimit(20)->execute()->getLastResult();
+        $this->assertEquals(2, $result[0]['id']);
     }
 
     public function testQueryInsertSelectUpdateDelete() {

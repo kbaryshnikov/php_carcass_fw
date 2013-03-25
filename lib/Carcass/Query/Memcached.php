@@ -124,9 +124,11 @@ class Memcached extends Base {
             $is_own_fetch_fn       = true;
             $this->is_own_fetch_fn = false;
         }
-        if (null === $this->key || $is_own_fetch_fn) {
+
+        if (!$this->hasCacheKey() || $is_own_fetch_fn) {
             return parent::doFetch($args);
         }
+
         /** @noinspection PhpUnusedParameterInspection */
         $this->doInTransaction(
             function (Mysql\Client $DbUnused, $args) {
@@ -139,7 +141,16 @@ class Memcached extends Base {
             },
             $args
         );
+
         return $this->last_result;
+    }
+
+    protected function isCacheEnabled() {
+        return $this->hasCacheKey() || !empty($this->tags);
+    }
+
+    protected function hasCacheKey() {
+        return null !== $this->key;
     }
 
     /**
@@ -150,24 +161,28 @@ class Memcached extends Base {
      * @return mixed
      */
     protected function doModify(Callable $fn, array $args, $in_transaction, Callable $finally_fn = null) {
-        return null === $this->key
-            ? parent::doModify($fn, $args, $in_transaction, $finally_fn)
-            : parent::doModify(
-                function ($Db, array $args) use ($fn) {
-                    $affected_rows = $fn($Db, $args);
-                    if ($affected_rows) {
-                        if ($this->last_insert_id_field_name !== null) {
-                            if ($this->last_insert_id_field_name !== false && $this->last_insert_id) {
-                                $args[$this->last_insert_id_field_name] = $this->last_insert_id;
-                                $this->getMct()->flush($args, [$this->key]);
-                            }
-                        } else {
-                            $this->getMct()->flush($args);
+        if (!$this->isCacheEnabled()) {
+            return parent::doModify($fn, $args, $in_transaction, $finally_fn);
+        }
+
+        return parent::doModify(
+            function ($Db, array $args) use ($fn) {
+                $affected_rows = $fn($Db, $args);
+                if ($affected_rows) {
+                    if ($this->last_insert_id_field_name !== null) {
+                        if ($this->last_insert_id_field_name !== false && $this->last_insert_id) {
+                            $args[$this->last_insert_id_field_name] = $this->last_insert_id;
                         }
                     }
-                    return $affected_rows;
-                }, $args, true, $finally_fn
-            );
+                    if ($this->hasCacheKey()) {
+                        $this->getMct()->flush($args, [$this->key]);
+                    } else {
+                        $this->getMct()->flush($args);
+                    }
+                }
+                return $affected_rows;
+            }, $args, true, $finally_fn
+        );
     }
 
     /**
