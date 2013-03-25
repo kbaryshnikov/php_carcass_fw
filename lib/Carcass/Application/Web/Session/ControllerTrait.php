@@ -13,18 +13,12 @@ use Carcass\Corelib;
 /**
  * This trait contains the implementation of session related methods
  * for session-aware controllers.
+ *
+ * @method void addFinalizer($finalizer)
+ *
  * @package Carcass\Application
  */
 trait Web_Session_ControllerTrait {
-
-    /**
-     * @var \Carcass\Corelib\Request
-     */
-    protected $Request;
-    /**
-     * @var \Carcass\Application\Web_Response
-     */
-    protected $Response;
 
     /**
      * @return \Carcass\Application\Web_Session
@@ -41,6 +35,10 @@ trait Web_Session_ControllerTrait {
                 $SessionConfig->exportArrayFrom('storage.args', [])
             );
         }
+
+        $this->addFinalizer('sendSession');
+
+        /** @noinspection PhpUndefinedFieldInspection */
         return new Web_Session($this->Request, $this->Response, $Storage);
     }
 
@@ -48,10 +46,17 @@ trait Web_Session_ControllerTrait {
      * @return \Carcass\Application\Web_Session
      */
     protected function getSession() {
-        if (!$this->Request->has('Session')) {
-            $this->Request->set('Session', $this->assembleSession());
+        /** @noinspection PhpUndefinedFieldInspection */
+        $Request = $this->Request;
+        /** @var $Request Corelib\Request */
+        if (!$Request->has('Session')) {
+            $Request->set('Session', $this->assembleSession());
         }
-        return $this->Request->Session;
+        return $Request->Session;
+    }
+
+    protected function sendSession() {
+        $this->getSession()->save();
     }
 
 }

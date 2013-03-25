@@ -24,6 +24,9 @@ abstract class Web_PageController extends Controller {
     /** @var Web_Router_Interface */
     protected $Router;
 
+    /** @var callable[] */
+    protected $finalizers = [];
+
     /**
      * @param \Carcass\Corelib\Request $Request
      * @param Web_Response $Response
@@ -44,12 +47,36 @@ abstract class Web_PageController extends Controller {
         if (!method_exists($this, $method)) {
             throw new ImplementationNotFoundException("Action not implemented: '$action'");
         }
-        $this->initBeforeAction();
-        return $this->handleActionResult($this->$method($Args));
+        $init_result = $this->initBeforeAction();
+        if (null !== $init_result) {
+            $result = $init_result;
+        } else {
+            $result = $this->$method($Args);
+        }
+        $action_result = $this->handleActionResult($result);
+        $this->finalizeAfterAction();
+        return $action_result;
     }
 
     protected function initBeforeAction() {
         $this->initResultObject();
+        return null;
+    }
+
+    protected function finalizeAfterAction() {
+        foreach ($this->finalizers as $finalizer) {
+            $finalizer();
+        }
+    }
+
+    protected function addFinalizer($finalizer) {
+        if (is_string($finalizer)) {
+            $finalizer = [$this, $finalizer];
+        }
+        if (!is_callable($finalizer)) {
+            throw new \InvalidArgumentException('finalizer is not callable');
+        }
+        $this->finalizers[] = $finalizer;
     }
 
     /**
