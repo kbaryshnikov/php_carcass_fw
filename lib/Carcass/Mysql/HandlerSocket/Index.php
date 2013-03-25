@@ -37,6 +37,9 @@ class HandlerSocket_Index {
         $this->index_connect_cmd = $index_connect_cmd;
     }
 
+    /**
+     * @return int
+     */
     public function getIndexId() {
         return $this->index_id;
     }
@@ -46,29 +49,36 @@ class HandlerSocket_Index {
      */
     public function connect() {
         if (!$this->Connection->query($this->index_connect_cmd)) {
-            throw new \RuntimeException("Could not query index {$this->index_id}, command: '".join("\t", $this->index_connect_cmd)."'");
+            throw new \RuntimeException("Could not query index {$this->index_id}, command: '" . join("\t", $this->index_connect_cmd) . "'");
         }
     }
 
     /**
-     * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='. Additionally, '==' means 'fetch one'.
+     * Find and returns the first row. See the find() method phpdoc for details on arguments.
+     *
+     * @param $op
+     * @param array $qargs
+     * @param array $extras
+     * @return array|null    array row, or null if not found
+     */
+    public function findOne($op, array $qargs, array $extras = array()) {
+        return $this->find($op, $qargs, $extras, true);
+    }
+
+    /**
+     * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='
      * @param array  $qargs     index column values to fetch
      * @param array  $extras    array of extra options:
-                                    limit => array(int limit, int offset)
-                                    in => array(string in_column, array in_values)
-                                    filter => array of array(string 'F'|'W', string filter_op, string filter_col, string filter_value)
+     *                              limit => array(int limit, int offset)
+     *                              in => array(string in_column, array in_values)
+     *                              filter => array of array(string 'F'|'W', string filter_op, string filter_col, string filter_value)
+     * @param bool $fetch_one   return only first row. internal flag, external code should use findOne()
      * @throws \InvalidArgumentException
-     * @return array|bool|mixed
+     * @return array
      */
-    public function find($op, array $qargs, array $extras = array()) {
+    public function find($op, array $qargs, array $extras = array(), $fetch_one = false) {
         if (count($qargs) > count($this->cols)) {
             throw new \InvalidArgumentException('count(qargs) must not exceed count(cols)');
-        }
-        if ($op == '==') {
-            $fetch_one = true;
-            $op = '=';
-        } else {
-            $fetch_one = false;
         }
         array_unshift($qargs, $this->getIndexId(), $op, count($qargs));
         if (isset($extras['limit'])) {
@@ -113,24 +123,26 @@ class HandlerSocket_Index {
             }
         }
         $result = $this->Connection->query($qargs, $this);
-        if (!$result) {
-            return false;
-        }
-        $result = $this->parseFindResponse($result);
-        if (!empty($result) && $fetch_one) {
-            $result = reset($result);
-        }
-        return $result;
+        return $this->parseFindResponse($result, $fetch_one);
     }
 
-    protected function parseFindResponse(array $response) {
+    protected function parseFindResponse($response, $fetch_one = false) {
+        if (!$response || !is_array($response)) {
+            return $fetch_one ? [] : null;
+        }
         $num_cols = (int)array_shift($response);
         if (!$num_cols) {
             throw new \LogicException("Malformed find response: num_cols is empty");
         }
+        if ($fetch_one) {
+            return $response ? array_combine($this->cols, array_slice($response, 0, count($this->cols))) : null;
+        }
         $chunks = array_chunk($response, count($this->cols));
-        $keys = $this->cols;
-        return array_map(function($values) use($keys) { return array_combine($keys, $values); }, $chunks);
+        return array_map(
+            function ($values)  {
+                return array_combine($this->cols, $values);
+            }, $chunks
+        );
     }
 
 }

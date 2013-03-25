@@ -26,12 +26,16 @@ class Mysql_HandlerSocket_ConnectionTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('1', $result[0]['id']);
     }
 
-    public function testGetEqOne() {
+    public function testFindOne() {
         $Dsn = new Carcass\Connection\Dsn(test_hs_get_dsn());
         $Conn = Mysql\HandlerSocket_Connection::constructWithDsn($Dsn);
         $Index = $Conn->openIndex('test', 'PRIMARY', ['id']);
-        $result = $Index->find('==', ['id' => 1]);
+        $result = $Index->findOne('=', ['id' => 1]);
         $this->assertEquals('1', $result['id']);
+        $result = $Index->findOne('>', ['id' => 0]);
+        $this->assertEquals('1', $result['id']);
+        $result = $Index->findOne('<', ['id' => 0]);
+        $this->assertNull($result);
     }
 
     public function testGetMany() {
@@ -46,6 +50,9 @@ class Mysql_HandlerSocket_ConnectionTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('2', $result[1]['id']);
         $this->assertEquals('2', $result[1]['i']);
         $this->assertEquals('v2', $result[1]['s']);
+
+        $result = $Index->find('<', ['id' => 1], ['limit'=>2]);
+        $this->assertEquals([], $result);
     }
 
     public function testManyConditions() {
@@ -57,8 +64,7 @@ class Mysql_HandlerSocket_ConnectionTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('1', $result[0]['id']);
 
         $result = $Index->find('=', ['id' => 2, 'i' => 1], ['limit'=>2]);
-        $this->assertTrue(is_array($result));
-        $this->assertEquals(0, count($result));
+        $this->assertEquals([], $result);
     }
 
 }

@@ -295,9 +295,9 @@ class Mysql_ShardingModel {
      * @return Mysql_Server|null
      */
     public function getNextServer($prev_server_id = 0) {
-        $server_result = $this->getServerIndex()->find('>', ['database_server_id' => $prev_server_id], ['limit' => 1]) ? : null;
+        $server_result = $this->getServerIndex()->findOne('>', ['database_server_id' => $prev_server_id], ['limit' => 1]) ? : null;
         if ($server_result) {
-            $server_result = $this->parseServerRow($server_result[0]);
+            $server_result = $this->parseServerRow($server_result);
             $server_id = $server_result['database_server_id'];
             return $this->cache['servers'][$server_id] = new Mysql_Server($server_result);
         }
@@ -311,10 +311,10 @@ class Mysql_ShardingModel {
      * @return Mysql_Shard|null
      */
     public function getNextShard($server_id, $prev_shard_id = 0) {
-        $shard_result = $this->getShardIndex()->find('>', ['database_shard_id' => $prev_shard_id], ['database_server_id' => $server_id, 'limit' => 1]) ? : null;
+        $shard_result = $this->getShardIndex()->findOne('>', ['database_shard_id' => $prev_shard_id], ['database_server_id' => $server_id, 'limit' => 1]) ? : null;
         if ($shard_result) {
-            $shard_id = $shard_result[0]['database_shard_id'];
-            return $this->cache['shards'][$shard_id] = new Mysql_Shard($this->Manager, $shard_result[0]);
+            $shard_id = $shard_result['database_shard_id'];
+            return $this->cache['shards'][$shard_id] = new Mysql_Shard($this->Manager, $shard_result);
         }
         return null;
     }
@@ -324,7 +324,7 @@ class Mysql_ShardingModel {
      * @return array|null
      */
     protected function fetchServerFromHsById($server_id) {
-        $server_result = $this->getServerIndex()->find('==', ['database_server_id' => $server_id]) ? : null;
+        $server_result = $this->getServerIndex()->findOne('=', ['database_server_id' => $server_id]) ? : null;
         if ($server_result) {
             $server_result = $this->parseServerRow($server_result);
         }
@@ -341,7 +341,7 @@ class Mysql_ShardingModel {
      * @return array|null
      */
     protected function fetchShardFromHsById($shard_id) {
-        return $this->getShardIndex()->find('==', ['database_shard_id' => $shard_id]) ? : null;
+        return $this->getShardIndex()->findOne('=', ['database_shard_id' => $shard_id]) ? : null;
     }
 
     /**
