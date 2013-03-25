@@ -128,7 +128,7 @@ class HandlerSocket_Index {
 
     protected function parseFindResponse($response, $fetch_one = false) {
         if (!$response || !is_array($response)) {
-            return $fetch_one ? [] : null;
+            return $fetch_one ? null : [];
         }
         $num_cols = (int)array_shift($response);
         if (!$num_cols) {
