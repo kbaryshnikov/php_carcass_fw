@@ -6,13 +6,18 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
+/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */// PHPStorm bug: @method not resolved without FQ spec
 namespace Carcass\Model;
 
 use Carcass\Query;
 use Carcass\Corelib;
 
-trait ListTrait {
-    use QueryTrait;
+/**
+ * List query trait
+ *
+ * @package Carcass\Model
+ */
+trait ListQueryTrait {
     use Corelib\ArrayObjectTrait;
     use Corelib\RenderableTrait;
 
@@ -167,14 +172,9 @@ trait ListTrait {
         return $Item;
     }
 
-    /**
-     * @return \Carcass\Query\BaseDispatcher
-     */
-    protected function getQueryDispatcher() {
-        if (null === $this->QueryDispatcher) {
-            $this->QueryDispatcher = $this->assembleQueryDispatcher();
-        }
-        return $this->QueryDispatcher->setLimit($this->limit, $this->offset);
+    protected function prepareListQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
+        $QueryDispatcher->setLimit($this->limit, $this->offset);
+        return $QueryDispatcher;
     }
 
     /**

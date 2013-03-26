@@ -6,7 +6,6 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */// PHPStorm bug: @method not resolved without FQ spec
 namespace Carcass\Model;
 
 use Carcass\Query;
@@ -14,11 +13,9 @@ use Carcass\Query;
 /**
  * Memcached model trait
  *
- * @method \Carcass\Query\MemcachedDispatcher getQueryDispatcher()
- *
  * @package Carcass\Model
  */
-trait MemcachedTrait {
+trait MemcachedQueryTrait {
 
     /**
      * @var string|bool|null  if not null, overrides static::$cache_key
@@ -72,30 +69,53 @@ trait MemcachedTrait {
 
     /**
      * @param int|null $chunk_size, int chunk size, or null for non-chunked mode
+     * @throws \LogicException
      * @return \Carcass\Query\MemcachedDispatcher
      */
     protected function getListQueryDispatcher($chunk_size = null) {
-        return $this->getQueryDispatcher()->setListChunkSize($chunk_size);
+        /** @noinspection PhpUndefinedMethodInspection */
+        $QueryDispatcher = $this->getQueryDispatcher();
+        if (!$QueryDispatcher instanceof Query\MemcachedDispatcher) {
+            throw new \LogicException("instanceof Query\\MemcachedDispatcher expected");
+        }
+        return $QueryDispatcher->setListChunkSize($chunk_size);
     }
 
-    /**
-     * @return \Carcass\Query\MemcachedDispatcher
-     */
-    protected function assembleQueryDispatcher() {
-        return $this->configureMemcachedQueryDispatcher($this->createQueryInstance());
-    }
-
-    protected function configureMemcachedQueryDispatcher(Query\MemcachedDispatcher $Query) {
-        return $Query
+    protected function configureMemcachedQueryDispatcher(Query\MemcachedDispatcher $QueryDispatcher) {
+        if (null !== $config_path = $this->getConfigMemcachedDsnPath()) {
+            $QueryDispatcher->setConfigDatabaseDsnPath($config_path);
+        }
+        return $QueryDispatcher
             ->setTags($this->getCurrentCacheTags())
             ->useCache($this->getCurrentCacheKey());
     }
 
     /**
-     * @return \Carcass\Query\MemcachedDispatcher
-     */
-    protected function createQueryInstance() {
+     * @return Query\MemcachedDispatcher
+     *
+    protected function constructQueryDispatcher() {
         return new Query\MemcachedDispatcher;
+    }
+
+    protected function configureAssembledQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
+        if (!$QueryDispatcher instanceof Query\MemcachedDispatcher) {
+            throw new \InvalidArgumentException('instanceof Query\MemcachedDispatcher required');
+        }
+        $this->configureAssembledBaseQueryDispatcher($QueryDispatcher);
+        if (null !== $config_path = $this->getConfigMemcachedDsnPath()) {
+            $QueryDispatcher->setConfigDatabaseDsnPath($config_path);
+        }
+        return $QueryDispatcher
+            ->setTags($this->getCurrentCacheTags())
+            ->useCache($this->getCurrentCacheKey());
+    }
+     * */
+
+    /**
+     * @return string|null
+     */
+    protected function getConfigMemcachedDsnPath() {
+        return null;
     }
 
     /**

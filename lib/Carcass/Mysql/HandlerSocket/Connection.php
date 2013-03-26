@@ -193,7 +193,9 @@ class HandlerSocket_Connection implements ConnectionInterface {
 
     protected function connect() {
         $this->socket = $this->develCollectExecutionTime(
-            'connect: ' . $this->Dsn,
+            function () {
+                return 'connect: ' . $this->Dsn;
+            },
             function () {
                 if ($this->Dsn->has('socket')) {
                     $socket = fsockopen('unix://' . $this->Dsn->socket, null, $errno, $errstr);

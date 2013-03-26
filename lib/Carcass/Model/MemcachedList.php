@@ -19,10 +19,8 @@ use Carcass\Query;
  *
  * @package Carcass\Model
  */
-abstract class MemcachedList implements \Iterator, \ArrayAccess, \Countable, Corelib\ExportableInterface, Corelib\RenderableInterface, Query\ListReceiverInterface {
-    use ListTrait, MemcachedTrait {
-        MemcachedTrait::assembleQueryDispatcher insteadof ListTrait;
-    }
+abstract class MemcachedList extends ListBase implements \Iterator, \ArrayAccess, \Countable, Corelib\ExportableInterface, Corelib\RenderableInterface, Query\ListReceiverInterface {
+    use MemcachedQueryTrait;
 
     protected static $default_cache_chunk_size = 10;
 
@@ -30,6 +28,19 @@ abstract class MemcachedList implements \Iterator, \ArrayAccess, \Countable, Cor
 
     protected function getCacheChunkSize() {
         return $this->cache_chunk_size;
+    }
+
+    protected function assembleQueryDispatcher() {
+        return new Query\MemcachedDispatcher;
+    }
+
+    protected function prepareQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
+        if (!$QueryDispatcher instanceof Query\MemcachedDispatcher) {
+            throw new \LogicException("instanceof Query\\MemcachedDispatcher expected");
+        }
+        $this->configureBaseQueryDispatcher($QueryDispatcher);
+        $this->configureMemcachedQueryDispatcher($QueryDispatcher);
+        return parent::prepareQueryDispatcher($QueryDispatcher);
     }
 
 }

@@ -8,7 +8,6 @@ use Carcass\Corelib as Corelib;
 class Help {
 
     protected $commands = [
-        'help'                 => 'Show this message',
         'build-nginx-config'   => 'Build application nginx config',
         'fetch-dependencies'   => 'Fetch application dependencies',
         '' => null,

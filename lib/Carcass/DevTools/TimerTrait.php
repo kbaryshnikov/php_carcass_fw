@@ -52,6 +52,10 @@ trait TimerTrait {
         $e = null;
         $result = null;
 
+        if ($message instanceof \Closure) {
+            $message = $message();
+        }
+
         $Timer = $this->develStartTimer($message);
         try {
             $result = $fn();

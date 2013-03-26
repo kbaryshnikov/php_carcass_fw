@@ -75,8 +75,8 @@ class Web_FrontController implements FrontControllerInterface {
     public function dispatch($fq_action, Corelib\Hash $Args) {
         list ($controller, $action) = Corelib\StringTools::split($fq_action, '.', [null, 'Default']);
 
-        $page_class    = "{$controller}Page";
-        $page_fq_class = $this->requirePageClass($page_class);
+        DI::getPathManager()->requirePage($controller);
+        $page_fq_class = Instance::getFqClassName($controller);
 
         /** @var ControllerInterface $Page */
         $Page = new $page_fq_class($this->Request, $this->Response, $this->Router);
@@ -86,17 +86,6 @@ class Web_FrontController implements FrontControllerInterface {
     protected function dispatchPageAction(ControllerInterface $Page, $action, Corelib\Hash $Args) {
         $this->displayResult($Page->dispatch($action, $Args));
         return true;
-    }
-
-    protected function requirePageClass($page_class) {
-        $page_php_file = DI::getPathManager()->getPathToPhpFile('pages', $page_class);
-        if (!file_exists($page_php_file)) {
-            throw new ImplementationNotFoundException("No implementation for $page_class found");
-        }
-
-        include_once $page_php_file;
-
-        return Instance::getFqClassName($page_class);
     }
 
     /**

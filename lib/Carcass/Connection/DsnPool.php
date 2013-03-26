@@ -80,7 +80,7 @@ class DsnPool extends Corelib\Hash implements DsnInterface {
     }
 
     /**
-     * @return null|string
+     * @return string
      */
     public function __toString() {
         if (null === $this->string_id) {
@@ -88,7 +88,7 @@ class DsnPool extends Corelib\Hash implements DsnInterface {
             foreach ($this as $Item) {
                 $ids[] = (string)$Item;
             }
-            $this->string_id = 'pool://' . md5(join("\t", $ids));
+            $this->string_id = 'pool://' . count($ids) . '@' . $this->getType() . '?' . join(';', $ids);
         }
         return $this->string_id;
     }

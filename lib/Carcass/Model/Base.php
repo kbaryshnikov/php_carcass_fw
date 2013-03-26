@@ -37,7 +37,7 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
     }
 
     /**
-     * @return mixed
+     * @return bool
      */
     public function validate() {
         return $this->Fieldset->validate();
@@ -50,6 +50,9 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
         return $this->Fieldset->getError();
     }
 
+    /**
+     * @return void
+     */
     protected function initFieldset() {
         $this->Fieldset = clone static::getModelFieldset();
     }
@@ -145,11 +148,14 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
         $this->fetchResults();
     }
 
+    /**
+     * return void
+     */
     protected function fetchResults() {
         $this->Fieldset->dynamic(
             function () {
                 $this->Fieldset->clean();
-                $this->QueryDispatcher->sendTo($this->Fieldset);
+                $this->getQueryDispatcher()->sendTo($this->Fieldset);
             }
         );
     }
@@ -261,17 +267,25 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
     }
 
     /**
-     * @return mixed
+     * @return array
      */
     public function exportArray() {
         return $this->Fieldset->exportArray();
     }
 
     /**
-     * @return mixed
+     * @return array
      */
     public function getRenderArray() {
         return $this->Fieldset->exportArray();
+    }
+
+    protected function assembleQueryDispatcher() {
+        return new Query\BaseDispatcher;
+    }
+
+    protected function prepareQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
+        return $QueryDispatcher;
     }
 
 }

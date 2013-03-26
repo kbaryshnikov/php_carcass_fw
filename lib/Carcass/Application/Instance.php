@@ -233,7 +233,7 @@ class Instance {
                 if (is_object($crypter_settings)) {
                     $crypter_settings = $crypter_settings->exportArray();
                 }
-                $this->Crypter = new $class($crypter_settings);
+                return new $class($crypter_settings);
             }
         );
 

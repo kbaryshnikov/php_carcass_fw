@@ -95,6 +95,16 @@ abstract class Web_PageController extends Controller {
     }
 
     /**
+     * @return Corelib\Result
+     */
+    protected function getResult() {
+        if (null === $this->Result) {
+            $this->initResultObject();
+        }
+        return $this->Result;
+    }
+
+    /**
      * @param null $template_file
      * @return Web_Renderer_Interface
      */
@@ -143,6 +153,14 @@ abstract class Web_PageController extends Controller {
      */
     protected function sendFile($location) {
         return new Web_Renderer_Sendfile($location);
+    }
+
+    protected function getOwnUrl($action, array $args = []) {
+        return $this->Router->getPageUrl($this->Request, $this, $action, $args);
+    }
+
+    protected function getOwnAbsoluteUrl($action, array $args = []) {
+        return $this->Router->getPageAbsoluteUrl($this->Request, $this, $action, $args);
     }
 
 }

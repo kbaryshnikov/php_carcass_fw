@@ -82,4 +82,34 @@ class Web_Router_Simple implements Web_Router_Interface {
         return new Corelib\Url($uri, [], $args);
     }
 
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []) {
+        return $this->getUrl($Request, $this->getRouteByController($Controller, $action), $args);
+    }
+
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageAbsoluteUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []) {
+        return $this->getAbsoluteUrl($Request, $this->getRouteByController($Controller, $action), $args);
+    }
+
+    protected function getRouteByController(Web_PageController $Controller, $action = null) {
+        $route_name = end(explode('\\', get_class($Controller)));
+        if ($action) {
+            $route_name .= ".{$action}";
+        }
+        return $route_name;
+    }
+
 }

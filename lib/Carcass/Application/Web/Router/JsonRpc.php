@@ -150,6 +150,28 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
     }
 
     /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []) {
+        return $this->getUrl($Request, null, $args);
+    }
+
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageAbsoluteUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []) {
+        return $this->getAbsoluteUrl($Request, null, $args);
+    }
+
+    /**
      * @param array $args
      * @return Corelib\Url
      */

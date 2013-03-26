@@ -104,4 +104,37 @@ class PathManager {
         return $this->getPathTo($location_name, strtr($filename, ['_' => '/', '\\' => '/']) . $extension);
     }
 
+    /**
+     * @param $controller_class
+     * @return void
+     * @throws ImplementationNotFoundException
+     */
+    public function requirePage($controller_class) {
+        $this->requireController($controller_class, 'pages');
+    }
+
+    /**
+     * @param $controller_class
+     * @return void
+     * @throws ImplementationNotFoundException
+     */
+    public function requireScript($controller_class) {
+        $this->requireController($controller_class, 'scripts');
+    }
+
+    /**
+     * @param $controller_class
+     * @param $controller_location_name
+     * @return void
+     * @throws ImplementationNotFoundException
+     */
+    public function requireController($controller_class, $controller_location_name) {
+        $page_php_file = $this->getPathToPhpFile($controller_location_name, $controller_class);
+        if (!file_exists($page_php_file)) {
+            throw new ImplementationNotFoundException("No implementation for $controller_class found in $controller_location_name");
+        }
+
+        include_once $page_php_file;
+    }
+
 }

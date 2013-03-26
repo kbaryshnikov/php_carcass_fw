@@ -74,6 +74,8 @@ class FetchDependenciesScript extends Controller {
     }
 
     protected function updateSymlink($target, $link) {
+        $target = $this->normalizePath($target);
+        $link = $this->normalizePath($link);
         Fs\Directory::mkdirIfNotExists(dirname($link));
         if (file_exists($link)) {
             if (!is_link($link)) {
@@ -81,7 +83,49 @@ class FetchDependenciesScript extends Controller {
             }
             unlink($link);
         }
-        symlink($target, $link);
+        $common_subdir = $this->findCommonPrefix($target, $link);
+        $this->makeSymlink($target, $link, $common_subdir);
+    }
+
+    protected function makeSymlink($target, $link, $chdir = null) {
+        $cwd = null;
+        if ($chdir) {
+            $cwd = getcwd();
+            if (!chdir($chdir)) {
+                throw new \RuntimeException("Failed to chdir('$chdir')");
+            }
+            $target = ltrim(substr($target, strlen($chdir)), '/');
+            $link = ltrim(substr($link, strlen($chdir)), '/');
+        }
+        $result = symlink($target, $link);
+        if ($cwd) {
+            chdir($cwd);
+        }
+        return $result;
+    }
+
+    protected function findCommonPrefix($target, $link) {
+        $subdir_path = [];
+        $target_path = explode('/', trim($target, '/'));
+        $link_path = explode('/', trim($link, '/'));
+        foreach ($target_path as $idx => $element) {
+            if (!isset($link_path[$idx]) || $element !== $link_path[$idx]) {
+                break;
+            }
+            $subdir_path[] = $element;
+        }
+        if (!$subdir_path) {
+            return null;
+        }
+        $subdir = '/' . join('/', $subdir_path);
+        if (!is_writable($subdir)) {
+            return null;
+        }
+        return $subdir;
+    }
+
+    protected function normalizePath($link) {
+        return preg_replace('#/{2,}#', '/', trim($link));
     }
 
     protected function getHelp() {

@@ -36,6 +36,24 @@ interface Web_Router_Interface extends RouterInterface {
 
     /**
      * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []);
+
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageAbsoluteUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []);
+
+    /**
+     * @param \Carcass\Corelib\Request $Request
      * @param $url
      * @param string|bool $host string for exact hostname, true to use the default static host, false for no hostname
      * @param string|null $scheme

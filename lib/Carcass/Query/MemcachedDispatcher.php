@@ -30,7 +30,8 @@ class MemcachedDispatcher extends BaseDispatcher {
         $chunk_size = null,
         $mc_dsn = null,
         $is_own_fetch_fn = false,
-        $last_insert_id_field_name = null;
+        $last_insert_id_field_name = null,
+        $config_memcached_dsn_path = null;
 
     /**
      * @var \Carcass\Memcached\Connection
@@ -225,7 +226,23 @@ class MemcachedDispatcher extends BaseDispatcher {
      * @return \Carcass\Config\ItemInterface|null|string
      */
     protected function getMemcachedDsn() {
-        return $this->mc_dsn ? : DI::getConfigReader()->getPath('application.connections.memcached');
+        return $this->mc_dsn ? : DI::getConfigReader()->getPath($this->getConfigMemcachedDsnPath());
+    }
+
+    /**
+     * @return string
+     */
+    protected function getConfigMemcachedDsnPath() {
+        return $this->config_memcached_dsn_path ? : 'application.connections.memcached';
+    }
+
+    /**
+     * @param string $path
+     * @return $this
+     */
+    public function setConfigMemcachedDsnPath($path) {
+        $this->config_memcached_dsn_path = $path;
+        return $this;
     }
 
     /**

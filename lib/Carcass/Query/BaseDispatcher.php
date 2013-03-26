@@ -26,6 +26,7 @@ class BaseDispatcher {
     protected $last_insert_id = null;
     protected $last_result = [];
     protected $last_count = null;
+    protected $config_dsn_path = null;
 
     /**
      * @var callable|null
@@ -423,16 +424,33 @@ class BaseDispatcher {
     protected function assembleDatabaseClient() {
         /** @var Mysql\Connection $Connection */
         $Connection = DI::getConnectionManager()->getConnection(
-            DI::getConfigReader()->getPath('application.connections.database')
+            DI::getConfigReader()->getPath($this->getConfigDatabaseDsnPath())
         );
         return new Mysql\Client($Connection);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getConfigDatabaseDsnPath() {
+        return $this->config_dsn_path ? : 'application.connections.database';
+    }
+
+    /**
+     * @param string $path
+     * @return $this
+     */
+    public function setConfigDatabaseDsnPath($path) {
+        $this->config_dsn_path = $path;
+        return $this;
     }
 
     /**
      * @param array $args
      * @return array
      */
-    protected function getCallbackArgs(array $args) {
+    protected
+    function getCallbackArgs(array $args) {
         return [
             $this->getDatabaseClient(),
             $args,
@@ -443,7 +461,8 @@ class BaseDispatcher {
      * @param callable $fn
      * @return $this
      */
-    protected function setFetchWith(Callable $fn) {
+    protected
+    function setFetchWith(Callable $fn) {
         $this->FetchFn = $fn;
         return $this;
     }

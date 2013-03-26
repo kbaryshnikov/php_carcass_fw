@@ -51,6 +51,28 @@ class Web_Router_Map implements Web_Router_Interface {
 
     /**
      * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []) {
+        return $this->getUrl($Request, $this->getRouteByController($Controller, $action), $args);
+    }
+
+    /**
+     * @param \Carcass\Corelib\Request $Request
+     * @param Web_PageController $Controller
+     * @param string|null $action
+     * @param array $args
+     * @return string
+     */
+    public function getPageAbsoluteUrl(Corelib\Request $Request, Web_PageController $Controller, $action = null, array $args = []) {
+        return $this->getAbsoluteUrl($Request, $this->getRouteByController($Controller, $action), $args);
+    }
+
+    /**
+     * @param \Carcass\Corelib\Request $Request
      * @param string $route
      * @param array $args
      * @return string
@@ -175,4 +197,14 @@ class Web_Router_Map implements Web_Router_Interface {
         });
         return $routes;
     }
+
+    protected function getRouteByController(Web_PageController $Controller, $action = null) {
+        $tokens = explode('\\', get_class($Controller));
+        $route_name = end($tokens);
+        if ($action) {
+            $route_name .= ".{$action}";
+        }
+        return $route_name;
+    }
+
 }

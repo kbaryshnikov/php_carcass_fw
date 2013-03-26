@@ -180,7 +180,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     }
 
     protected function beginTransaction() {
-        $this->delay_mode    = true;
+        $this->delay_mode = true;
         $this->delayed_calls = [];
     }
 
@@ -192,7 +192,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     }
 
     protected function rollbackTransaction() {
-        $this->delay_mode    = false;
+        $this->delay_mode = false;
         $this->delayed_calls = [];
     }
 
@@ -222,7 +222,9 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         $MemcachedInstance = $this->getMemcachedInstance();
 
         $result = $this->develCollectExecutionTime(
-            $method . (isset($args[0]) ? ' ' . json_encode($args[0]) : ''),
+            function() use ($method, $args) {
+                return $method . (isset($args[0]) ? ' ' . json_encode($args[0]) : '');
+            },
             function () use ($MemcachedInstance, $method, $args) {
                 return call_user_func_array([$this->getMemcachedInstance(), $method], $args);
             }
@@ -240,7 +242,14 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
      */
     protected function getMemcachedInstance() {
         if (null === $this->MemcachedInstance) {
-            $this->MemcachedInstance = $this->assembleMemcachedInstance();
+            $this->develCollectExecutionTime(
+                function () {
+                    return 'connect: ' . $this->Pool;
+                },
+                function () {
+                    $this->MemcachedInstance = $this->assembleMemcachedInstance();
+                }
+            );
         }
         return $this->MemcachedInstance;
     }
@@ -297,7 +306,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     protected function assembleMemcachedInstance() {
         $Mc = $this->constructMemcacheInstance();
 
-        $compress_threshold             = 0;
+        $compress_threshold = 0;
         $compress_threshold_min_savings = -1;
 
         foreach ($this->Pool as $Item) {

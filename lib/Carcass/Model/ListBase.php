@@ -17,5 +17,13 @@ use Carcass\Corelib;
  * @package Carcass\Model
  */
 abstract class ListBase implements \Iterator, \ArrayAccess, \Countable, Corelib\ExportableInterface, Corelib\RenderableInterface, Query\ListReceiverInterface {
-    use ListTrait;
+    use QueryTrait, ListQueryTrait;
+
+    protected function assembleQueryDispatcher() {
+        return new Query\BaseDispatcher;
+    }
+
+    protected function prepareQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
+        return $this->prepareListQueryDispatcher($QueryDispatcher);
+    }
 }

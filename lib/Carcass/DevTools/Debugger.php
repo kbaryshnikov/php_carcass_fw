@@ -77,7 +77,7 @@ class Debugger {
      */
     public function exceptionToString(\Exception $Exception) {
         return sprintf(
-            "%s in %s line %d\n%s\n%s",
+            "%s in %s line %d\n\n%s\n\n%s",
             get_class($Exception),
             $Exception->getFile(),
             $Exception->getLine(),

@@ -57,6 +57,13 @@ abstract class Controller implements ControllerInterface {
         throw new \RuntimeException("Route not found: '$error_message'");
     }
 
+    /**
+     * @return Corelib\Request
+     */
+    protected function getRequest() {
+        return $this->Request;
+    }
+
     protected function init() {
         // pass
     }

@@ -10,6 +10,7 @@
 namespace Carcass\Model;
 
 use Carcass\Query;
+use Carcass\Corelib;
 
 /**
  * Memcached Model
@@ -18,8 +19,8 @@ use Carcass\Query;
  *
  * @package Carcass\Model
  */
-abstract class Memcached extends Base {
-    use MemcachedTrait;
+abstract class Memcached extends Base implements Corelib\DatasourceInterface, Corelib\DataReceiverInterface, Corelib\ImportableInterface, Corelib\ExportableInterface, Corelib\RenderableInterface {
+    use MemcachedQueryTrait;
 
     /**
      * @var string|bool|null  null: undefined, false: no cache, or key template
@@ -54,6 +55,19 @@ abstract class Memcached extends Base {
             return false;
         }
         return $this->getQueryDispatcher()->setLastInsertIdFieldName($this->id_key)->insert($query, $args + $this->exportArray());
+    }
+
+    protected function assembleQueryDispatcher() {
+        return new Query\MemcachedDispatcher;
+    }
+
+    protected function prepareQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
+        if (!$QueryDispatcher instanceof Query\MemcachedDispatcher) {
+            throw new \LogicException("instanceof Query\\MemcachedDispatcher expected");
+        }
+        $this->configureBaseQueryDispatcher($QueryDispatcher);
+        $this->configureMemcachedQueryDispatcher($QueryDispatcher);
+        return $QueryDispatcher;
     }
 
 }

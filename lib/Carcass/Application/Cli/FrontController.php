@@ -66,19 +66,17 @@ class Cli_FrontController implements FrontControllerInterface {
     public function dispatch($fq_action, Corelib\Hash $Args) {
         list ($controller, $action) = Corelib\StringTools::split($fq_action, '.', [null, 'Default']);
 
-        $script_class = "{$controller}Script";
-
         try {
-            include_once DI::getPathManager()->getPathToPhpFile('scripts', $script_class);
-        } catch (WarningException $e) {
-            $this->Response->setStatus(self::INPUT_ERROR)->writeErrorLn("Could not load '$script_class' implementation file: " . $e->getMessage());
+            DI::getPathManager()->requireScript($controller);
+        } catch (ImplementationNotFoundException $e) {
+            $this->Response->setStatus(self::INPUT_ERROR)->writeErrorLn("Controller for $fq_action not exists");
             return;
         }
 
-        $script_fq_class = Instance::getFqClassName($script_class);
+        $script_fq_class = Instance::getFqClassName($controller);
 
         if (!class_exists($script_fq_class, false)) {
-            $this->Response->setStatus(self::INPUT_ERROR)->writeErrorLn("No implementation exists for '$script_class'");
+            $this->Response->setStatus(self::INPUT_ERROR)->writeErrorLn("No implementation exists for '$fq_action'");
             return;
         }
 

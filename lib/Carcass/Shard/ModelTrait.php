@@ -32,7 +32,7 @@ trait ModelTrait {
     /**
      * @return QueryDispatcher
      */
-    protected function createQueryInstance() {
+    protected function assembleQueryDispatcher() {
         return new QueryDispatcher($this->Unit);
     }
 

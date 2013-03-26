@@ -268,7 +268,9 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
      */
     protected function createConnectionByCurrentDsn() {
         return $this->develCollectExecutionTime(
-            'connect: ' . $this->Dsn,
+            function() {
+                return 'connect: ' . $this->Dsn;
+            },
             function () {
                 $Connection = new \mysqli(
                     $this->Dsn->get('hostname', null),
