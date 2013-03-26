@@ -338,11 +338,11 @@ class BaseDispatcher {
     }
 
     /**
-     * @param \Carcass\Corelib\ImportableInterface $Target
+     * @param ItemReceiverInterface $Target
      * @return $this
      */
-    public function sendTo(Corelib\ImportableInterface $Target) {
-        $Target->import($this->getLastResult() ? : []);
+    public function sendTo(ItemReceiverInterface $Target) {
+        $Target->importItem($this->getLastResult() ? : []);
         return $this;
     }
 
@@ -449,8 +449,7 @@ class BaseDispatcher {
      * @param array $args
      * @return array
      */
-    protected
-    function getCallbackArgs(array $args) {
+    protected function getCallbackArgs(array $args) {
         return [
             $this->getDatabaseClient(),
             $args,
@@ -461,8 +460,7 @@ class BaseDispatcher {
      * @param callable $fn
      * @return $this
      */
-    protected
-    function setFetchWith(Callable $fn) {
+    protected function setFetchWith(Callable $fn) {
         $this->FetchFn = $fn;
         return $this;
     }

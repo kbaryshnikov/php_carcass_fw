@@ -8,6 +8,8 @@
 
 namespace Carcass\Mysql;
 
+use Carcass\Corelib\ExportableInterface;
+
 /**
  * Class HandlerSocket_Index
  * @package Carcass\Mysql
@@ -21,6 +23,7 @@ class HandlerSocket_Index {
 
     protected
         $index_id,
+        $index_cols,
         $cols,
         $fcols,
         $index_connect_cmd;
@@ -29,18 +32,24 @@ class HandlerSocket_Index {
      * @param HandlerSocket_Connection $Connection
      * @param $dbname
      * @param $tablename
-     * @param $indexname
+     * @param array $index
      * @param $index_id
      * @param array $cols
      * @param array $fcols
      */
-    public function __construct(HandlerSocket_Connection $Connection, $dbname, $tablename, $indexname, $index_id, array $cols, array $fcols = null) {
+    public function __construct(HandlerSocket_Connection $Connection, $dbname, $tablename, array $index, $index_id, array $cols, array $fcols = null) {
         $this->Connection = $Connection;
         $this->index_id = $index_id;
         $this->cols = $cols;
         $this->fcols = $fcols;
 
-        $this->index_connect_cmd = ['P', $index_id, $dbname, $tablename, $indexname, join(',', $cols)];
+        reset($index);
+        list($this->index_name, $this->index_cols) = each($index);
+        if (!is_array($this->index_cols)) {
+            $this->index_cols = [strval($this->index_cols) => null];
+        }
+
+        $this->index_connect_cmd = ['P', $index_id, $dbname, $tablename, $this->index_name, join(',', $cols)];
         if ($fcols) {
             $this->index_connect_cmd[] = join(',', $fcols);
         }
@@ -75,21 +84,60 @@ class HandlerSocket_Index {
     }
 
     /**
+     * @return HandlerSocket_FilterBuilder
+     */
+    public function getFilterBuilder() {
+        return new HandlerSocket_FilterBuilder($this->fcols);
+    }
+
+    /**
      * @param string $op        HandlerSocket supports '=', '>', '>=', '<', and '<='
-     * @param array  $qargs     index column values to fetch
+     * @param array  $args      index column values to fetch
      * @param array  $extras    array of extra options:
      *                              limit => array(int limit, int offset), default (1, 0)
      *                              in => array(string in_column, array in_values)
-     *                              filter => array of array(string 'F'|'W', string filter_op, string filter_col, string filter_value)
+     *                              filter => FilterBuilder or array of array(string 'F'|'W', string filter_op, string filter_col, string filter_value)
      * @param bool $fetch_one   return only first row. internal flag, external code should use findOne()
      * @throws \InvalidArgumentException
      * @return array
      */
-    public function find($op, array $qargs, array $extras = [], $fetch_one = false) {
-        if (count($qargs) > count($this->cols)) {
-            throw new \InvalidArgumentException('count(qargs) must not exceed count(cols)');
+    public function find($op, array $args, array $extras = [], $fetch_one = false) {
+        if (count($args) > count($this->index_cols)) {
+            throw new \InvalidArgumentException('count(args) must not exceed count(index cols)');
         }
-        array_unshift($qargs, $this->getIndexId(), $op, count($qargs));
+        $qargs = [$this->getIndexId(), $op];
+        $fargs = [];
+        $gap = null;
+        foreach ($this->index_cols as $name => $default) {
+            if (isset($args[$name])) {
+                if (null !== $gap) {
+                    throw new \InvalidArgumentException("args.$gap value is required to search for args.$name");
+                }
+                $fargs[] = $args[$name];
+                unset($args[$name]);
+            } else {
+                if (null === $default) {
+                    throw new \InvalidArgumentException("args.$name value is required");
+                } elseif (false === $default) {
+                    $gap = $name;
+                } else {
+                    if (null !== $gap) {
+                        throw new \InvalidArgumentException("args.$gap value is required to search for args.$name");
+                    }
+                    $fargs[] = $default;
+                }
+            }
+        }
+        if (!$fargs) {
+            throw new \InvalidArgumentException('No known columns found in args');
+        }
+        if ($args) {
+            throw new \InvalidArgumentException('Unknown columns found in args: ' . join(', ', array_keys($args)));
+        }
+        $qargs[] = count($fargs);
+        foreach ($fargs as $arg) {
+            $qargs[] = $arg;
+        }
         // always send limit and offset: filters are not accepted without limit and offset due to handlersocket bug
         $limit = 1;
         $offset = 0;
@@ -119,6 +167,9 @@ class HandlerSocket_Index {
             }
         }
         if (isset($extras['filter'])) {
+            if ($extras['filter'] instanceof ExportableInterface) {
+                $extras['filter'] = $extras['filter']->exportArray();
+            }
             if (!is_array($extras['filter'])) {
                 throw new \InvalidArgumentException('extras.filter is not an array');
             }

@@ -26,6 +26,7 @@ use Carcass\Corelib;
  * @method static \Carcass\Corelib\Request getRequest()
  * @method static \Carcass\Corelib\Crypter getCrypter()
  * @method static \Carcass\Event\Dispatcher getEventDispatcher()
+ * @method static \Carcass\Mail\Dispatcher getMailDispatcher()
  *
  * @package Carcass\Application
  */

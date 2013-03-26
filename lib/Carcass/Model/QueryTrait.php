@@ -39,26 +39,6 @@ trait QueryTrait {
         return $this->prepareQueryDispatcher($this->QueryDispatcher);
     }
 
-    /*
-    protected function prepareQueryDispatcher($QueryDispatcher) {
-        return $QueryDispatcher;
-    }
-
-    /*
-     * @return \Carcass\Query\BaseDispatcher
-     *
-    protected function assembleQueryDispatcher() {
-        return $this->configureAssembledQueryDispatcher($this->constructQueryDispatcher());
-    }
-
-    /**
-     * @return Query\BaseDispatcher
-     *
-    protected function constructQueryDispatcher() {
-        return new Query\BaseDispatcher;
-    }
-    */
-
     /**
      * @param Query\BaseDispatcher $QueryDispatcher
      * @return Query\BaseDispatcher

@@ -22,6 +22,13 @@ interface DatasourceInterface {
     public function get($key, $default_value = null);
 
     /**
+     * @param string $path dot-separated
+     * @param mixed $default_value
+     * @return $this|mixed
+     */
+    public function getPath($path, $default_value = null);
+
+    /**
      * @param mixed $key
      * @return bool
      */

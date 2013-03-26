@@ -108,14 +108,14 @@ class HandlerSocket_Connection implements ConnectionInterface {
 
     /**
      * @param string $tablename
-     * @param string $indexname 'PRIMARY' for PK, or index name
+     * @param array $index ['PRIMARY' for PK, or index name => array of [ field => default ]]
      * @param array $cols
      * @param array $fcols
      * @param int|string|null $index_id
      * @return HandlerSocket_Index
      * @throws \LogicException
      */
-    public function openIndex($tablename, $indexname, array $cols, array $fcols = null, $index_id = null) {
+    public function openIndex($tablename, array $index, array $cols, array $fcols = null, $index_id = null) {
         if (null === $index_id) {
             $index_id = $this->index_sequence++;
         }
@@ -130,7 +130,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
         if (null === $dbname) {
             throw new \LogicException('Database not selected');
         }
-        return new HandlerSocket_Index($this, $dbname, $tablename, $indexname, $index_id, $cols, $fcols);
+        return new HandlerSocket_Index($this, $dbname, $tablename, $index, $index_id, $cols, $fcols);
     }
 
     /**
@@ -146,12 +146,16 @@ class HandlerSocket_Connection implements ConnectionInterface {
         }
         $query = join("\t", $tokens);
         $h = $this->h();
+        $raw_response = null;
         $result = $this->develCollectExecutionTime(
             $query,
             function () use ($h, $query, &$raw_response) {
                 fwrite($h, $query . "\n");
                 $result = explode("\t", rtrim($raw_response = fgets($h)));
                 return $result;
+            },
+            function () use (&$raw_response) {
+                return " => '{$raw_response}'";
             }
         );
         if (!is_array($result) || !isset($result[0])) {

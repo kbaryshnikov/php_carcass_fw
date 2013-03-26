@@ -62,8 +62,8 @@ trait RuleTrait {
      * @return $this
      */
     public function setRules(array $rules) {
-        foreach ($rules as $Rule) {
-            $this->addRule($Rule);
+        foreach ($rules as $key => $rule) {
+            $this->addRule(is_int($key) ? $rule : [$key, $rule]);
         }
         return $this;
     }

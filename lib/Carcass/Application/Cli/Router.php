@@ -60,7 +60,7 @@ class Cli_Router implements RouterInterface {
     }
 
     protected function getDispatcherName($argument) {
-        list ($controller, $action) = Corelib\StringTools::split($argument, 2, [$this->default_controller_name, $this->default_action_name]);
+        list ($controller, $action) = Corelib\StringTools::split($argument, '.', 2, [$this->default_controller_name, $this->default_action_name]);
         $controller = (join('', array_map('ucfirst', explode('-', $controller))) ?: $this->default_controller_name) . $this->controller_suffix;
         return "{$controller}.${action}";
     }

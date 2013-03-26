@@ -62,6 +62,24 @@ class Timer {
     }
 
     /**
+     * @param string $title
+     * @return $this
+     */
+    public function changeTitle($title) {
+        $this->title = (string)$title;
+        return $this;
+    }
+
+    /**
+     * @param string $title
+     * @return $this
+     */
+    public function appendTitle($title) {
+        $this->title .= (string)$title;
+        return $this;
+    }
+
+    /**
      * @return bool
      */
     public function isRunning() {

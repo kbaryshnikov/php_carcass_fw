@@ -45,10 +45,11 @@ trait TimerTrait {
     /**
      * @param $message
      * @param callable $fn
+     * @param callable $append_message_fn
+     * @throws \Exception|null
      * @return null
-     * @throws \Exception
      */
-    protected function develCollectExecutionTime($message, callable $fn) {
+    protected function develCollectExecutionTime($message, callable $fn, callable $append_message_fn = null) {
         $e = null;
         $result = null;
 
@@ -65,6 +66,10 @@ trait TimerTrait {
 
         // finally:
         $Timer->stop();
+
+        if ($append_message_fn) {
+            $Timer->appendTitle($append_message_fn());
+        }
 
         if ($e) {
             throw $e;

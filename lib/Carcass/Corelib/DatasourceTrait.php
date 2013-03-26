@@ -37,6 +37,32 @@ trait DatasourceTrait {
     }
 
     /**
+     * @param string $path dot-separated
+     * @param mixed $default_value
+     * @return $this|mixed
+     */
+    public function getPath($path, $default_value = null) {
+        if (false === $key = strtok($path, '.')) {
+            return $default_value;
+        }
+        $subpath = strtok(null);
+        try {
+            $Item = $this->get($key);
+            if ($subpath !== false) {
+                if ($Item instanceof static) {
+                    return $Item->get($subpath, $default_value);
+                } elseif (is_array($Item)) {
+                    return ArrayTools::getPath($Item, $subpath, $default_value);
+                }
+                return $default_value;
+            }
+            return $Item;
+        } catch (\OutOfBoundsException $e) {
+            return $default_value;
+        }
+    }
+
+    /**
      * @param mixed $key
      * @return mixed
      * @throws \OutOfBoundsException

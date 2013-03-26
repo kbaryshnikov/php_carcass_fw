@@ -19,13 +19,6 @@ interface ItemInterface extends Corelib\DatasourceInterface {
     /**
      * @param string $path dot-separated
      * @param mixed $default_value
-     * @return ItemInterface|string|null
-     */
-    public function getPath($path, $default_value = null);
-
-    /**
-     * @param string $path dot-separated
-     * @param mixed $default_value
      * @return array
      */
     public function exportArrayFrom($path, $default_value = []);

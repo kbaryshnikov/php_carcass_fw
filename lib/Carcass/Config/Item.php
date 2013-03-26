@@ -35,7 +35,7 @@ class Item implements ItemInterface, \Iterator, \ArrayAccess, \Countable, Coreli
     /**
      * @param string $path dot-separated
      * @param mixed $default_value
-     * @return ItemInterface|null|string
+     * @return $this|mixed
      */
     public function getPath($path, $default_value = null) {
         if (false === $key = strtok($path, '.')) {

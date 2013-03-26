@@ -44,8 +44,8 @@ trait FilterTrait {
      * @return $this
      */
     public function setFilters(array $filters) {
-        foreach ($filters as $Filter) {
-            $this->addFilter($Filter);
+        foreach ($filters as $key => $filter) {
+            $this->addFilter(is_int($key) ? $filter : [$key, $filter]);
         }
         return $this;
     }

@@ -360,7 +360,7 @@ class Mysql_ShardingModel {
         if (!isset($this->cache['HsServerIndex'])) {
             $this->cache['HsServerIndex'] = $this->getHsConn()->openIndex(
                 'DatabaseServers',
-                'PRIMARY',
+                ['PRIMARY' => 'database_server_id'],
                 ['database_server_id', 'ip_address', 'port', 'username', 'password',
                     'super_username', 'super_password', 'is_available',
                     'capacity', 'units_per_shard', 'databases_count']
@@ -376,7 +376,7 @@ class Mysql_ShardingModel {
         if (!isset($this->cache['HsShardIndex'])) {
             $this->cache['HsShardIndex'] = $this->getHsConn()->openIndex(
                 'DatabaseShards',
-                'PRIMARY',
+                ['PRIMARY' => 'database_shard_id'],
                 ['database_shard_id', 'database_server_id', 'database_idx',
                     'units_allocated', 'units_free', 'is_available'],
                 ['database_server_id']

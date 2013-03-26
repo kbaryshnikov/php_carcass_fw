@@ -23,6 +23,7 @@ class Set extends Corelib\Hash implements FieldInterface {
     }
 
     protected $is_dynamic = false;
+    protected $own_error = null;
 
     /**
      * @param $value
@@ -325,16 +326,37 @@ class Set extends Corelib\Hash implements FieldInterface {
         return $this->error === null;
     }
 
+    public function setFieldError($field_name, $error) {
+        $this->getField($field_name)->setError($error);
+        $this->updateErrors();
+        return $this;
+    }
+
     protected function doValidate() {
         $this->error = null;
+        $this->own_error = null;
         $this->validateOwnRules();
         if ($this->error !== null && !is_array($this->error)) {
+            $this->own_error = $this->error;
             $this->error = ['_self_' => $this->error];
         }
         foreach ($this as $name => $Field) {
             /** @var FieldInterface $Field */
             if (!$Field->validate()) {
                 $this->error[$name] = $Field->getError();
+            }
+        }
+    }
+
+    protected function updateErrors() {
+        $this->error = null;
+        if ($this->own_error) {
+            $this->error = ['_self_' => $this->own_error];
+        }
+        foreach ($this as $name => $Field) {
+            /** @var FieldInterface $Field */
+            if (null !== $error = $Field->getError()) {
+                $this->error[$name] = $error;
             }
         }
     }

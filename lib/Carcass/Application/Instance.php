@@ -244,6 +244,13 @@ class Instance {
             }
         );
 
+        $this->DI->MailDispatcher = $this->DI->reuse(
+            isset($dep_map['MailDispatcherFn']) ? $dep_map['MailDispatcherFn'] : function (Corelib\DIContainer $I) {
+                $class = (isset($I->dep_map['MailDispatcher']) ? $I->dep_map['MailDispatcher'] : '\Carcass\Mail\Dispatcher');
+                return new $class($I->ConfigReader->exportHashFrom('mail'));
+            }
+        );
+
         $this->DI->ConnectionManager = $this->DI->reuse(
             isset($dep_map['ConnectionManagerFn']) ? $dep_map['ConnectionManagerFn'] : function (Corelib\DIContainer $I) {
                 /** @var \Carcass\Connection\Manager $ConnectionManager */

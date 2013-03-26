@@ -115,14 +115,16 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $Query->modify('insert into t (s) values (\'foo\'), (\'bar\')');
 
-        $Result = new \Carcass\Corelib\Hash;
+        /** @var $Result \Carcass\Model\Base */
+        $Result = $this->getMockBuilder('\Carcass\Model\Base')->setMethods([])->getMockForAbstractClass();
+
         $Query->fetchRow('select id, s from t order by id limit 1')->execute()->sendTo($Result);
         $this->assertEquals('foo', $Result->s);
 
-        $Result = new \Carcass\Corelib\Hash;
+        $Result = $this->getMockBuilder('\Carcass\Model\Base')->setMethods([])->getMockForAbstractClass();
         $Query->fetchAll('select id, s from t order by id')->execute()->sendTo($Result);
-        $this->assertEquals('foo', $Result[0]->s);
-        $this->assertEquals('bar', $Result[1]->s);
+        $this->assertEquals('foo', $Result->get(0)['s']);
+        $this->assertEquals('bar', $Result->get(1)['s']);
     }
 
     public function testFetchList() {

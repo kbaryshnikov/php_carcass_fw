@@ -145,4 +145,24 @@ class ArrayTools {
             : '';
     }
 
+    /**
+     * @param array $array
+     * @param string $path dot-separated path
+     * @param mixed $default_value
+     * @return mixed
+     */
+    public static function getPath(array $array, $path, $default_value = null) {
+        if (!strlen($path)) {
+            return $array;
+        }
+        $ptr = $array;
+        foreach (explode('.', $path) as $token) {
+            if (!is_array($ptr) || !array_key_exists($token, $ptr)) {
+                return $default_value;
+            }
+            $ptr = $ptr[$token];
+        }
+        return $ptr;
+    }
+
 }

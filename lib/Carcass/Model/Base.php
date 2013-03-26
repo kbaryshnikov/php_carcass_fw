@@ -16,7 +16,7 @@ use Carcass\Corelib;
  * Base Model
  * @package Carcass\Model
  */
-abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiverInterface, Corelib\ImportableInterface, Corelib\ExportableInterface, Corelib\RenderableInterface {
+abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiverInterface, Corelib\ImportableInterface, Corelib\ExportableInterface, Corelib\RenderableInterface, Query\ItemReceiverInterface {
     use QueryTrait;
     use Corelib\RenderableTrait;
 
@@ -54,23 +54,13 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      * @return void
      */
     protected function initFieldset() {
-        $this->Fieldset = clone static::getModelFieldset();
+        $this->Fieldset = clone $this->getModelFieldset();
     }
 
     /**
      * @return Field\Set
      */
-    protected static function getModelFieldset() {
-        if (null === static::$ModelFieldset) {
-            static::$ModelFieldset = static::assembleModelFieldset();
-        }
-        return static::$ModelFieldset;
-    }
-
-    /**
-     * @return $this
-     */
-    protected static function assembleModelFieldset() {
+    protected function getModelFieldset() {
         return Field\Set::constructDynamic()
             ->addFields(static::getModelFields())
             ->setRules(static::getModelRules())
@@ -152,12 +142,7 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      * return void
      */
     protected function fetchResults() {
-        $this->Fieldset->dynamic(
-            function () {
-                $this->Fieldset->clean();
-                $this->getQueryDispatcher()->sendTo($this->Fieldset);
-            }
-        );
+        $this->getQueryDispatcher()->sendTo($this);
     }
 
     /**
@@ -165,6 +150,16 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      */
     public function getFieldset() {
         return $this->Fieldset;
+    }
+
+    public function importItem(array $data = null) {
+        $this->Fieldset->dynamic(
+            function () use ($data) {
+                $this->Fieldset->clean();
+                $this->import($data);
+            }
+        );
+        return $this;
     }
 
     /**
@@ -220,11 +215,7 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      * @throws \InvalidArgumentException
      */
     public function setError($field_name, $error) {
-        $Field = $this->getField($field_name);
-        if (!$Field) {
-            throw new \InvalidArgumentException("Unknown field: '$field_name");
-        }
-        $Field->setError($error);
+        $this->Fieldset->setFieldError($field_name, $error);
         return $this;
     }
 
@@ -271,6 +262,15 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      */
     public function exportArray() {
         return $this->Fieldset->exportArray();
+    }
+
+    /**
+     * @param string $path dot-separated
+     * @param mixed $default_value
+     * @return mixed
+     */
+    public function getPath($path, $default_value = null) {
+        return $this->Fieldset->getPath($path, $default_value);
     }
 
     /**

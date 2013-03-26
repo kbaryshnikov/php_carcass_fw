@@ -9,11 +9,11 @@
 namespace Carcass\Corelib;
 
 use Carcass\Application\PathManager;
-use Carcass\Application\Web_Router_Interface;
 use Carcass\Config\ItemInterface;
 use Carcass\Connection\Manager;
 use Carcass\DevTools\Debugger;
-use Carcass\Log\Dispatcher;
+use Carcass\Log\Dispatcher as LogDispatcher;
+use Carcass\Mail\Dispatcher as MailDispatcher;
 use Closure;
 use InvalidArgumentException;
 
@@ -21,13 +21,18 @@ use InvalidArgumentException;
  * Simple pseudo-IoC implementation.
  *
  * Below are a few commonly used definitions just for IDE hints.
- * @method static ItemInterface getConfigReader()
- * @method static Manager getConnectionManager()
- * @method static Dispatcher getLogger()
- * @method static Debugger getDebugger()
- * @method static PathManager getPathManager()
- * @method static Web_Router_Interface getRouter()
- * @method static Request getRequest()
+ * @property ItemInterface ConfigReader
+ * @method ItemInterface getConfigReader()
+ * @property Manager ConnectionManager
+ * @method Manager getConnectionManager()
+ * @property LogDispatcher Logger
+ * @method LogDispatcher getLogger()
+ * @property Debugger Debugger
+ * @method Debugger getDebugger()
+ * @property PathManager PathManager
+ * @method PathManager getPathManager()
+ * @property MailDispatcher MailDispatcher
+ * @method MailDispatcher getMailDispatcher()
  *
  * @package Carcass\Corelib
  */
