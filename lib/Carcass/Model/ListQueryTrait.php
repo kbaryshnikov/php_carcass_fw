@@ -6,7 +6,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */// PHPStorm bug: @method not resolved without FQ spec
+/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */ // PHPStorm bug: @method not resolved without FQ spec
 namespace Carcass\Model;
 
 use Carcass\Query;
@@ -30,6 +30,11 @@ trait ListQueryTrait {
 
     protected $limit = null;
     protected $offset = 0;
+
+    /**
+     * @var array of [method => args | :id => [closure]]
+     */
+    protected $for_each_item_actions = [];
 
     /**
      * @param $limit
@@ -61,6 +66,36 @@ trait ListQueryTrait {
         $this->count = (int)$count;
         $this->items = $items;
         return $this;
+    }
+
+    /**
+     * Run $Item->$method($args) for each item.
+     * Immediately for existing objects, scheduled for objects created later
+     *
+     * @param string $method
+     * @param array $args
+     * @param bool $replace remove previously assigned forEachItem actions
+     * @return $this
+     */
+    public function forEachItemDo($method, array $args = [], $replace = false) {
+        if ($replace) {
+            $this->for_each_item_actions = [];
+        }
+        $this->for_each_item_actions[$method] = $args;
+        $this->applyForEachLoadedItem($method, $args);
+        return $this;
+    }
+
+    /**
+     * Run $Closure($Item) for each item.
+     * Immediately for existing objects, scheduled for objects created later
+     *
+     * @param \Closure $Closure
+     * @param bool $replace remove previously assigned forEachItem actions
+     * @return $this
+     */
+    public function forEachItemDoClosure(\Closure $Closure, $replace = false) {
+        return $this->forEachItemDo(':' . Corelib\ObjectTools::toString($Closure), [$Closure], $replace);
     }
 
     /**
@@ -169,6 +204,7 @@ trait ListQueryTrait {
     protected function constructItem(array $data) {
         $Item = $this->constructItemModel();
         $data and $Item->fetchFromArray($data);
+        $this->applyAllForItem($Item);
         return $Item;
     }
 
@@ -193,6 +229,31 @@ trait ListQueryTrait {
         throw new \LogicException(__METHOD__ . " must be overridden in " . get_called_class());
         /** @noinspection PhpUnreachableStatementInspection */
         return '';
+    }
+
+    protected function applyAllForItem($Item) {
+        foreach ($this->for_each_item_actions as $method => $args) {
+            $this->applyForItem($Item, $method, $args);
+        }
+    }
+
+    protected function applyForEachLoadedItem($method, array $args = []) {
+        foreach ($this->items as $item) {
+            if (is_object($item)) {
+                $this->applyForItem($item, $method, $args);
+            }
+        }
+    }
+
+    protected function applyForItem($Item, $method, array $args = []) {
+        if (substr($method, 0, 1) == ':') {
+            $args[0]($Item);
+        } else {
+            if (!method_exists($Item, $method)) {
+                throw new \RuntimeException(get_class($Item) . " has no method '$method'");
+            }
+            call_user_func_array([$Item, $method], $args);
+        }
     }
 
 }

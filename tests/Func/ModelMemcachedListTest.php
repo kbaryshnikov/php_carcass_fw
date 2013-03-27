@@ -18,6 +18,13 @@ class TestCachedListItemBaseModel extends Model\Base {
         return null !== $this->id;
     }
 
+    public function uppercaseEmail() {
+        $this->email = strtoupper($this->email);
+    }
+
+    public function appendToEmail($s) {
+        $this->email .= $s;
+    }
 }
 
 class TestCachedListBaseModel extends Model\MemcachedList {
@@ -288,4 +295,46 @@ class ModelMemcachedListTest extends PHPUnit_Framework_TestCase {
         $this->assertArrayNotHasKey('list', $Result->exportArray());
     }
 
+    public function testForEachActions() {
+        $this->fill();
+        $Model = new TestListBaseModel;
+        $Model->setLimit(2)->load();
+        $this->assertEquals('a@domain.com', $Model[0]->email);
+        $Model->forEachItemDo('uppercaseEmail');
+        $this->assertEquals('A@DOMAIN.COM', $Model[0]->email);
+        $this->assertEquals('B@DOMAIN.COM', $Model[1]->email);
+        $Model->setLimit(3)->load();
+        $this->assertEquals('A@DOMAIN.COM', $Model[0]->email);
+        $this->assertEquals('B@DOMAIN.COM', $Model[1]->email);
+        $this->assertEquals('C@DOMAIN.COM', $Model[2]->email);
+        $Model->forEachItemDo('appendToEmail', ['x']);
+        $this->assertEquals('A@DOMAIN.COMx', $Model[0]->email);
+        $this->assertEquals('B@DOMAIN.COMx', $Model[1]->email);
+        $this->assertEquals('C@DOMAIN.COMx', $Model[2]->email);
+        $Model->forEachItemDo('appendToEmail', ['y'], true);
+        $Model->setLimit(3)->load();
+        $this->assertEquals('a@domain.comy', $Model[0]->email);
+        $this->assertEquals('b@domain.comy', $Model[1]->email);
+        $this->assertEquals('c@domain.comy', $Model[2]->email);
+        $Model->forEachItemDoClosure(
+            function ($Item) {
+                $Item->email = 'z' . $Item->email;
+            },
+            true
+        );
+        $Model->setLimit(4)->load();
+        $this->assertEquals('za@domain.com', $Model[0]->email);
+        $this->assertEquals('zb@domain.com', $Model[1]->email);
+        $this->assertEquals('zc@domain.com', $Model[2]->email);
+        $this->assertEquals('zd@domain.com', $Model[3]->email);
+        $Model->forEachItemDoClosure(
+            function ($Item) {
+                $Item->email = 'x' . $Item->email;
+            }
+        );
+        $this->assertEquals('xza@domain.com', $Model[0]->email);
+        $this->assertEquals('xzb@domain.com', $Model[1]->email);
+        $this->assertEquals('xzc@domain.com', $Model[2]->email);
+        $this->assertEquals('xzd@domain.com', $Model[3]->email);
+    }
 }
