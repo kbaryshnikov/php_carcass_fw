@@ -31,10 +31,12 @@ class Cli_Router implements RouterInterface {
      * @param ControllerInterface $Controller
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
-        $Controller->dispatch(
-            $this->getDispatcherName($Request->Args->get(0)),
-            $Request->Args
-        );
+        $dispatcher_name = $this->getDispatcherName($Request->Args->get(0));
+        try {
+            $Controller->dispatch($dispatcher_name, $Request->Args);
+        } catch (ImplementationNotFoundException $e) {
+            $Controller->dispatchNotFound("{$dispatcher_name}: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -44,8 +46,8 @@ class Cli_Router implements RouterInterface {
      * @return $this
      */
     public function setDefaultRoute($controller_name = null, $action_name = null) {
-        $this->default_controller_name = $controller_name ?: self::DEFAULT_CONTROLLER_NAME;
-        $this->default_action_name = $action_name ?: self::DEFAULT_ACTION_NAME;
+        $this->default_controller_name = $controller_name ? : self::DEFAULT_CONTROLLER_NAME;
+        $this->default_action_name = $action_name ? : self::DEFAULT_ACTION_NAME;
         return $this;
     }
 
@@ -61,7 +63,7 @@ class Cli_Router implements RouterInterface {
 
     protected function getDispatcherName($argument) {
         list ($controller, $action) = Corelib\StringTools::split($argument, '.', 2, [$this->default_controller_name, $this->default_action_name]);
-        $controller = (join('', array_map('ucfirst', explode('-', $controller))) ?: $this->default_controller_name) . $this->controller_suffix;
+        $controller = (join('', array_map('ucfirst', explode('-', $controller))) ? : $this->default_controller_name) . $this->controller_suffix;
         return "{$controller}.${action}";
     }
 

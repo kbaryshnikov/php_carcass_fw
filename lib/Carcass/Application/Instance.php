@@ -167,6 +167,7 @@ class Instance {
     }
 
     protected function bootstrap() {
+        $this->setupLocale();
         $this->setupErrorHandler();
         $this->loadApplicationConfiguration();
         $this->setupRunMode();
@@ -190,7 +191,7 @@ class Instance {
             }
             $this->Debugger->finalize();
         }
-        if ($this->DI->Response && $this->DI->Response->isBuffering()) {
+        if ($this->DI && $this->DI->Response && $this->DI->Response->isBuffering()) {
             $this->DI->Response->commit();
         }
         $this->finalized = true;
@@ -221,6 +222,7 @@ class Instance {
 
         $this->DI->Namespace = isset($this->app_env['namespace']) ? $this->app_env['namespace'] : '\\';
 
+        $this->DI->Autoloader = $this->Autoloader;
         $this->DI->ConfigReader = $this->ConfigReader;
         $this->DI->PathManager = $this->PathManager;
         $this->DI->Debugger = $this->Debugger;
@@ -348,7 +350,9 @@ class Instance {
                 if (substr($path, 0, 1) != '/') {
                     $path = $lib_path . '/' . $path;
                 }
-                $lib_pathes[realpath($path)] = true;
+                if ($realpath = realpath($path)) {
+                    $lib_pathes[$realpath] = true;
+                }
             }
         }
 
@@ -366,6 +370,14 @@ class Instance {
             return static::getFqClassName($name);
         }
         return $name;
+    }
+
+    protected function setupLocale() {
+        setlocale(LC_ALL, 'en_US.UTF-8');
+        setlocale(LC_NUMERIC, 'C');
+        if (function_exists('mb_internal_encoding')) {
+            mb_internal_encoding('UTF-8');
+        }
     }
 
     protected function setupErrorHandler() {

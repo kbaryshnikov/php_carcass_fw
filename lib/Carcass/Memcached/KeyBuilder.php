@@ -142,6 +142,15 @@ class KeyBuilder extends StringTemplate {
     }
 
     /**
+     * @param array $filter
+     * @return string
+     */
+    public function filter(array $filter) {
+        ksort($filter);
+        return '(' . http_build_query($filter) . ')';
+    }
+
+    /**
      * @param $value
      * @return string
      */
