@@ -158,11 +158,6 @@ trait ListTrait {
     }
 
     /**
-     * return $this
-     */
-    abstract public function load();
-
-    /**
      * @param array $data
      * @return Base
      */

@@ -202,12 +202,35 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
     public function testShard() {
         $this->ShardManager->initializeShardingDatabase(true);
 
+        $ShardingConfig = DI::getConfigReader()->get('sharding');
+
+        /** @var $ShardingDbConn \Carcass\Mysql\Connection */
+        $ShardingDbConn = DI::getConnectionManager()->getConnection($ShardingConfig->getPath('sharding_database.mysql_dsn'));
+        $ShardingDb = new \Carcass\Mysql\Client($ShardingDbConn);
+
         $Server = $this->addServer();
+
+        $this->assertEquals($ShardingConfig->getPath('server_defaults.capacity'), $Server->capacity);
+        $this->assertEquals($ShardingConfig->getPath('server_defaults.units_per_shard'), $Server->units_per_shard);
+
+        $server_row = $ShardingDb->getRow("SELECT * FROM DatabaseServers WHERE database_server_id = {{ i(id) }}", ['id' => $Server->getId()]);
+        $this->assertEquals($ShardingConfig->getPath('server_defaults.capacity'), $server_row['capacity']);
+        $this->assertEquals($ShardingConfig->getPath('server_defaults.units_per_shard'), $server_row['units_per_shard']);
 
         // test unit
 
         $Unit1 = new TestShardUnit(1);
+
+        /** @var $Shard Shard\Mysql_Shard */
         $Shard = $this->ShardManager->allocateShard($Unit1);
+
+        $this->assertEquals(1, $Shard->units_allocated);
+        $this->assertEquals($Server->units_per_shard - 1, $Shard->units_free);
+
+        $shard_row = $ShardingDb->getRow("SELECT * FROM DatabaseShards WHERE database_shard_id = {{ i(id) }}", ['id' => $Shard->getId()]);
+        $this->assertEquals(1, $shard_row['units_allocated']);
+        $this->assertEquals($Server->units_per_shard - 1, $shard_row['units_free']);
+
         $this->assertTrue($Unit1->initialize_shard_called);
         $this->assertEquals(1, $Shard->getId());
         $this->assertEquals(['Seq1'], $Unit1->getDatabase()->getCol("show tables in TestShardDb1 like 'Seq1'"));
@@ -215,7 +238,16 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
 
         $Unit2 = new TestShardUnit(2);
         $Shard = $this->ShardManager->allocateShard($Unit2);
+
         $this->assertFalse($Unit2->initialize_shard_called);
+
+        $this->assertEquals(2, $Shard->units_allocated);
+        $this->assertEquals($Server->units_per_shard - 2, $Shard->units_free);
+
+        $shard_row = $ShardingDb->getRow("SELECT * FROM DatabaseShards WHERE database_shard_id = {{ i(id) }}", ['id' => $Shard->getId()]);
+        $this->assertEquals(2, $shard_row['units_allocated']);
+        $this->assertEquals($Server->units_per_shard - 2, $shard_row['units_free']);
+
         $this->assertEquals(1, $Shard->getId());
         $this->assertEquals(['Seq1'], $Unit2->getDatabase()->getCol("show tables in TestShardDb1 like 'Seq1'"));
         $this->assertEquals(['Test1'], $Unit2->getDatabase()->getCol("show tables in TestShardDb1 like 'Test1'"));

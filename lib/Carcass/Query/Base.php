@@ -226,7 +226,7 @@ class Base {
     public function insert($sql_query_template, array $args = array()) {
         $this->doModify(
             function (Mysql\Client $Db, $args) use ($sql_query_template) {
-                $affected_rows        = $Db->query($sql_query_template, $this->getArgs($args));
+                $affected_rows = $Db->query($sql_query_template, $this->getArgs($args));
                 $this->last_insert_id = $affected_rows ? $Db->getLastInsertId() : null;
                 return $affected_rows;
             }, $args, false
@@ -310,13 +310,13 @@ class Base {
      */
     public function doInTransaction(Callable $fn, array $args = [], Callable $finally_fn = null) {
         if (null !== $this->before_call) {
-            $before_fn         = $this->before_call;
+            $before_fn = $this->before_call;
             $this->before_call = null;
         } else {
             $before_fn = null;
         }
         if (null !== $this->after_call) {
-            $after_fn         = $this->after_call;
+            $after_fn = $this->after_call;
             $this->after_call = null;
         } else {
             $after_fn = null;
@@ -344,8 +344,12 @@ class Base {
         return $this;
     }
 
+    /**
+     * @param ListReceiverInterface $Target
+     * @return $this
+     */
     public function sendListTo(ListReceiverInterface $Target) {
-        $Target->importList($this->getLastCount(), $this->getLastResult() ?: []);
+        $Target->importList($this->getLastCount(), $this->getLastResult() ? : []);
         return $this;
     }
 
@@ -359,14 +363,29 @@ class Base {
         return $this->Db;
     }
 
-    protected function doFetchList($sql_query_template, array $args, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
-        $result = null;
-        $count  = null;
-
-        $args += [
-            'limit' => $this->limit,
+    /**
+     * @param array $args
+     * @return array
+     */
+    protected function mixListArgsInto(array $args) {
+        return $args + [
+            'limit'  => $this->limit,
             'offset' => $this->offset,
         ];
+    }
+
+    /**
+     * @param $sql_query_template
+     * @param array $args
+     * @param array $keys
+     * @param string $count_modifier
+     * @return array|null
+     */
+    protected function doFetchList($sql_query_template, array $args, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
+        $result = null;
+        $count = null;
+
+        $args = $this->mixListArgsInto($args);
 
         if ($count_modifier) {
             $count = $this->getDatabase()->getCell($sql_query_template, [$count_modifier => true] + $args);

@@ -16,7 +16,7 @@ use Carcass\Corelib;
  * Base Model
  * @package Carcass\Model
  */
-abstract class Base implements Corelib\DataReceiverInterface, Corelib\ExportableInterface, Corelib\RenderableInterface {
+abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiverInterface, Corelib\ImportableInterface, Corelib\ExportableInterface, Corelib\RenderableInterface {
     use QueryTrait;
     use Corelib\RenderableTrait;
 
@@ -144,7 +144,6 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
         });
     }
 
-
     /**
      * @return Field\Set|null
      */
@@ -169,6 +168,23 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
     }
 
     /**
+     * @param mixed $key
+     * @param mixed $default_value
+     * @return mixed
+     */
+    public function get($key, $default_value = null) {
+        return $this->Fieldset->get($key, $default_value);
+    }
+
+    /**
+     * @param mixed $key
+     * @return bool
+     */
+    public function has($key) {
+        return $this->Fieldset->has($key);
+    }
+
+    /**
      * @param \Traversable $Source
      * @param bool $no_overwrite
      * @return $this
@@ -185,6 +201,16 @@ abstract class Base implements Corelib\DataReceiverInterface, Corelib\Exportable
      */
     public function fetchFromArray(array $source, $no_overwrite = false) {
         $this->Fieldset->fetchFromArray($source, $no_overwrite);
+        return $this;
+    }
+
+    /**
+     * @param \Traversable|array $data
+     * @param bool $no_overwrite
+     * @return $this
+     */
+    public function import(/* Traversable */ $data, $no_overwrite = false) {
+        $this->Fieldset->import($data, $no_overwrite);
         return $this;
     }
 

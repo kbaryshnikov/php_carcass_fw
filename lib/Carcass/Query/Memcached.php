@@ -259,8 +259,29 @@ class Memcached extends Base {
             return parent::doFetchList($sql_query_template, $args, $keys, $count_modifier);
         }
 
+        if ($this->chunk_size) {
+            return $this->doFetchChunkedList($sql_query_template, $args, $keys, $count_modifier);
+        } else {
+            return $this->doFetchEntireList($sql_query_template, $args, $keys, $count_modifier);
+        }
+    }
+
+    protected function doFetchEntireList($sql_query_template, array $args, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
+        $cache_args = $this->mixListArgsInto($args);
+        $cached_result = $this->getMct()->getKey($this->key, $cache_args);
+        if ($cached_result && is_array($cached_result) && isset($cached_result['d']) && isset($cached_result['c'])) {
+            $result = $cached_result['d'];
+            $this->last_count = $cached_result['c'];
+        } else {
+            $result = parent::doFetchList($sql_query_template, $args, $keys, $count_modifier);
+            $this->getMct()->setKey($this->key, ['d' => $result, 'c' => $this->last_count], $cache_args);
+        }
+        return $result;
+    }
+
+    protected function doFetchChunkedList($sql_query_template, array $args, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
         if (!$this->limit) {
-            throw new \LogicException('setLimit() was not called or defined no limit');
+            throw new \LogicException('Chunked list fetch mode enabled, but setLimit() was not called or defined no limit');
         }
 
         $key = $this->key;

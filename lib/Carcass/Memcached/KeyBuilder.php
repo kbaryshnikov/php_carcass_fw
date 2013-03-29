@@ -25,9 +25,9 @@ class KeyBuilder extends StringTemplate {
      * @var array
      */
     protected $config = [
-        'null_value' => 'NULL',
+        'null_value'   => 'NULL',
         'escape_chars' => '.',
-        'separator' => ';',
+        'separator'    => ';',
     ];
 
     /**
@@ -162,9 +162,15 @@ class KeyBuilder extends StringTemplate {
      * @return string
      */
     public function set(array $values) {
-        return $this->s(join($this->config['separator'], array_map(function($value) {
-            return addcslashes($value, $this->config['separator']);
-        }, $values)));
+        return $this->s(
+            join(
+                $this->config['separator'], array_map(
+                    function ($value) {
+                        return addcslashes($value, $this->config['separator']);
+                    }, $values
+                )
+            )
+        );
     }
 
     /**
@@ -188,11 +194,33 @@ class KeyBuilder extends StringTemplate {
     }
 
     /**
+     * @param int $limit
+     * @param int $offset
+     * @return string
+     */
+    public function limit($limit, $offset = 0) {
+        return '[' . ( $this->lim($limit, 0) ?: '' ). ':' . $this->lim($offset) . ']';
+    }
+
+    /**
+     * @param $i
+     * @param int $default
+     * @return int
+     */
+    public function lim($i, $default = 0) {
+        if ($i < 1) {
+            $i = $default;
+        }
+        return max(0, (int)$i);
+    }
+
+    /**
      * @param $method
      * @param $value
      * @return mixed
      */
-    protected function nullOr(/** @noinspection PhpUnusedParameterInspection */ $method, $value /* args */) {
+    protected function nullOr(/** @noinspection PhpUnusedParameterInspection */
+        $method, $value /* args */) {
         if (null === $value) {
             return $this->config['null_value'];
         }

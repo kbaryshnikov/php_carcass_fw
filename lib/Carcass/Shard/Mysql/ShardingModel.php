@@ -69,19 +69,38 @@ class Mysql_ShardingModel {
      * @return ShardInterface|null
      */
     protected function findBestShardForNewUnit() {
-        $shard_id = $this->getDb()->getCell(
-            "SELECT
-                DSH.database_shard_id
-            FROM
-                DatabaseShards DSH
-            WHERE
-                DSH.is_available = TRUE
-                AND DSH.units_free > 0
-            ORDER BY
-                DSH.units_free DESC
-            LIMIT 1"
-        );
-        return $shard_id ? $this->getShardById($shard_id) : null;
+        do {
+            $shard_id = $this->getDb()->getCell(
+                "SELECT
+                    database_shard_id
+                FROM
+                    DatabaseShards
+                WHERE
+                    is_available = TRUE
+                    AND units_free > 0
+                ORDER BY
+                    units_free DESC
+                LIMIT 1"
+            );
+            if (!$shard_id) {
+                return null;
+            }
+            $affected_rows = $this->getDb()->query(
+                "UPDATE
+                    DatabaseShards
+                SET
+                    units_free = units_free - 1,
+                    units_allocated = units_allocated + 1
+                WHERE
+                    units_free > 0
+                    AND is_available = TRUE
+                    AND database_shard_id = {{ i(id) }}",
+                [
+                    'id' => $shard_id
+                ]
+            );
+        } while (!$affected_rows);
+        return $this->getShardById($shard_id, true);
     }
 
     /**
@@ -92,7 +111,7 @@ class Mysql_ShardingModel {
     protected function allocateNewShard() {
         $shard_id = $this->doWithLockedTables(
             function () {
-                $Db        = $this->getDb();
+                $Db = $this->getDb();
                 $server_id = $Db->getCell(
                     "SELECT
                         DatabaseServers.database_server_id
@@ -172,13 +191,13 @@ class Mysql_ShardingModel {
                     SET
                         database_server_id = {{ i(database_server_id) }},
                         database_idx = {{ i(database_idx) }},
-                        units_allocated = 0,
+                        units_allocated = 1,
                         units_free = {{ i(units_free) }},
                         created_ts = NOW()",
                     [
                         'database_server_id' => $server_id,
                         'database_idx'       => $db_index_data['idx'],
-                        'units_free'         => $Server->units_per_shard,
+                        'units_free'         => $Server->units_per_shard - 1,
                     ]
                 );
 
@@ -186,7 +205,7 @@ class Mysql_ShardingModel {
             }
         );
 
-        return $this->getShardById($shard_id);
+        return $this->getShardById($shard_id, true);
     }
 
     /**
@@ -342,7 +361,7 @@ class Mysql_ShardingModel {
      * @throws \Exception|null
      */
     protected function doWithLockedTables(Callable $fn, array $args = []) {
-        $e      = null;
+        $e = null;
         $result = null;
         $this->getDb()->query("LOCK TABLES DatabaseServers READ LOCAL, DatabaseShards READ LOCAL");
         try {

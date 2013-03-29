@@ -68,6 +68,14 @@ trait MemcachedTrait {
     }
 
     /**
+     * @param int|null $chunk_size
+     * @return \Carcass\Query\Memcached
+     */
+    protected function getListQuery($chunk_size = null) {
+        return $this->getQuery()->setListChunkSize($chunk_size);
+    }
+
+    /**
      * @return \Carcass\Query\Memcached
      */
     protected function assembleQuery() {

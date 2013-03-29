@@ -22,9 +22,9 @@ class TestCachedListItemBaseModel extends Model\Base {
 
 class TestCachedListBaseModel extends Model\MemcachedList {
 
-    protected static $cache_key = 'test{{ IF min_id }}{{ i(min_id) }}{{ END }}';
+    public static $cache_key = 'test{{ IF min_id }}{{ i(min_id) }}{{ END }}';
 
-    public $chunk_size = null;
+    public $chunk_size = 10;
 
     public function getMct() {
         return $this->getQuery()->getMct();
@@ -34,8 +34,7 @@ class TestCachedListBaseModel extends Model\MemcachedList {
      * return $this
      */
     public function load($filter = []) {
-        $this->getQuery()
-            ->setListChunkSize($this->chunk_size)
+        $this->getListQuery($this->chunk_size)
             ->fetchList(
                 "SELECT
                     {{ IF COUNT }}
@@ -83,6 +82,8 @@ class ModelMemcachedListTest extends PHPUnit_Framework_TestCase {
         $Db->executeQuery('create table t (id integer auto_increment, email varchar(255) not null, primary key(id)) engine=innodb');
 
         $this->Db = $Db;
+
+        TestCachedListBaseModel::$cache_key = 'test{{ IF min_id }}{{ i(min_id) }}{{ END }}';
     }
 
     protected function fill() {
@@ -103,6 +104,45 @@ class ModelMemcachedListTest extends PHPUnit_Framework_TestCase {
 
         $this->setExpectedException('\LogicException');
         $Model->load();
+    }
+
+    public function testLoadListNotChunked() {
+        $this->fill();
+        $Model = new TestCachedListBaseModel;
+
+        $Model->chunk_size = null;
+        TestCachedListBaseModel::$cache_key = 'test{{ IF min_id }}{{ i(min_id) }}{{ END }}{{ limit(limit, offset) }}';
+
+        $Mc = $Model->getMct()->getConnection();
+        $Mc->flush();
+
+        $Model->setLimit(3)->load();
+
+        $this->assertEquals(6, $Mc->get('test[3:0]')['d']['c']);
+        $this->assertEquals($Model->exportArray(), array_values($Mc->get('test[3:0]')['d']['d']));
+
+        $this->assertEquals(3, count($Model));
+        $this->assertEquals(6, $Model->getCount());
+
+        /** @var $Item \TestCachedListItemBaseModel */
+        foreach ($Model as $idx => $Item) {
+            $this->assertInstanceOf('\TestCachedListItemBaseModel', $Item);
+            $expected_id    = $this->stub_values[$idx]['id'];
+            $expected_email = $this->stub_values[$idx]['email'];
+            $this->assertEquals($expected_id, $Item->id);
+            $this->assertEquals($expected_email, $Item->email);
+        }
+        $this->assertEquals(3, $Item->id);
+
+        $Model = new TestCachedListBaseModel;
+        $Model->chunk_size = null;
+
+        $Mc = $Model->getMct()->getConnection();
+
+        $Model->setLimit(null)->load();
+
+        $this->assertEquals(6, $Mc->get('test[:0]')['d']['c']);
+        $this->assertEquals($Model->exportArray(), array_values($Mc->get('test[:0]')['d']['d']));
     }
 
     public function testLoadListWithLimit() {

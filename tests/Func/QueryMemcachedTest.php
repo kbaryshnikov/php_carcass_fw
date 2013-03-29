@@ -84,7 +84,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals([1, 2], $this->Mc->get('id_1')['d']);
     }
 
-    public function testQueryFetchList() {
+    public function testQueryFetchUnchunkedList() {
         $this->Db->executeQuery('drop table if exists t');
         $this->Db->executeQuery('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $this->Db->executeQuery(
@@ -102,6 +102,55 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
         $Query
             ->setTags(['tag'])
             ->useCache('items');
+
+        $result = $Query
+            ->fetchList(
+                "SELECT
+                    {{ IF COUNT }}
+                        COUNT(id)
+                    {{ END }}
+                    {{ UNLESS COUNT }}
+                        id, s
+                    {{ END }}
+                FROM
+                    t
+                {{ UNLESS COUNT }}
+                    ORDER BY id
+                    {{ limit(limit, offset) }}
+                {{ END }}"
+            )
+            ->setLimit(15)
+            ->execute()
+            ->getLastResult();
+
+        $count  = $Query->getLastCount();
+        $this->assertEquals(20, $count);
+        $this->assertEquals(15, count($result));
+
+        $mc_key = $this->Mc->get('items');
+        $this->assertEquals(20, $mc_key['d']['c']);
+        $this->assertEquals($result, $mc_key['d']['d']);
+    }
+
+    public function testQueryFetchChunkedList() {
+        $this->Db->executeQuery('drop table if exists t');
+        $this->Db->executeQuery('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $this->Db->executeQuery(
+            "insert into t (s) values " . join(
+                ', ', array_reduce(
+                    range(1, 20), function ($result, $item) {
+                        $result[] = "('$item')";
+                        return $result;
+                    }, []
+                )
+            )
+        );
+
+        $Query = new Query\Memcached;
+        $Query
+            ->setTags(['tag'])
+            ->useCache('items')
+            ->setListChunkSize(10);
 
         $result = $Query
             ->fetchList(

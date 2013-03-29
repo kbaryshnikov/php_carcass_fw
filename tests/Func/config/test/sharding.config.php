@@ -14,6 +14,8 @@ return [
         'password' => 'test',
         'super_username' => 'root',
         'super_password' => '890p',
-    ]
+        'capacity' => 100,
+        'units_per_shard' => 100,
+    ],
 
 ];
