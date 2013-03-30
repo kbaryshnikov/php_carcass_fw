@@ -64,9 +64,6 @@ class Web_Router_Factory {
         if ($Config->has('api_class_template')) {
             $Router->setApiClassTemplate($Config->get('api_class_template'));
         }
-        if ($Config->has('request_body_provider_fn')) {
-            $Router->setRequestBodyProvider($Config->get('request_body_provider_fn'));
-        }
         return $Router->setStatic($Config->getPath('static.uri'), $Config->getPath('static.host'), $Config->getPath('static.scheme'));
     }
 

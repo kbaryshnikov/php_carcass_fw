@@ -8,6 +8,7 @@
 
 namespace Carcass\Http;
 
+use Carcass\Application\Web_Response;
 use Carcass\Corelib;
 use Carcass\Application\DI;
 
@@ -46,11 +47,12 @@ class JsonRpc_Server {
      * @return bool
      */
     public function dispatchJsonString($json_string) {
+        /** @var $Request JsonRpc_Request */
         $Request = null;
         try {
             $Request = JsonRpc_Request::factory($json_string, $this->batch_mode);
         } catch (JsonRpc_Exception $JsonRpcException) {
-            $this->addErrorResponseFromException($JsonRpcException);
+            $this->addErrorResponseFromException($JsonRpcException, $Request && $Request->getId() ? $Request->getId() : null);
             return false;
         }
         return true === ($this->batch_mode ? $this->processBatch($Request) : $this->processRequest($Request));
@@ -79,7 +81,7 @@ class JsonRpc_Server {
             }
             $result = true;
         } catch (JsonRpc_Exception $JsonRpcException) {
-            $this->addErrorResponseFromException($JsonRpcException->setId($Request->getId()));
+            $Request->getId() and $this->addErrorResponseFromException($JsonRpcException, $Request->getId());
             if ($this->batch_mode && $JsonRpcException->abortsBatchProcessing()) {
                 return $JsonRpcException;
             }
@@ -90,9 +92,10 @@ class JsonRpc_Server {
             }
             DI::getLogger()->logException($e);
             DI::getDebugger()->dumpException($e);
-            $this->addErrorResponse(
+            $Request->getId() and $this->addErrorResponse(
                 JsonRpc_Exception::ERR_SERVER_ERROR,
-                DI::getDebugger()->isEnabled() ? $e->getMessage() . "\n" . $e->getTraceAsString() : "Internal Server Error"
+                DI::getDebugger()->isEnabled() ? $e->getMessage() . "\n" . $e->getTraceAsString() : "Internal Server Error",
+                $Request->getId()
             );
         }
         return $result;
@@ -108,7 +111,9 @@ class JsonRpc_Server {
         /** @var JsonRpc_Request $Request */
         foreach ($Batch as $Request) {
             if ($AbortException) {
-                $this->addErrorResponseFromException($AbortException->setId($Request->getId()));
+                if ($Request->getId()) {
+                    $this->addErrorResponseFromException($AbortException, $Request->getId());
+                }
             } else {
                 $result = $this->processRequest($Request);
                 $AbortException = $result instanceof \Exception ? $result : null;
@@ -121,6 +126,9 @@ class JsonRpc_Server {
      * @param Corelib\ResponseInterface $Response
      */
     public function displayTo(Corelib\ResponseInterface $Response) {
+        if ($Response instanceof Web_Response) {
+            $Response->sendHeader('Content-Type', 'application/json; charset=utf8');
+        }
         $Response->write(Corelib\JsonTools::encode($this->getCollectedResponse()));
     }
 
@@ -174,7 +182,7 @@ class JsonRpc_Server {
     /**
      * @param $code
      * @param $message
-     * @param null $id
+     * @param $id
      */
     protected function addErrorResponse($code, $message, $id = null) {
         $this->addResponse(
@@ -190,9 +198,10 @@ class JsonRpc_Server {
 
     /**
      * @param JsonRpc_Exception $e
+     * @param $id
      */
-    protected function addErrorResponseFromException(JsonRpc_Exception $e) {
-        $this->addErrorResponse($e->getCode(), $e->getMessage(), $e->getId());
+    protected function addErrorResponseFromException(JsonRpc_Exception $e, $id) {
+        $this->addErrorResponse($e->getCode(), $e->getMessage(), $id);
     }
 
 }

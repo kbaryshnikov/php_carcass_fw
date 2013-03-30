@@ -24,8 +24,6 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
     protected $api_url;
     /** @var string */
     protected $api_class_template;
-    /** @var callable|null */
-    protected $body_provider = null;
 
     /**
      * @param string $api_url
@@ -55,15 +53,6 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
     }
 
     /**
-     * @param callable|null $fn
-     * @return $this
-     */
-    public function setRequestBodyProvider(callable $fn = null) {
-        $this->body_provider = $fn;
-        return $this;
-    }
-
-    /**
      * @param \Carcass\Corelib\Request $Request
      * @param $route
      * @param array $args
@@ -85,11 +74,15 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
 
     /**
      * @param Corelib\Request $Request
-     * @param ControllerInterface $Controller
+     * @param \Carcass\Application\ControllerInterface|\Carcass\Application\Web_JsonRpc_ControllerInterface $Controller  Web_JsonRpc_ControllerInterface required
      * @throws \Carcass\Http\JsonRpc_Exception
+     * @throws \InvalidArgumentException
      * @return bool
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
+        if (!$Controller instanceof Web_JsonRpc_ControllerInterface) {
+            throw new \InvalidArgumentException("Web_JsonRpc_ControllerInterface expected");
+        }
         $uri = $Request->Env->get('REQUEST_URI');
 
         if (0 != strncmp($uri, $this->api_url, strlen($this->api_url))) {
@@ -107,14 +100,10 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
             }
         );
 
-        $result = $Server->dispatchRequestBody($this->body_provider);
+        $Controller->dispatchRequestBody($Server);
+        $Controller->displayResponse($Server);
 
-        if ($Controller instanceof Web_JsonRpcFrontController)  {
-            $Controller->displayJsonRpcResults($Server);
-            return true;
-        }
-
-        return $result;
+        return true;
     }
 
     /**

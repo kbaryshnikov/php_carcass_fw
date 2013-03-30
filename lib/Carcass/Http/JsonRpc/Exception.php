@@ -36,8 +36,6 @@ class JsonRpc_Exception extends \RuntimeException {
         self::ERR_SERVER_ERROR     => 'Server error',
     ];
 
-    protected $id = null;
-
     protected $abort_batch = false;
 
     /**
@@ -104,9 +102,8 @@ class JsonRpc_Exception extends \RuntimeException {
     /**
      * @param int $code one of ERR_ constants
      * @param string|null $message
-     * @param string|int|null $id
      */
-    public function __construct($code, $message = null, $id = null) {
+    public function __construct($code, $message = null) {
         if (self::isServerErrorCode($code)) {
             $error_string = self::$error_messages_by_code[self::ERR_SERVER_ERROR];
         } elseif (!isset(self::$error_messages_by_code[$code])) {
@@ -116,28 +113,6 @@ class JsonRpc_Exception extends \RuntimeException {
             $error_string = self::$error_messages_by_code[$code];
         }
         parent::__construct($error_string . ($message === null ? '' : ": $message"), $code);
-        $this->setId($id);
-    }
-
-    /**
-     * @param string|int|null $id
-     * @return self
-     */
-    public function setId($id) {
-        Corelib\Assert::that('ID is valid')->withClosure(
-            $id, function ($id) {
-                return $id === null || is_int($id) || is_string($id);
-            }
-        );
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @param string|int|null $id
-     */
-    public function getId() {
-        return $this->id;
     }
 
     /**
