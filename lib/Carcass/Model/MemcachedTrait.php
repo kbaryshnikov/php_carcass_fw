@@ -6,7 +6,7 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */// PHPStorm bug: @method not resolved without FQ spec
 namespace Carcass\Model;
 
 use Carcass\Query;
@@ -14,7 +14,8 @@ use Carcass\Query;
 /**
  * Memcached model trait
  *
- * @method \Carcass\Query\Memcached getQuery()
+ * @method \Carcass\Query\MemcachedDispatcher getQueryDispatcher()
+ *
  * @package Carcass\Model
  */
 trait MemcachedTrait {
@@ -62,37 +63,39 @@ trait MemcachedTrait {
     protected function setCacheKey($override_cache_key = null, array $override_cache_tags = null) {
         $this->override_cache_key  = $override_cache_key;
         $this->override_cache_tags = $override_cache_tags;
-        /** @noinspection PhpUndefinedFieldInspection */
-        $this->Query               = null;
+
+        if (isset($this->QueryDispatcher)) {
+            $this->QueryDispatcher = null;
+        }
         return $this;
     }
 
     /**
-     * @param int|null $chunk_size
-     * @return \Carcass\Query\Memcached
+     * @param int|null $chunk_size, int chunk size, or null for non-chunked mode
+     * @return \Carcass\Query\MemcachedDispatcher
      */
-    protected function getListQuery($chunk_size = null) {
-        return $this->getQuery()->setListChunkSize($chunk_size);
+    protected function getListQueryDispatcher($chunk_size = null) {
+        return $this->getQueryDispatcher()->setListChunkSize($chunk_size);
     }
 
     /**
-     * @return \Carcass\Query\Memcached
+     * @return \Carcass\Query\MemcachedDispatcher
      */
-    protected function assembleQuery() {
-        return $this->configureMemcachedQuery($this->createQueryInstance());
+    protected function assembleQueryDispatcher() {
+        return $this->configureMemcachedQueryDispatcher($this->createQueryInstance());
     }
 
-    protected function configureMemcachedQuery(Query\Memcached $Query) {
+    protected function configureMemcachedQueryDispatcher(Query\MemcachedDispatcher $Query) {
         return $Query
             ->setTags($this->getCurrentCacheTags())
             ->useCache($this->getCurrentCacheKey());
     }
 
     /**
-     * @return \Carcass\Query\Memcached
+     * @return \Carcass\Query\MemcachedDispatcher
      */
     protected function createQueryInstance() {
-        return new Query\Memcached;
+        return new Query\MemcachedDispatcher;
     }
 
     /**

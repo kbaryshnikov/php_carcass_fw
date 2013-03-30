@@ -18,24 +18,24 @@ use Carcass\Query;
 trait QueryTrait {
 
     /**
-     * @var Query\Base|null
+     * @var Query\BaseDispatcher
      */
-    protected $Query = null;
+    protected $QueryDispatcher = null;
 
     /**
-     * @return \Carcass\Query\Base
+     * @return \Carcass\Query\BaseDispatcher
      */
-    protected function getQuery() {
-        if (null === $this->Query) {
-            $this->Query = $this->assembleQuery();
+    protected function getQueryDispatcher() {
+        if (null === $this->QueryDispatcher) {
+            $this->QueryDispatcher = $this->assembleQueryDispatcher();
         }
-        return $this->Query;
+        return $this->QueryDispatcher;
     }
 
     /**
-     * @return \Carcass\Query\Base
+     * @return \Carcass\Query\BaseDispatcher
      */
-    protected function assembleQuery() {
-        return new Query\Base;
+    protected function assembleQueryDispatcher() {
+        return new Query\BaseDispatcher;
     }
 }

@@ -26,7 +26,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryFetchRow() {
-        $Query = new Query\Memcached;
+        $Query = new Query\MemcachedDispatcher;
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $cached = $this->Mc->get('id_1');
         $this->assertFalse($cached);
@@ -41,7 +41,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
 
     public function testQueryFetchRowDoesNotTouchDatabaseOnCacheHit() {
         $this->testQueryFetchRow();
-        $Query = new Query\Memcached;
+        $Query = new Query\MemcachedDispatcher;
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $result = $Query->useCache('id_{{ i(id) }}')
             ->fetchRow('select 2 as id')
@@ -51,7 +51,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryFetchAll() {
-        $Query = new Query\Memcached;
+        $Query = new Query\MemcachedDispatcher;
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $cached = $this->Mc->get('id_1');
         $this->assertFalse($cached);
@@ -72,7 +72,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryFetchWithCallback() {
-        $Query = new Query\Memcached;
+        $Query = new Query\MemcachedDispatcher;
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $result = $Query->useCache('id_{{ i(id) }}')
             ->fetchWith(
@@ -98,7 +98,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
             )
         );
 
-        $Query = new Query\Memcached;
+        $Query = new Query\MemcachedDispatcher;
         $Query
             ->setTags(['tag'])
             ->useCache('items');
@@ -146,7 +146,7 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
             )
         );
 
-        $Query = new Query\Memcached;
+        $Query = new Query\MemcachedDispatcher;
         $Query
             ->setTags(['tag'])
             ->useCache('items')
@@ -192,14 +192,14 @@ class QueryMemcachedTest extends PHPUnit_Framework_TestCase {
         $mc_data10 = $this->Mc->get('|items|10');
         $this->assertEquals(10, count($mc_data10['d']));
 
-        (new Query\Memcached)->setTags(['tag'])->modify("delete from t where id=1");
+        (new Query\MemcachedDispatcher)->setTags(['tag'])->modify("delete from t where id=1");
 
         $result = $Query->setLimit(20)->execute()->getLastResult();
         $this->assertEquals(2, $result[0]['id']);
     }
 
     public function testQueryInsertSelectUpdateDelete() {
-        $Query = new Query\Memcached;
+        $Query = new Query\MemcachedDispatcher;
         $Query->setTags(['tag_id_{{ i(id) }}']);
         $Query->useCache('id_{{ i(id) }}');
 

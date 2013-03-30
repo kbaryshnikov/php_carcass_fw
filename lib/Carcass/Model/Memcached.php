@@ -14,7 +14,7 @@ use Carcass\Query;
 /**
  * Memcached Model
  *
- * @method \Carcass\Query\Memcached getQuery()
+ * @method \Carcass\Query\MemcachedDispatcher getQueryDispatcher()
  *
  * @package Carcass\Model
  */
@@ -53,7 +53,7 @@ abstract class Memcached extends Base {
         if (!$this->validate()) {
             return false;
         }
-        return $this->getQuery()->setLastInsertIdFieldName($this->id_key)->insert($query, $args + $this->exportArray());
+        return $this->getQueryDispatcher()->setLastInsertIdFieldName($this->id_key)->insert($query, $args + $this->exportArray());
     }
 
 }

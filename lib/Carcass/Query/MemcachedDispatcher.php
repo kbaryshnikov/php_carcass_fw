@@ -15,10 +15,11 @@ use Carcass\Memcached\Key as MemcachedKey;
 use Carcass\Application\DI;
 
 /**
- * Memcached query, with tags support
+ * Memcached query dispatcher, with tags support
+ *
  * @package Carcass\Query
  */
-class Memcached extends Base {
+class MemcachedDispatcher extends BaseDispatcher {
 
     /** @var callable|null */
     protected $key = null;

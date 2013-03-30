@@ -20,7 +20,7 @@ class TestMemcachedModel extends Model\Memcached {
     }
 
     public function getMct() {
-        return $this->getQuery()->getMct();
+        return $this->getQueryDispatcher()->getMct();
     }
 
     public function isLoaded() {

@@ -50,7 +50,7 @@ interface UnitInterface {
     /**
      * @return Mysql_Client
      */
-    public function getDatabase();
+    public function getDatabaseClient();
 
     /**
      * @return Mysql_ShardManager

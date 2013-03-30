@@ -15,28 +15,21 @@ use Carcass\Query;
 /**
  * Memcached list model
  *
- * @method \Carcass\Query\Memcached getQuery()
+ * @method \Carcass\Query\MemcachedDispatcher getQueryDispatcher()
  *
  * @package Carcass\Model
  */
 abstract class MemcachedList implements \Iterator, \ArrayAccess, \Countable, Corelib\ExportableInterface, Corelib\RenderableInterface, Query\ListReceiverInterface {
     use ListTrait, MemcachedTrait {
-        MemcachedTrait::assembleQuery as mctAssembleQuery;
-        ListTrait::assembleQuery as ltAssembleQuery;
+        MemcachedTrait::assembleQueryDispatcher insteadof ListTrait;
     }
 
     protected static $default_cache_chunk_size = 10;
+
     protected $cache_chunk_size = null;
 
     protected function getCacheChunkSize() {
         return $this->cache_chunk_size;
-    }
-
-    /**
-     * @return \Carcass\Query\Memcached
-     */
-    protected function assembleQuery() {
-        return $this->mctAssembleQuery();
     }
 
 }

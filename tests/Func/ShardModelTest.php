@@ -36,7 +36,7 @@ class TestShardUnit extends Corelib\Hash implements Shard\UnitInterface {
      * @return Shard\Mysql_Client
      */
     public function getDb() {
-        return $this->getDatabase();
+        return $this->getDatabaseClient();
     }
 
     public function updateShard($OldShard) {
@@ -54,7 +54,7 @@ class TestShardUnit extends Corelib\Hash implements Shard\UnitInterface {
     }
 
     public function initializeShard() {
-        $Db = $this->getDatabase();
+        $Db = $this->getDatabaseClient();
         $Db->createSequenceTable(true);
         $Db->query(
             "CREATE TABLE {{ t('Test') }} (
@@ -95,7 +95,7 @@ class TestListShardModel extends Shard\ListModel {
     }
 
     public function load($limit = self::DEFAULT_LIMIT, $offset = 0) {
-        $this->getQuery()
+        $this->getQueryDispatcher()
             ->setListChunkSize($this->chunk_size)
             ->setLimit($limit, $offset)
             ->fetchList(
@@ -138,11 +138,11 @@ class TestShardModel extends Shard\Model {
     }
 
     public function getDb() {
-        return $this->getQuery()->getDatabase();
+        return $this->getQueryDispatcher()->getDatabaseClient();
     }
 
     public function getMct() {
-        return $this->getQuery()->getMct();
+        return $this->getQueryDispatcher()->getMct();
     }
 
     public function isLoaded() {
@@ -233,8 +233,8 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
 
         $this->assertTrue($Unit1->initialize_shard_called);
         $this->assertEquals(1, $Shard->getId());
-        $this->assertEquals(['Seq1'], $Unit1->getDatabase()->getCol("show tables in TestShardDb1 like 'Seq1'"));
-        $this->assertEquals(['Test1'], $Unit1->getDatabase()->getCol("show tables in TestShardDb1 like 'Test1'"));
+        $this->assertEquals(['Seq1'], $Unit1->getDatabaseClient()->getCol("show tables in TestShardDb1 like 'Seq1'"));
+        $this->assertEquals(['Test1'], $Unit1->getDatabaseClient()->getCol("show tables in TestShardDb1 like 'Test1'"));
 
         $Unit2 = new TestShardUnit(2);
         $Shard = $this->ShardManager->allocateShard($Unit2);
@@ -249,11 +249,11 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($Server->units_per_shard - 2, $shard_row['units_free']);
 
         $this->assertEquals(1, $Shard->getId());
-        $this->assertEquals(['Seq1'], $Unit2->getDatabase()->getCol("show tables in TestShardDb1 like 'Seq1'"));
-        $this->assertEquals(['Test1'], $Unit2->getDatabase()->getCol("show tables in TestShardDb1 like 'Test1'"));
+        $this->assertEquals(['Seq1'], $Unit2->getDatabaseClient()->getCol("show tables in TestShardDb1 like 'Seq1'"));
+        $this->assertEquals(['Test1'], $Unit2->getDatabaseClient()->getCol("show tables in TestShardDb1 like 'Test1'"));
 
-        $this->assertSame($Unit1->getDatabase()->getDsn(), $Unit2->getDatabase()->getDsn());
-        $this->assertNotSame($Unit1->getDatabase(), $Unit2->getDatabase());
+        $this->assertSame($Unit1->getDatabaseClient()->getDsn(), $Unit2->getDatabaseClient()->getDsn());
+        $this->assertNotSame($Unit1->getDatabaseClient(), $Unit2->getDatabaseClient());
 
         // test model
 
@@ -269,10 +269,10 @@ class ShardMysqlTest extends PHPUnit_Framework_TestCase {
         $this->assertTrue($Model->isLoaded());
         $this->assertEquals(1, $Model->id);
 
-        $seq_value = $Unit1->getDatabase()->getCell("select value from TestShardDb1.Seq1 where shardTest=1 and name='t'");
+        $seq_value = $Unit1->getDatabaseClient()->getCell("select value from TestShardDb1.Seq1 where shardTest=1 and name='t'");
         $this->assertEquals(1, $seq_value);
 
-        $row = $Unit1->getDatabase()->getRow("select * from TestShardDb1.t1 where shardTest=1 and id=1");
+        $row = $Unit1->getDatabaseClient()->getRow("select * from TestShardDb1.t1 where shardTest=1 and id=1");
         $this->assertEquals('1@domain.com', $row['email']);
 
         unset($Model);

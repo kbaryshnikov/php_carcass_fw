@@ -26,7 +26,7 @@ class TestListBaseModel extends Model\ListBase {
      * return $this
      */
     public function load($filter = []) {
-        $this->getQuery()
+        $this->getQueryDispatcher()
             ->fetchList(
                 "SELECT
                     {{ IF COUNT }}

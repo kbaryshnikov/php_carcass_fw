@@ -168,13 +168,13 @@ trait ListTrait {
     }
 
     /**
-     * @return \Carcass\Query\Base
+     * @return \Carcass\Query\BaseDispatcher
      */
-    protected function getQuery() {
-        if (null === $this->Query) {
-            $this->Query = $this->assembleQuery();
+    protected function getQueryDispatcher() {
+        if (null === $this->QueryDispatcher) {
+            $this->QueryDispatcher = $this->assembleQueryDispatcher();
         }
-        return $this->Query->setLimit($this->limit, $this->offset);
+        return $this->QueryDispatcher->setLimit($this->limit, $this->offset);
     }
 
     /**

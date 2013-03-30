@@ -10,7 +10,7 @@ namespace Carcass\Query;
 
 
 /**
- * List receiver interface: supports the importList method called by Query*::sendListTo
+ * List receiver interface: supports the importList method called by Query\*Dispatcher::sendListTo
  *
  * @package Carcass\Query
  */

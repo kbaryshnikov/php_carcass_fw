@@ -10,13 +10,13 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryFetchRow() {
-        $Query  = new Query\Base;
+        $Query  = new Query\BaseDispatcher;
         $result = $Query->fetchRow('select 1 as id')->execute()->getLastResult();
         $this->assertEquals(1, $result['id']);
     }
 
     public function testQueryFetchAll() {
-        $Query  = new Query\Base;
+        $Query  = new Query\BaseDispatcher;
         $result = $Query->fetchAll('select 1 as id union select 2 as id')->execute()->getLastResult();
         $this->assertEquals(1, $result[0]['id']);
         $this->assertEquals(2, $result[1]['id']);
@@ -33,7 +33,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryFetchWithCallback() {
-        $Query  = new Query\Base;
+        $Query  = new Query\BaseDispatcher;
         $result = $Query->fetchWith(
             function (\Carcass\Mysql\Client $Db, array $args) {
                 return [$Db->getCell('select ' . $args[0]), $result[1] = $Db->getCell('select ' . $args[1])];
@@ -43,7 +43,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryUID() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $id = $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'foo']);
@@ -55,12 +55,12 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryWithBeforeCall() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $id = $Query
             ->before(
-                function (Query\Base $Query) {
+                function (Query\BaseDispatcher $Query) {
                     $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'bar']);
                 }
             )
@@ -72,12 +72,12 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryWithAfterCall() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $id = $Query
             ->after(
-                function (Query\Base $Query) {
+                function (Query\BaseDispatcher $Query) {
                     $Query->insert('insert into t (s) values ({{ s(s) }})', ['s' => 'bar']);
                 }
             )
@@ -89,7 +89,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQueryUIDCallback() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $id = $Query->insertWith(
@@ -110,7 +110,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testQuerySendTo() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $Query->modify('insert into t (s) values (\'foo\'), (\'bar\')');
@@ -126,7 +126,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testFetchList() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');
@@ -158,7 +158,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testFetchListWithKeysArg() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');
@@ -192,7 +192,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testFetchListWithCustomCountModifier() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');
@@ -220,7 +220,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testResultsConverter() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');
@@ -237,7 +237,7 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testRowsConverter() {
-        $Query = new Query\Base;
+        $Query = new Query\BaseDispatcher;
         $Query->modify('drop table if exists t');
         $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
         $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\')');

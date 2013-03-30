@@ -30,10 +30,10 @@ trait ModelTrait {
     }
 
     /**
-     * @return Query
+     * @return QueryDispatcher
      */
     protected function createQueryInstance() {
-        return new Query($this->Unit);
+        return new QueryDispatcher($this->Unit);
     }
 
 }

@@ -14,7 +14,7 @@ use \Carcass\Model\Memcached as MemcachedModel;
 /**
  * Sharded model
  *
- * @method \Carcass\Shard\Query getQuery()
+ * @method \Carcass\Shard\QueryDispatcher getQueryDispatcher()
  *
  * @package Carcass\Shard
  */
@@ -43,7 +43,7 @@ class Model extends MemcachedModel {
         if (!$this->validate()) {
             return false;
         }
-        $result = $this->getQuery()->insert(
+        $result = $this->getQueryDispatcher()->insert(
             $query,
             $args + $this->exportArray(),
             $this->getSequence()

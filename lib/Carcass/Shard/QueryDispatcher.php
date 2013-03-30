@@ -8,13 +8,16 @@
 
 namespace Carcass\Shard;
 
-use Carcass\Query\Memcached as MemcachedQuery;
+use Carcass\Query\MemcachedDispatcher;
+use Carcass\Memcached;
 
 /**
- * Sharded Query
+ * Sharded Query Dispatcher
  * @package Carcass\Shard
  */
-class Query extends MemcachedQuery {
+class QueryDispatcher extends MemcachedDispatcher {
+
+    const UNIT_MEMCACHED_PREFIX_TEMPLATE = '{{ unit_key }}_{{ i(unit_id) }}:';
 
     /**
      * @var UnitInterface
@@ -45,7 +48,7 @@ class Query extends MemcachedQuery {
 
                     $sequence_value = $args[$sequence_field_name] = $Db->getSequenceNextValue($sequence_name);
                 }
-                $affected_rows        = $Db->query($sql_query_template, $this->getArgs($args));
+                $affected_rows = $Db->query($sql_query_template, $this->getArgs($args));
                 $this->last_insert_id = $sequence_value;
                 return $affected_rows;
             },
@@ -60,18 +63,20 @@ class Query extends MemcachedQuery {
      * @return \Carcass\Memcached\TaggedCache
      */
     protected function assembleMct(array $options = []) {
-        return parent::assembleMct(
-            $options + [
-                'prefix' => $this->Unit->getKey() . '_' . $this->Unit->getId() . '|',
+        $mc_key_prefix = Memcached\KeyBuilder::parseString(
+            self::UNIT_MEMCACHED_PREFIX_TEMPLATE, [
+                'unit_key' => $this->Unit->getKey(),
+                'unit_id'  => $this->Unit->getId(),
             ]
         );
+        return parent::assembleMct($options + ['prefix' => $mc_key_prefix]);
     }
 
     /**
      * @return Mysql_Client
      */
     protected function assembleDatabaseClient() {
-        return $this->Unit->getDatabase();
+        return $this->Unit->getDatabaseClient();
     }
 
     /**

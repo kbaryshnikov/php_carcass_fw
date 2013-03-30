@@ -27,14 +27,14 @@ class TestCachedListBaseModel extends Model\MemcachedList {
     public $chunk_size = 10;
 
     public function getMct() {
-        return $this->getQuery()->getMct();
+        return $this->getQueryDispatcher()->getMct();
     }
 
     /**
      * return $this
      */
     public function load($filter = []) {
-        $this->getListQuery($this->chunk_size)
+        $this->getListQueryDispatcher($this->chunk_size)
             ->fetchList(
                 "SELECT
                     {{ IF COUNT }}

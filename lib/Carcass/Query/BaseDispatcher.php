@@ -14,10 +14,11 @@ use Carcass\Model;
 use Carcass\Mysql;
 
 /**
- * Base Query
+ * Base Query Dispatcher
+ *
  * @package Carcass\Query
  */
-class Base {
+class BaseDispatcher {
 
     const DEFAULT_COUNT_MODIFIER = 'COUNT';
 
@@ -47,7 +48,7 @@ class Base {
     /**
      * @var Mysql\Client
      */
-    protected $Db = null;
+    protected $DatabaseClient = null;
     /**
      * @var callable|null
      */
@@ -356,11 +357,11 @@ class Base {
     /**
      * @return \Carcass\Mysql\Client|null
      */
-    public function getDatabase() {
-        if (null === $this->Db) {
-            $this->Db = $this->assembleDatabaseClient();
+    public function getDatabaseClient() {
+        if (null === $this->DatabaseClient) {
+            $this->DatabaseClient = $this->assembleDatabaseClient();
         }
-        return $this->Db;
+        return $this->DatabaseClient;
     }
 
     /**
@@ -388,14 +389,14 @@ class Base {
         $args = $this->mixListArgsInto($args);
 
         if ($count_modifier) {
-            $count = $this->getDatabase()->getCell($sql_query_template, [$count_modifier => true] + $args);
+            $count = $this->getDatabaseClient()->getCell($sql_query_template, [$count_modifier => true] + $args);
             if (!$count) {
                 $result = [];
             }
         }
 
         if (null === $result) {
-            $result = $this->getDatabase()->getAll($sql_query_template, $args, $keys);
+            $result = $this->getDatabaseClient()->getAll($sql_query_template, $args, $keys);
         }
 
         $this->last_count = $count;
@@ -433,7 +434,7 @@ class Base {
      */
     protected function getCallbackArgs(array $args) {
         return [
-            $this->getDatabase(),
+            $this->getDatabaseClient(),
             $args,
         ];
     }

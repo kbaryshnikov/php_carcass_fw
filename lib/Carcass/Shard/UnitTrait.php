@@ -29,7 +29,7 @@ trait UnitTrait {
     /**
      * @var Mysql_Client
      */
-    protected $Database = null;
+    protected $DatabaseClient = null;
     /**
      * @var \Carcass\Memcached\Connection
      */
@@ -63,12 +63,12 @@ trait UnitTrait {
     /**
      * @return Mysql_Client
      */
-    public function getDatabase() {
-        if (null === $this->Database) {
+    public function getDatabaseClient() {
+        if (null === $this->DatabaseClient) {
             /** @noinspection PhpParamsInspection ($this will actually implement UnitInterface) */
-            $this->Database = new Mysql_Client($this);
+            $this->DatabaseClient = new Mysql_Client($this);
         }
-        return $this->Database;
+        return $this->DatabaseClient;
     }
 
     /**
