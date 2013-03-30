@@ -168,14 +168,6 @@ trait ListQueryTrait {
     }
 
     /**
-     * @param array $item_data
-     * @return $this
-     */
-    protected function assembleItemModel(array $item_data = []) {
-        return $this->constructItemModel()->fetchFromArray($item_data);
-    }
-
-    /**
      * @return array
      */
     protected function &getDataArrayPtr() {
