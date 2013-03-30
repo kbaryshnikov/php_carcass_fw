@@ -12,6 +12,7 @@ use Carcass\Corelib;
 use Carcass\Application\DI;
 use Carcass\Model;
 use Carcass\Mysql;
+use Carcass\Connection;
 
 /**
  * Base Query Dispatcher
@@ -443,6 +444,16 @@ class BaseDispatcher {
     public function setConfigDatabaseDsnPath($path) {
         $this->config_dsn_path = $path;
         return $this;
+    }
+
+    /**
+     * Call inside doInTransaction callbacks to rollback and return $result
+     *
+     * @param mixed $result
+     * @throws \Carcass\Connection\TransactionRollbackException
+     */
+    public function rollbackTransaction($result) {
+        throw new Connection\TransactionRollbackException($result);
     }
 
     /**

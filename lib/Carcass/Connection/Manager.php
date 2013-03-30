@@ -186,7 +186,11 @@ class Manager {
             $finally_fn($result);
         }
         if (null !== $e) {
-            throw $e;
+            if ($e instanceof TransactionRollbackException) {
+                $result = $e->getResult();
+            } else {
+                throw $e;
+            }
         }
         return $result;
     }
@@ -296,4 +300,3 @@ class ManagerXaVotedNoException extends \LogicException {
     // pass
 }
 
-;

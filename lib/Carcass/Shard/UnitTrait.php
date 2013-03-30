@@ -93,4 +93,11 @@ trait UnitTrait {
         return $this->MemcachedConnection;
     }
 
+    protected function allocateShardForMyself() {
+        if (!$this instanceof UnitInterface) {
+            throw new \LogicException(get_class($this) . ' does not implement UnitInterface');
+        }
+        return $this->getShardManager()->allocateShard($this);
+    }
+
 }

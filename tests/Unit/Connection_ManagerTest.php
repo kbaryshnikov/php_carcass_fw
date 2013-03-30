@@ -65,6 +65,18 @@ class Connection_ManagerTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('rollback', $TTC2->transaction);
     }
 
+    public function testTransactionRollbackException() {
+        $CM = new Connection\Manager;
+        $CM->replaceTypes(['test' => 'TestTransactionalConnection']);
+        /** @var TransactionalConnectionTraitUser $TTC */
+        $TTC = $CM->getConnection('test://localhost');
+        $result = $CM->doInTransaction(function() {
+            throw new Connection\TransactionRollbackException(123);
+        });
+        $this->assertEquals(123, $result);
+        $this->assertEquals('rollback', $TTC->transaction);
+    }
+
     public function testTransactionCallsFilterSource() {
         $CM = new Connection\Manager;
         $CM->replaceTypes(['test' => 'TestTransactionalConnection']);
