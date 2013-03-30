@@ -57,28 +57,11 @@ class QueryTemplate extends StringTemplate {
     }
 
     /**
-     * @param $int
-     * @return string
-     */
-    public function iNul($int) {
-        return $this->nullOr('i', $int);
-    }
-
-    /**
      * @param $str
      * @return string
      */
     public function s($str) {
         return "'" . $this->QueryParser->escapeString($str) . "'";
-    }
-
-    /**
-     * @param $str
-     * @param string $extra_escape_chars
-     * @return string
-     */
-    public function sNul($str, $extra_escape_chars = '') {
-        return $this->nullOr('s', $str, $extra_escape_chars);
     }
 
     /**
@@ -91,14 +74,6 @@ class QueryTemplate extends StringTemplate {
     }
 
     /**
-     * @param $float
-     * @return string
-     */
-    public function fNul($float) {
-        return $this->nullOr('f', $float);
-    }
-
-    /**
      * @param $id
      * @return string
      */
@@ -108,29 +83,12 @@ class QueryTemplate extends StringTemplate {
     }
 
     /**
-     * @param $id
-     * @return string
-     */
-    public function idNul($id) {
-        return $this->nullOr('id', $id);
-    }
-
-    /**
      * @param $num
      * @param $decimals
      * @return string
      */
     public function n($num, $decimals) {
         return number_format($num, $decimals, '.', '');
-    }
-
-    /**
-     * @param $num
-     * @param $decimals
-     * @return string
-     */
-    public function nNul($num, $decimals) {
-        return $this->nullOr('n', $num, $decimals);
     }
 
     /**
@@ -145,24 +103,8 @@ class QueryTemplate extends StringTemplate {
      * @param $value
      * @return string
      */
-    public function bNul($value) {
-        return $this->nullOr('b', $value);
-    }
-
-    /**
-     * @param $value
-     * @return string
-     */
     public function json($value) {
         return JsonTools::encode($value);
-    }
-
-    /**
-     * @param $value
-     * @return string
-     */
-    public function jsonNul($value) {
-        return $this->nullOr('json', $value);
     }
 
     /**
@@ -289,30 +231,6 @@ class QueryTemplate extends StringTemplate {
     }
 
     /**
-     * @param $unixtime
-     * @return string
-     */
-    public function datetimeNul($unixtime) {
-        return $this->nullOr($unixtime, 'datetime');
-    }
-
-    /**
-     * @param $unixtime
-     * @return string
-     */
-    public function dateNul($unixtime) {
-        return $this->nullOr($unixtime, 'date');
-    }
-
-    /**
-     * @param $unixtime
-     * @return string
-     */
-    public function timeNul($unixtime) {
-        return $this->nullOr($unixtime, 'time');
-    }
-
-    /**
      * 'Like' pattern builder
      *
      * Example: {{ like('?1%', prefix) }}
@@ -357,13 +275,25 @@ class QueryTemplate extends StringTemplate {
         return parent::parse($args);
     }
 
-    protected function nullOr($method, $value /* args */) {
-        if (null === $value) {
-            return self::NULL_VALUE;
+    /**
+     * @param $method  <method>Nul or <method>Def
+     * @param array $args
+     * @return mixed
+     * @throws \BadMethodCallException
+     */
+    public function __call($method, array $args) {
+        static $null_value_map = [
+            'nul' => self::NULL_VALUE,
+            'def' => self::DEFAULT_VALUE,
+        ];
+        if (preg_match('/^(?<fn>.*)(?<mod>Nul|Def)$/i', $method, $matches) && method_exists($this, $matches['fn'])) {
+            if (!count($args)) {
+                throw new \BadMethodCallException("$method requires at least 1 argument");
+            }
+            $null_value = $null_value_map[strtolower($matches['mod'])];
+            return null === reset($args) ? $null_value : call_user_func_array([$this, $matches['fn']], $args);
         }
-        $args = func_get_args();
-        array_shift($args);
-        return call_user_func_array([$this, $method], $args);
+        throw new \BadMethodCallException("Unknown method: $method");
     }
 
     protected function getFormattedDate($unixtime = null) {
@@ -379,5 +309,6 @@ class QueryTemplate extends StringTemplate {
     }
 
     const NULL_VALUE = 'NULL';
+    const DEFAULT_VALUE = 'DEFAULT';
 
 }

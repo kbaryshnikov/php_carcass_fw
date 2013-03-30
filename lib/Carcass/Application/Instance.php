@@ -269,6 +269,12 @@ class Instance {
                 . "is defined in configuration, and mode is not supported internally");
         }
 
+        $extras = $this->ConfigReader->getPath('application.bootstrap.extras');
+
+        if ($extras instanceof \Closure) {
+            $extras($this->DI);
+        }
+
         $this->setupApplicationDependencies();
     }
 

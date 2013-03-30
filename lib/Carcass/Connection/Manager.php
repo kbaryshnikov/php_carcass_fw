@@ -126,7 +126,7 @@ class Manager {
     public function addConnection(ConnectionInterface $Connection) {
         $normalized_string_dsn = (string)$Connection->getDsn();
         if (isset($this->registry[$normalized_string_dsn])) {
-            throw new \LogicException("Connectino with DSN '$normalized_string_dsn' is already registered'");
+            throw new \LogicException("Connection with DSN '$normalized_string_dsn' is already registered'");
         }
         $this->registry[$normalized_string_dsn] = $Connection;
         return $this;
@@ -278,7 +278,7 @@ class Manager {
         if ($Dsn instanceof DsnPool) {
             if (array_key_exists(__NAMESPACE__ . '\PoolConnectionInterface', class_implements($class))) {
                 /** @var PoolConnectionInterface $class */
-                $class      = $this->dsn_type_map[$type];
+                $class = $this->dsn_type_map[$type];
                 $Connection = $class::constructWithPool($Dsn);
             } else {
                 throw new \LogicException("'$type' connection does not support pools, but pool dsn given");
@@ -290,6 +290,16 @@ class Manager {
         }
         if ($Connection instanceof TransactionalConnectionInterface) {
             $Connection->setManager($this);
+            $begin = false;
+            foreach ($this->registry as $Cn) {
+                if ($Cn instanceof TransactionalConnectionInterface && $Cn->getTransactionId()) {
+                    $begin = true;
+                    break;
+                }
+            }
+            if ($begin) {
+                $Connection->begin(true);
+            }
         }
         return $Connection;
     }
