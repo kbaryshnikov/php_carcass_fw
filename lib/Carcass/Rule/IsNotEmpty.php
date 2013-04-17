@@ -24,6 +24,6 @@ class IsNotEmpty extends IsEmpty {
      * @return bool
      */
     public function validate($value) {
-        return $value === null || !parent::validate($value);
+        return !parent::validate($value);
     }
 }

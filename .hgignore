@@ -9,3 +9,4 @@ syntax: glob
 tags
 vendor/
 .idea
+push.sh
