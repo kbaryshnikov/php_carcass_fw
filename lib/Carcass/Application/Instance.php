@@ -492,7 +492,7 @@ class Instance {
 
 
     protected function setupDebugger() {
-        if ($this->ConfigReader->getPath('application.debugger.enable')) {
+        if (($this->ConfigReader->getPath('application.debugger.enable') || !empty($_SERVER['DEBUG'])) && empty($_SERVER['NODEBUG'])) {
             $this->Debugger = new DevTools\Debugger($this->getDebuggerReporter());
         } else {
             $this->Debugger = new DevTools\DebuggerStub;

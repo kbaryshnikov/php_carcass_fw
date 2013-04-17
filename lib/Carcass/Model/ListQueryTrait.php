@@ -6,7 +6,6 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */ // PHPStorm bug: @method not resolved without FQ spec
 namespace Carcass\Model;
 
 use Carcass\Query;

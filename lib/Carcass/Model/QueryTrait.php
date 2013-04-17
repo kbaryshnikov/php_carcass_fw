@@ -6,17 +6,16 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */// PHPStorm bug: @method not resolved without FQ spec
 namespace Carcass\Model;
 
 use Carcass\Query;
 
 /**
- * Query methods trai
+ * Query methods trait
  *
  * A user must implement
- * protected method \Carcass\Query\BaseDispatcher assembleQueryDispatcher()
- * protected method \Carcass\Query\BaseDispatcher prepareQueryDispatcher()
+ * protected method BaseDispatcher assembleQueryDispatcher()
+ * protected method BaseDispatcher prepareQueryDispatcher()
  *
  * @package Carcass\Model
  */

@@ -6,7 +6,6 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
 namespace Carcass\Model;
 
 use Carcass\Corelib;
@@ -15,7 +14,7 @@ use Carcass\Query;
 /**
  * Memcached list model
  *
- * @method \Carcass\Query\MemcachedDispatcher getQueryDispatcher()
+ * @method Query\MemcachedDispatcher getQueryDispatcher()
  *
  * @package Carcass\Model
  */

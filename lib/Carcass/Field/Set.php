@@ -30,6 +30,7 @@ class Set extends Corelib\Hash implements FieldInterface {
      */
     public function __construct($value = null) {
         $value and $this->addFields($value);
+        $this->taint();
     }
 
     /**

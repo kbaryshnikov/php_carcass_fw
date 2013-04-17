@@ -72,6 +72,12 @@ class MemcachedDispatcher extends BaseDispatcher {
         return $this;
     }
 
+    /**
+     * @param $sql_query_template
+     * @param array $keys
+     * @param string $count_modifier
+     * @return $this
+     */
     public function fetchList($sql_query_template, array $keys = [], $count_modifier = self::DEFAULT_COUNT_MODIFIER) {
         $this->is_own_fetch_fn = true;
         return parent::fetchList($sql_query_template, $keys, $count_modifier);
