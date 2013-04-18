@@ -75,6 +75,8 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
     protected $delay_mode = false;
     /** @var array */
     protected $delayed_calls = [];
+    /** @var array */
+    protected $last_args = [];
 
     /**
      * @param \Carcass\Connection\Dsn $Dsn
@@ -226,7 +228,9 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
                 return $method . (isset($args[0]) ? ' ' . json_encode($args[0]) : '');
             },
             function () use ($MemcachedInstance, $method, $args) {
-                return call_user_func_array([$this->getMemcachedInstance(), $method], $args);
+                $result = call_user_func_array([$this->getMemcachedInstance(), $method], $args);
+                $this->last_args = $args;
+                return $result;
             }
         );
 
@@ -235,6 +239,13 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         }
 
         return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function getLastArgs() {
+        return $this->last_args;
     }
 
     /**

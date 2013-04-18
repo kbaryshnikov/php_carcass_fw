@@ -10,6 +10,7 @@ namespace Carcass\Application;
 
 use Carcass\Memcached;
 use Carcass\Connection;
+use Carcass\Corelib;
 
 /**
  * Stores the session data in memcached.
@@ -83,6 +84,7 @@ class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
             'set',
             $this->getMcacheKey($session_id),
             $data,
+            0,
             $this->mc_expire
         );
         return $this;
@@ -102,7 +104,7 @@ class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
      * @return string
      */
     protected function getMcacheKey($session_id) {
-        return $this->Memcached->buildKey($this->mc_key_tmpl, array('session_id' => $session_id));
+        return Corelib\StringTemplate::constructFromString($this->mc_key_tmpl)->parse(['session_id' => $session_id]);
     }
 
     /**

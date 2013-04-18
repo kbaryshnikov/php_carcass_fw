@@ -20,7 +20,7 @@ use Carcass\Corelib;
  */
 class Web_Session {
 
-    const DEFAULT_COOKIE_NAME     = 's';
+    const DEFAULT_COOKIE_NAME = 's';
     const DEFAULT_COOKIE_LIFETIME = 0;
 
     /**
@@ -66,10 +66,10 @@ class Web_Session {
      * @param Web_Session_StorageInterface $PersistentStorage
      */
     public function __construct(Corelib\Request $Request, Web_Response $Response, Web_Session_StorageInterface $PersistentStorage = null) {
-        $this->cookie_name     = self::DEFAULT_COOKIE_NAME;
+        $this->cookie_name = self::DEFAULT_COOKIE_NAME;
         $this->cookie_lifetime = self::DEFAULT_COOKIE_LIFETIME;
 
-        $this->Request  = $Request;
+        $this->Request = $Request;
         $this->Response = $Response;
 
         $this->Data = new Corelib\Hash;
@@ -197,6 +197,19 @@ class Web_Session {
     }
 
     /**
+     * @param $session_id
+     * @return $this
+     */
+    public function setSessionId($session_id) {
+        if (!$session_id) {
+            $session_id = $this->generateSessionId();
+        }
+        $this->session_id = $session_id;
+        $this->loadDataFromPersistentStorage();
+        return $this;
+    }
+
+    /**
      * Fills $Receiver with session identifier
      *
      * @param mixed $Receiver
@@ -217,6 +230,10 @@ class Web_Session {
             $this->generateSessionId();
         }
 
+        $this->loadDataFromPersistentStorage();
+    }
+
+    protected function loadDataFromPersistentStorage() {
         $this->Data->clear();
         if ($this->PersistentStorage !== null) {
             $session_data = $this->PersistentStorage->get($this->session_id);
@@ -241,15 +258,15 @@ class Web_Session {
 
     protected function loadSessionIdFromRequest() {
         $sources_to_try = array('Cookies', 'Vars', 'Args');
-        $result         = null;
-        $found_in       = null;
+        $result = null;
+        $found_in = null;
 
         foreach ($sources_to_try as $source) {
             if ($this->Request->has($source) && $this->Request->get($source)->has($this->cookie_name)) {
                 $value = $this->Request->get($source)->get($this->cookie_name);
                 if ($this->isValidSessionId($value)) {
                     $found_in = $source;
-                    $result   = $value;
+                    $result = $value;
                     break;
                 }
             }

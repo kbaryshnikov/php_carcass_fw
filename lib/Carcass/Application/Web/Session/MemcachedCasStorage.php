@@ -52,6 +52,7 @@ class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
                 $result = $this->Memcached->add(
                     $mc_key,
                     $data,
+                    0,
                     $this->mc_expire
                 );
                 if (false === $result) {
@@ -61,7 +62,7 @@ class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
                 $result = $this->Memcached->cas(
                     $mc_key,
                     $data,
-                    null,
+                    0,
                     $this->mc_expire,
                     $cas_token
                 );
@@ -107,6 +108,10 @@ class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
     protected function getDataFromMemcached($session_id, &$cas_token = null) {
         $key = $this->getMcacheKey($session_id);
         $data = $this->Memcached->get($key, null, $cas_token);
+
+        $args = $this->Memcached->getLastArgs();
+        $cas_token = isset($args[2]) ? $args[2] : null;
+
         return is_array($data) ? $data : [];
     }
 

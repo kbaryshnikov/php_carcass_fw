@@ -73,14 +73,15 @@ class BuildNginxConfigScript extends Controller {
 
         $server_names = [];
         if ($Site->has('domain')) {
-            $server_names[] = $Site->get('domain');
+            $domain = $Site->get('domain');
+            $server_names[] = $domain === '*' ? '_' : $domain;
         }
         if ($Site->has('aliases')) {
             foreach ($Site->exportArrayFrom('aliases') as $alias) {
-                $server_names[] = $alias;
+                $server_names[] = $alias === '*' ? '_' : $alias;
             }
         }
-        $vars['server_names'] = $server_names ? join(' ', $server_names) : null;
+        $vars['server_names'] = $server_names ? join(' ', array_unique($server_names)) : null;
 
         foreach ($Site->exportArrayFrom('vars') as $key => $value) {
             $vars['site_' . $key] = is_array($value) ? static::assocToValArray($value) : $value;
