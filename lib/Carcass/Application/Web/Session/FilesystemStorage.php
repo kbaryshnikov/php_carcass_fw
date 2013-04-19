@@ -80,10 +80,11 @@ class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
     /**
      * @param string $session_id
      * @param array $data
+     * @param $is_changed
      * @return $this
      */
-    public function write($session_id, array $data) {
-        file_put_contents($this->getSessionFilePath($session_id), serialize($data), LOCK_EX);
+    public function write($session_id, array $data, $is_changed) {
+        $is_changed and file_put_contents($this->getSessionFilePath($session_id), serialize($data), LOCK_EX);
         return $this;
     }
 

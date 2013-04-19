@@ -125,8 +125,8 @@ class Web_Session {
      */
     public function save() {
         $this->ensureSessionIsStarted();
-        if ($this->Data->isTainted() && null !== $this->PersistentStorage) {
-            $this->PersistentStorage->write($this->session_id, $this->Data->exportArray());
+        if (null !== $this->PersistentStorage) {
+            $this->PersistentStorage->write($this->session_id, $this->Data->exportArray(), $this->Data->isTainted());
             $this->Data->untaint();
         }
         $this->sendSessionIdCookie();

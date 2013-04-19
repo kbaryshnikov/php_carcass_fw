@@ -38,10 +38,11 @@ class Web_Session_MemcachedCasStorage extends Web_Session_MemcachedStorage {
     /**
      * @param string $session_id
      * @param array $data
+     * @param $is_changed
      * @throws \LogicException
      * @return $this
      */
-    public function write($session_id, array $data) {
+    public function write($session_id, array $data, $is_changed) {
         $cas_token          = $this->getCasToken($session_id);
         $mc_key             = $this->getMcacheKey($session_id);
         $attempts_count     = 0;

@@ -77,9 +77,10 @@ class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
     /**
      * @param string $session_id
      * @param array $data
+     * @param $is_changed
      * @return $this
      */
-    public function write($session_id, array $data) {
+    public function write($session_id, array $data, $is_changed) {
         $this->Memcached->callRequired(
             'set',
             $this->getMcacheKey($session_id),

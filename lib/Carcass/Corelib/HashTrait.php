@@ -84,7 +84,7 @@ trait HashTrait {
      * @return array
      */
     /** @noinspection PhpHierarchyChecksInspection */
-    protected function getRenderArray() {
+    public function getRenderArray() {
         return $this->storage;
     }
 

@@ -98,8 +98,8 @@ trait RenderableTrait {
      * @return array
      * @throws \LogicException
      */
-    protected function getRenderArray() {
-        throw new \LogicException("Must be implemented by user of RenderableTrait");
+    public function getRenderArray() {
+        throw new \LogicException("Must be implemented by user of RenderableTrait, " . get_class($this));
         /** @noinspection PhpUnreachableStatementInspection */
         return [];
     }

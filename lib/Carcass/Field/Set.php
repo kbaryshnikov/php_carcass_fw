@@ -22,6 +22,7 @@ class Set extends Corelib\Hash implements FieldInterface {
         RuleTrait::validate as validateOwnRules;
     }
 
+    protected $fields_detailed_render_mode = false;
     protected $is_dynamic = false;
     protected $own_error = null;
 
@@ -95,6 +96,26 @@ class Set extends Corelib\Hash implements FieldInterface {
         $Field->setValue($value);
         $this->doSet($name, $Field);
         return $this;
+    }
+
+    /**
+     * Render fields mode: true - render complete field render subobjects, false - render values only
+     *
+     * @param bool $bool
+     * @return $this
+     */
+    public function setFieldsDetailedRenderMode($bool = true) {
+        $this->fields_detailed_render_mode = (bool)$bool;
+        return $this;
+    }
+
+    /**
+     * Render fields mode: false - render complete field render subobjects, true - render values only
+     * @param bool $bool
+     * @return $this
+     */
+    public function setFieldsSimpleRenderMode($bool = true) {
+        return $this->setFieldsDetailedRenderMode(!$bool);
     }
 
     /**
@@ -309,6 +330,9 @@ class Set extends Corelib\Hash implements FieldInterface {
      * @return array
      */
     public function getRenderArray() {
+        if (!$this->fields_detailed_render_mode) {
+            return $this->exportArray();
+        }
         $result = [];
         foreach ($this as $name => $Field) {
             /** @var FieldInterface $Field */

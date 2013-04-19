@@ -16,7 +16,7 @@ class RenderableTraitUser implements Corelib\RenderableInterface {
         $Result->list->assign($this->data);
     }
 
-    protected function getRenderArray() {
+    public function getRenderArray() {
         return $this->data;
     }
 

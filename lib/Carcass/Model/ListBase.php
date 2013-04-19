@@ -26,4 +26,8 @@ abstract class ListBase implements \Iterator, \ArrayAccess, \Countable, Corelib\
     protected function prepareQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
         return $this->prepareListQueryDispatcher($QueryDispatcher);
     }
+
+    public function getRenderArray() {
+        return $this->exportArray();
+    }
 }

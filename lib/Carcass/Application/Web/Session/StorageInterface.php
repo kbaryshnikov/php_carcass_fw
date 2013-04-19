@@ -24,9 +24,10 @@ interface Web_Session_StorageInterface {
     /**
      * @param string $session_id
      * @param array $data
+     * @param bool $is_changed
      * @return $this
      */
-    public function write($session_id, array $data);
+    public function write($session_id, array $data, $is_changed);
 
     /**
      * @param string $session_id

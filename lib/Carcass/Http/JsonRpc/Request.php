@@ -106,12 +106,10 @@ class JsonRpc_Request {
         $this->method = $json['method'];
 
         if (isset($json['params'])) {
-            if (is_object($json['params'])) {
-                $json['params'] = static::objectToArray($json['params']);
-            } elseif (!is_array($json['params'])) {
+            if (!is_object($json['params']) && !is_array($json['params'])) {
                 throw JsonRpc_Exception::constructInvalidRequestException('params must be an array or a key-value object');
             }
-            $this->params = $json['params'];
+            $this->params = static::objectToArray($json['params']);
         }
 
         if (array_key_exists('id', $json)) {
@@ -123,13 +121,7 @@ class JsonRpc_Request {
     }
 
     protected static function objectToArray($params) {
-        $result = (array)$params;
-        foreach ($result as $key => $value) {
-            if (is_object($value)) {
-                $result[$key] = static::objectToArray($value);
-            }
-        }
-        return $result;
+        return empty($params) ? [] : json_decode(json_encode($params), true);
     }
 
 }

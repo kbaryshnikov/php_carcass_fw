@@ -31,13 +31,13 @@ abstract class BaseReporter {
      * @return string
      */
     protected function formatValue($value) {
-        if (is_object($value)) {
+        if (is_object($value) || is_array($value)) {
             // using var_dump to avoid recursion
             ob_start();
             var_dump($value);
             return ob_get_clean();
         }
-        return print_r($value, true);
+        return var_export($value, true);
     }
 
 }

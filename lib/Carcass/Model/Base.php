@@ -284,7 +284,7 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      * @return array
      */
     public function getRenderArray() {
-        return $this->Fieldset->exportArray();
+        return $this->Fieldset->getRenderArray();
     }
 
     protected function assembleQueryDispatcher() {
