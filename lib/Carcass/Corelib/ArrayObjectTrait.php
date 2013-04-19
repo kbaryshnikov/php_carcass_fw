@@ -19,6 +19,7 @@ namespace Carcass\Corelib;
 trait ArrayObjectTrait {
 
     /**
+     * @throws \LogicException
      * @return array
      */
     protected function &getDataArrayPtr() {

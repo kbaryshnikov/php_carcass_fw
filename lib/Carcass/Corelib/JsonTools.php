@@ -8,6 +8,8 @@
 
 namespace Carcass\Corelib;
 
+use Carcass\Application;
+
 /**
  * JSON tools
  *
@@ -30,7 +32,15 @@ class JsonTools {
      * @return string
      */
     public static function encode($in_data, $encode_flags = null) {
-        return json_encode($in_data, $encode_flags === null ? static::getEncodeFlags() : $encode_flags);
+        try {
+            return json_encode($in_data, $encode_flags === null ? static::getEncodeFlags() : $encode_flags);
+        } catch (Application\WarningException $e) {
+            Application\DI::getDebugger()->dumpException($e);
+            Application\DI::getDebugger()->dump($in_data);
+            Application\DI::getLogger()->logException($e);
+            Application\DI::getLogger()->logWarning($in_data);
+            return 'null';
+        }
     }
 
     /**

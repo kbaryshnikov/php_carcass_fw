@@ -89,7 +89,11 @@ abstract class Web_PageController extends Controller {
             if ($result < 400 || $result >= 600) {
                 throw new \InvalidArgumentException('error status must be in range [400, 600)');
             }
-            return $this->getRenderer()->setStatus($result);
+            try {
+                return $this->getRenderer()->setStatus($result);
+            } catch (\LogicException $e) {
+                $this->Response->setStatus($result);
+            }
         }
         return $result;
     }

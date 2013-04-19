@@ -62,11 +62,12 @@ class Cacher_Memcached implements Cacher_Interface {
 
     /**
      * @param string $less_key
+     * @param null $default_value
      * @return mixed
      */
-    public function get($less_key) {
+    public function get($less_key, $default_value = null) {
         $Key = $this->MemcachedKey;
-        return $this->MemcachedConnection->get($Key(compact('less_key')));
+        return $this->MemcachedConnection->get($Key(compact('less_key'))) ?: $default_value;
     }
 
     /**

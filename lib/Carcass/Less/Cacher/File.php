@@ -29,16 +29,17 @@ class Cacher_File implements Cacher_Interface {
 
     /**
      * @param string $key
+     * @param null $default_value
      * @return mixed
      */
-    public function get($key) {
+    public function get($key, $default_value = null) {
         $cache_file = $this->getCacheFile($key);
         if (!file_exists($cache_file)) {
             return false;
         }
         try {
             $cache_data = file_get_contents($cache_file);
-            return Corelib\JsonTools::decode($cache_data);
+            return Corelib\JsonTools::decode($cache_data) ?: $default_value;
         } catch (WarningException $e) {
             DI::getDebugger()->dumpException($e);
             DI::getLogger()->logException($e, 'Notice');

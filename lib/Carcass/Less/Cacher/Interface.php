@@ -16,9 +16,10 @@ interface Cacher_Interface {
 
     /**
      * @param string $key
+     * @param null $default_value
      * @return mixed
      */
-    public function get($key);
+    public function get($key, $default_value = null);
 
     /**
      * @param string $key

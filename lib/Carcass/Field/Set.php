@@ -318,8 +318,12 @@ class Set extends Corelib\Hash implements FieldInterface {
         foreach ($this as $name => $Field) {
             /** @var FieldInterface $Field */
             $value = $Field->getValue();
-            if ($value instanceof self) {
-                $value = $value->exportArray();
+            if (is_object($value)) {
+                if ($value instanceof Corelib\ExportableInterface) {
+                    $value = $value->exportArray();
+                } else {
+                    $value = (array)$value;
+                }
             }
             $result[$name] = $value;
         }
