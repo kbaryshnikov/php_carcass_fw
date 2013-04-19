@@ -19,7 +19,7 @@ use Carcass\Corelib;
 class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
 
     const DEFAULT_MC_KEY = 's_{{ session_id }}';
-    const DEFAULT_MC_EXPIRE = 3600;
+    const DEFAULT_MC_EXPIRE = 86400;
 
     /** @var string */
     protected $mc_key_tmpl = self::DEFAULT_MC_KEY;

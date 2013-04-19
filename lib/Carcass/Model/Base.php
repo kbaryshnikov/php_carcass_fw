@@ -30,7 +30,6 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      */
     protected $Fieldset = null;
 
-
     public function __construct() {
         $this->initFieldset();
         $this->import($this->getModelFieldDefaultValues());
@@ -61,11 +60,19 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      * @return Field\Set
      */
     protected function getModelFieldset() {
-        return Field\Set::constructDynamic()
+        return $this->constructFieldsetInstance()
+            ->setDynamic(true)
             ->addFields(static::getModelFields())
             ->setRules(static::getModelRules())
             ->setFilters(static::getModelFilters())
             ->setDynamic(false);
+    }
+
+    /**
+     * @return Field\Set
+     */
+    protected function constructFieldsetInstance() {
+        return new Field\Set;
     }
 
     /**

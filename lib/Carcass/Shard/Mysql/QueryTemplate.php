@@ -49,6 +49,20 @@ class Mysql_QueryTemplate extends Mysql\QueryTemplate {
     }
 
     /**
+     * Expands to $alias1.unit_key = $alias2.unit_key
+     *
+     * @param string $alias1 table 1
+     * @param string $alias2 table 2
+     * @return string
+     */
+    public function on($alias1, $alias2) {
+        return join(' = ', [
+            $this->name("${alias1}.{$this->unit_key}"),
+            $this->name("${alias2}.{$this->unit_key}"),
+        ]);
+    }
+
+    /**
      * Expands to SET unit_key = unit_value, ... ,
      * @return string
      */

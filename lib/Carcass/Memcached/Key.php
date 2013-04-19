@@ -90,7 +90,7 @@ class Key {
                 $result[$key]('setOptions', $opts);
             } elseif (is_array($template)) {
                 $result[$key] = static::createMulti($template, $opts);
-            } else {
+            } elseif (!empty($template)) {
                 $result[$template] = static::create($template, $opts);
             }
         }

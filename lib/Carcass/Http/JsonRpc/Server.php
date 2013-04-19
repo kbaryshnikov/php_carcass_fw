@@ -152,7 +152,7 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
      */
     protected function dispatchRequest(JsonRpc_Request $Request) {
         $DispatcherFn = $this->DispatcherFn;
-        $response = $DispatcherFn($Request->getMethod(), new Corelib\Hash($Request->getParams()), $this);
+        $response = $DispatcherFn($Request->getMethod(), (new Corelib\Hash)->merge($Request->getParams()), $this);
         if (is_bool($response)) {
             $response = ['success' => $response];
         } elseif ($response instanceof Corelib\ExportableInterface) {

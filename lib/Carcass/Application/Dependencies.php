@@ -53,7 +53,7 @@ class Dependencies {
 
     /**
      * @var array of 'LibName' => [
-     *                  'source' => <SourceDefinition>, see Corelib\DependencyManager
+     *                  'source' => <SourceDefinition>
      *                  'target' => string subdirectory path in 'vendor' folder
      *               ]
      */

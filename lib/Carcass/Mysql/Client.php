@@ -63,7 +63,7 @@ class Client {
     /**
      * @param string $template
      * @param array $args
-     * @return mixed
+     * @return int affected rows
      */
     public function query($template, array $args = []) {
         $this->executeQueryTemplate($template, $args);

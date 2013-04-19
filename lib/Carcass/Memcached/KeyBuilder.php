@@ -55,6 +55,22 @@ class KeyBuilder extends StringTemplate {
     }
 
     /**
+     * @param $bool
+     * @return mixed
+     */
+    public function b($bool) {
+        return $bool ? '+' : '-';
+    }
+
+    /**
+     * @param $bool
+     * @return mixed
+     */
+    public function bNul($bool) {
+        return $this->nullOr('b', $bool);
+    }
+
+    /**
      * @param $int
      * @return mixed
      */

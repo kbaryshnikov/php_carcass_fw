@@ -104,7 +104,17 @@ class QueryTemplate extends StringTemplate {
      * @return string
      */
     public function json($value) {
-        return JsonTools::encode($value);
+        return $this->s(JsonTools::encode($value));
+    }
+
+    /**
+     * Alias for json call
+     *
+     * @param $value
+     * @return string
+     */
+    public function jsonEncode($value) {
+        return $this->json($value);
     }
 
     /**

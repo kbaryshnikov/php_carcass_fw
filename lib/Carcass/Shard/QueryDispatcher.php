@@ -34,16 +34,20 @@ class QueryDispatcher extends MemcachedDispatcher {
     /**
      * @param string $sql_query_template
      * @param array $args
-     * @param array|null sequence  [ 'sequence_name' => 'field_name' ]
+     * @param array|string|null sequence  [ 'sequence_name' => 'field_name' ], or string if sequence_name == field_name
      * @return mixed
      */
-    public function insert($sql_query_template, array $args = [], array $sequence = null) {
+    public function insert($sql_query_template, array $args = [], $sequence = null) {
         $this->doModify(
             function (Mysql_Client $Db, $args) use ($sql_query_template, $sequence) {
                 $sequence_value = null;
                 if ($sequence) {
-                    reset($sequence);
-                    list ($sequence_name, $sequence_field_name) = each($sequence);
+                    if (!is_array($sequence)) {
+                        $sequence_name = $sequence_field_name = (string)$sequence;
+                    } else {
+                        reset($sequence);
+                        list ($sequence_name, $sequence_field_name) = each($sequence);
+                    }
                     $this->last_insert_id_field_name = $sequence_field_name;
 
                     $sequence_value = $args[$sequence_field_name] = $Db->getSequenceNextValue($sequence_name);

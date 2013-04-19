@@ -255,5 +255,29 @@ class QueryBaseTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('BAR', $Query->getLastResult()[0]['s']);
         $this->assertEquals('BAZ', $Query->getLastResult()[1]['s']);
     }
+
+    public function testFetchListWithCallback() {
+        $Query = new Query\BaseDispatcher;
+        $Query->modify('drop table if exists t');
+        $Query->modify('create table t (id int auto_increment, s varchar(255), primary key(id)) engine=innodb');
+        $Query->modify('insert into t (s) values (\'foo\'), (\'bar\'), (\'baz\'), (\'z\'), (\'zz\')');
+        $Query
+            ->fetchListWith(
+                function(Mysql\Client $Db, array $args, &$count) {
+                    $count = $Db->getCell('SELECT COUNT(*) FROM t WHERE id >= {{ i(min_id) }}', $args);
+                    return $Db->getAll('SELECT * FROM t WHERE id >= {{ i(min_id) }} {{ limit(limit, offset) }}', $args);
+                }
+            )
+            ->setLimit(2)
+            ->setOffset(0)
+            ->execute( ['min_id' => 2] );
+
+        $count = $Query->getLastCount();
+        $this->assertEquals(4, $count);
+
+        $result   = $Query->getLastResult();
+        $expected = [['id' => 2, 's' => 'bar'], ['id' => 3, 's' => 'baz']];
+        $this->assertEquals($expected, $result);
+    }
 }
 

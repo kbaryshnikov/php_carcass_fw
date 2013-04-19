@@ -71,15 +71,15 @@ class TaggedCache {
     }
 
     /**
-     * setTags 
+     * setTags
      *
      * sets tag keys for current context.
      * The first tag is "hard": if it was flushed, the key is considered expired.
      * Second and later tags are "soft": the key itself does not get expired if tags are flushed
      * (and does not carry versions of soft tags), but flush is applied to all tags including 'soft'.
      * To specify multiple hard tags, use arrag as the first item.
-     * 
-     * @param array $tags 
+     *
+     * @param array $tags
      * @param array $key_options
      * @return self
      */
@@ -91,23 +91,25 @@ class TaggedCache {
             $hard_tags = [$hard_tags];
         }
         $this->key_options = $key_options;
-        $this->tags = $this->createKeys([
-            self::TAG_HARD     => $hard_tags,
-            self::TAG_SOFT   => $tags,
-        ]);
+        $this->tags = $this->createKeys(
+            [
+                self::TAG_HARD => $hard_tags,
+                self::TAG_SOFT => $tags,
+            ]
+        );
         return $this;
     }
 
     /**
-     * expireIn 
+     * expireIn
      *
      * Sets expiration time for all keys
-     * 
+     *
      * @param int $seconds expiration time, null for default
      * @return self
      */
     public function expireIn($seconds) {
-        $this->expiration = intval($seconds) ?: null;
+        $this->expiration = intval($seconds) ? : null;
         return $this;
     }
 
@@ -204,7 +206,7 @@ class TaggedCache {
         }
         if ($keys) {
             foreach ($this->buildKeys($this->createKeys($keys), $args) as $Key) {
-                $this->Connection->delete($Key);
+                $Key and $this->Connection->delete($Key);
             }
         }
         return $this;
@@ -216,7 +218,7 @@ class TaggedCache {
      * @return array|bool
      */
     protected function dispatchGet(array $Keys, array $args) {
-        $tag_keys  = $this->getHardTagKeys($args);
+        $tag_keys = $this->getHardTagKeys($args) ?: [];
         $data_keys = $this->buildKeys($Keys, $args);
 
         $mc_result = $this->Connection->get(array_merge(array_values($tag_keys), array_values($data_keys)));
@@ -266,7 +268,7 @@ class TaggedCache {
             throw new \LogicException("Keys and values count mismatch");
         }
 
-        $tag_value = $this->Connection->getTransactionId() ?: Corelib\UniqueId::generate();
+        $tag_value = $this->Connection->getTransactionId() ? : Corelib\UniqueId::generate();
         $tag_keys = $this->getAllTagKeys($args);
 
         $tags = [];
@@ -317,7 +319,7 @@ class TaggedCache {
             foreach ($result as $tags) {
                 $flat_result = array_merge($flat_result, $tags);
             }
-            return $flat_result;
+            $result = $flat_result;
         }
         return $result;
     }
@@ -334,7 +336,10 @@ class TaggedCache {
                 $result[$importance] = [];
             } else {
                 foreach ($this->tags[$importance] as $tag_template => $TagKey) {
-                    $result[$importance][$tag_template] = self::TAG_NAMESPACE . $TagKey($args);
+                    $key = $TagKey($args);
+                    if ($key) {
+                        $result[$importance][$tag_template] = self::TAG_NAMESPACE . $key;
+                    }
                 }
             }
         }

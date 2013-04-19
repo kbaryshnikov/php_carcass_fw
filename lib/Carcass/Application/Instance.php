@@ -350,6 +350,8 @@ class Instance {
 
         $lib_pathes[$lib_path] = true;
 
+        $autoload_functions = [];
+
         foreach ($dependencies as $dependency) {
             if (isset($dependency['source']['path'])) {
                 $path = rtrim($dependency['source']['path'], '/');
@@ -359,10 +361,16 @@ class Instance {
                 if ($realpath = realpath($path)) {
                     $lib_pathes[$realpath] = true;
                 }
+                if (isset($dependency['autoload_fn'])) {
+                    $autoload_functions[] = $dependency['autoload_fn'];
+                }
             }
         }
 
         $this->Autoloader->addToIncludePath(array_keys($lib_pathes));
+        foreach ($autoload_functions as $fn) {
+            $fn($this->Autoloader);
+        }
     }
 
     protected static function prefixNamespaces(array $list) {

@@ -138,6 +138,28 @@ class BaseDispatcher {
     }
 
     /**
+     * @param callable $fn (Mysql\Client $Db, array $args, &$count) -> array
+     * @param callable|null $finally_fn
+     * @return $this
+     */
+    public function fetchListWith(Callable $fn, Callable $finally_fn = null) {
+        return $this->setFetchWith(
+            function (Mysql\Client $Db, $args) use ($fn, $finally_fn) {
+                $count = null;
+                $args = $this->mixListArgsInto($args);
+                $do_fn = function() use ($fn, $Db, $args, &$count) {
+                    return $fn($Db, $args, $count);
+                };
+                $result = DI::getConnectionManager()->doInTransaction($do_fn, [], $finally_fn);
+                $this->last_result = $result;
+                $this->last_count = $count;
+                return $result;
+            }
+        );
+    }
+
+
+    /**
      * Sets the result converter function: mixed $fn(mixed query result)
      * @param callable $fn
      * @return $this
