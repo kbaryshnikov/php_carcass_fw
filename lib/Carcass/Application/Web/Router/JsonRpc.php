@@ -93,7 +93,7 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
         $Server = new Http\JsonRpc_Server(
             function ($method, Corelib\Hash $Args, Http\JsonRpc_Server $Server) use ($Controller) {
                 try {
-                    return $Controller->dispatch($this->jsonRpcMethodToRoute($method), $Args);
+                    return $Controller->dispatch($this->jsonRpcMethodToRoute($method), $Args, $Server);
                 } catch (ImplementationNotFoundException $e) {
                     throw Http\JsonRpc_Exception::constructMethodNotFoundException($method);
                 }

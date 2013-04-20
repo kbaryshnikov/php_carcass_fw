@@ -146,13 +146,37 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
     }
 
     /**
+     * @return $this
+     */
+    public function cleanCollectedResponse() {
+        $this->response_collector = [];
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBatchMode() {
+        return $this->batch_mode;
+    }
+
+    /**
      * @param JsonRpc_Request $Request
      * @return array
      * @throws JsonRpc_Exception
      */
     protected function dispatchRequest(JsonRpc_Request $Request) {
         $DispatcherFn = $this->DispatcherFn;
-        $response = $DispatcherFn($Request->getMethod(), (new Corelib\Hash)->merge($Request->getParams()), $this);
+        $response = $DispatcherFn(
+            $Request->getMethod(),
+            (new Corelib\Hash([
+                'JsonRpc' => [
+                    'Server' => $this,
+                    'Request' => $Request,
+                ]
+            ]))->merge($Request->getParams()),
+            $this
+        );
         if (is_bool($response)) {
             $response = ['success' => $response];
         } elseif ($response instanceof Corelib\ExportableInterface) {
