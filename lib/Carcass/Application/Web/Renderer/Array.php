@@ -9,15 +9,27 @@
 namespace Carcass\Application;
 use Carcass\Corelib;
 
-class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Interface, Corelib\ExportableInterface {
+class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Interface, Corelib\ExportableInterface, Corelib\FilterableInterface {
 
     protected $rendered_array = null;
 
+    /**
+     * @return array
+     */
     public function exportArray() {
         if (null === $this->rendered_array) {
             $this->rendered_array = $this->RenderData->exportArray();
         }
         return $this->rendered_array;
+    }
+
+    /**
+     * @param callable $fn filter function (array) -> array
+     * @return $this
+     */
+    public function filter(callable $fn) {
+        $this->rendered_array = $fn($this->exportArray());
+        return $this;
     }
 
     /**
