@@ -24,6 +24,8 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
     protected $api_url;
     /** @var string */
     protected $api_class_template;
+    /** @var string */
+    protected $json_rpc_server_class = null;
 
     /**
      * @param string $api_url
@@ -40,6 +42,15 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
      */
     public function setApiUrl($api_url) {
         $this->api_url = $api_url;
+        return $this;
+    }
+
+    /**
+     * @param string $class_name
+     * @return $this
+     */
+    public function setJsonRpcServerClass($class_name) {
+        $this->json_rpc_server_class = $class_name ?: null;
         return $this;
     }
 
@@ -90,7 +101,8 @@ class Web_Router_JsonRpc implements Web_Router_Interface {
             return true;
         }
 
-        $Server = new Http\JsonRpc_Server(
+        $server_class_name = $this->json_rpc_server_class ?: '\Carcass\Http\JsonRpc_Server';
+        $Server = new $server_class_name(
             function ($method, Corelib\Hash $Args, Http\JsonRpc_Server $Server) use ($Controller) {
                 try {
                     return $Controller->dispatch($this->jsonRpcMethodToRoute($method), $Args, $Server);

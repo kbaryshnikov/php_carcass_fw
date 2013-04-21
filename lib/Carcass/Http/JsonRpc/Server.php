@@ -95,9 +95,21 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
             DI::getDebugger()->dumpException($e);
             $Request->getId() and $this->addErrorResponse(
                 JsonRpc_Exception::ERR_SERVER_ERROR,
-                DI::getDebugger()->isEnabled() ? $e->getMessage() . "\n" . $e->getTraceAsString() : "Internal Server Error",
+                DI::getDebugger()->isEnabled()
+                    ?
+                    [
+                        'exception' => get_class($e),
+                        'message'   => $e->getMessage(),
+                        'file'      => $e->getFile(),
+                        'line'      => $e->getLine(),
+                        'backtrace' => explode("\n", $e->getTraceAsString()),
+                    ]
+                    : "Internal Server Error",
                 $Request->getId()
             );
+            if ($this->batch_mode) {
+                return $e;
+            }
         }
         return $result;
     }
@@ -118,6 +130,9 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
             } else {
                 $result = $this->processRequest($Request);
                 $AbortException = $result instanceof \Exception ? $result : null;
+                if ($AbortException && !$AbortException instanceof JsonRpc_Exception) {
+                    break;
+                }
             }
         }
         return false;
@@ -142,7 +157,7 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
         } else {
             $result = reset($this->response_collector);
         }
-        return $result ?: [];
+        return $result ? : [];
     }
 
     /**
@@ -171,7 +186,7 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
             $Request->getMethod(),
             (new Corelib\Hash([
                 'JsonRpc' => [
-                    'Server' => $this,
+                    'Server'  => $this,
                     'Request' => $Request,
                 ]
             ]))->merge($Request->getParams()),
@@ -216,7 +231,7 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
                     'code'    => $code,
                     'message' => $message,
                 ],
-                'id' => $id,
+                'id'    => $id,
             ]
         );
     }
