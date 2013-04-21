@@ -26,7 +26,9 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
 
         $DispatcherFn = function ($method, Corelib\Hash $Args, $Server) {
             $this->assertEquals('test', $method);
-            $this->assertEquals(['test_key' => 'test_value'], $Args->exportArray());
+            $args = $Args->exportArray();
+            unset($args['JsonRpc']);
+            $this->assertEquals(['test_key' => 'test_value'], $args);
             $this->assertInstanceOf('\Carcass\Http\JsonRpc_Server', $Server);
             return ['success' => true];
         };
@@ -176,7 +178,9 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
 
         $DispatcherFn = function ($method, Corelib\Hash $Args) {
             $this->assertEquals('test', $method);
-            $this->assertEquals(0, count($Args));
+            $args = $Args->exportArray();
+            unset($args['JsonRpc']);
+            $this->assertEquals(0, count($args));
             return ['success' => true];
         };
 
@@ -351,6 +355,33 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
         $Server->displayTo($Response);
     }
 
+    public function testJsonRpcArgsAreSent() {
+        $Response = $this->getMock('\Carcass\Corelib\ResponseInterface');
+        $Response
+            ->expects($this->once())
+            ->method('write');
+
+        $DispatcherFn = function ($method, Corelib\Hash $Args, $Server) {
+            $this->assertInstanceOf('\Carcass\Http\JsonRpc_Server', $Args->JsonRpc->Server);
+            $this->assertInstanceOf('\Carcass\Http\JsonRpc_Request', $Args->JsonRpc->Request);
+            return ['success' => true];
+        };
+
+        $Server = new Http\JsonRpc_Server($DispatcherFn);
+        $dispatcher_function_was_called = $Server->dispatchJsonString(
+            json_encode(
+                [
+                    'jsonrpc' => '2.0',
+                    'method'  => 'test',
+                    'params'  => [],
+                    'id'      => 1,
+                ]
+            )
+        );
+        $this->assertTrue($dispatcher_function_was_called);
+        $Server->displayTo($Response);
+    }
+
     public function testCatchAllExceptionMode() {
         $Response = $this->getMock('\Carcass\Corelib\ResponseInterface');
         $Response
@@ -437,8 +468,10 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
 
         $DispatcherFn = function ($method, Corelib\Hash $Args) {
             $dispatcher_function_was_called = ['success' => $method];
-            if (count($Args)) {
-                $dispatcher_function_was_called['args'] = $Args->exportArray();
+            $args = $Args->exportArray();
+            unset($args['JsonRpc']);
+            if (count($args)) {
+                $dispatcher_function_was_called['args'] = $args;
             }
             return $dispatcher_function_was_called;
         };

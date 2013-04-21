@@ -84,10 +84,17 @@ class Mysql_ShardManager {
         return $this->ShardingDb;
     }
 
+    /**
+     * @return Mysql_ServerIterator
+     */
     public function getServerIterator() {
         return new Mysql_ServerIterator($this->getModel());
     }
 
+    /**
+     * @param Mysql_Server $Server
+     * @return Mysql_ShardIterator
+     */
     public function getShardIterator(Mysql_Server $Server) {
         return new Mysql_ShardIterator($this->getModel(), $Server->getId());
     }

@@ -29,13 +29,13 @@ class Mysql_QueryTemplate extends Mysql\QueryTemplate {
      * @param string $template
      */
     public function __construct(Mysql_QueryParser $QueryParser, $template) {
-        $Unit           = $QueryParser->getClient()->getUnit();
+        $Unit = $QueryParser->getClient()->getUnit();
         $this->unit_key = $Unit->getKey();
-        $this->unit_id  = $Unit->getId();
+        $this->unit_id = $Unit->getId();
 
-        $Shard          = $Unit->getShard();
+        $Shard = $Unit->getShard();
         $this->shard_id = $Shard->getId();
-        $this->db_name  = $Shard->getDatabaseName();
+        $this->db_name = $Shard->getDatabaseName();
 
         parent::__construct($QueryParser, $template);
 
@@ -56,10 +56,12 @@ class Mysql_QueryTemplate extends Mysql\QueryTemplate {
      * @return string
      */
     public function on($alias1, $alias2) {
-        return join(' = ', [
-            $this->name("${alias1}.{$this->unit_key}"),
-            $this->name("${alias2}.{$this->unit_key}"),
-        ]);
+        return join(
+            ' = ', [
+                $this->name("${alias1}.{$this->unit_key}"),
+                $this->name("${alias2}.{$this->unit_key}"),
+            ]
+        );
     }
 
     /**
@@ -78,6 +80,21 @@ class Mysql_QueryTemplate extends Mysql\QueryTemplate {
     public function where() {
         $table_aliases = func_get_args();
         return 'WHERE ' . join(' AND ', $this->buildUnitCond($table_aliases)) . ' AND ';
+    }
+
+    /**
+     * @return string database name as string
+     */
+    public function databaseNameAsString() {
+        return $this->s($this->db_name);
+    }
+
+    /**
+     * @param $table_name
+     * @return string sharded table name escaped as string
+     */
+    public function tableNameAsString($table_name) {
+        return $this->s($table_name . $this->shard_id);
     }
 
     /**

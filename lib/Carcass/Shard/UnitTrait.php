@@ -36,7 +36,7 @@ trait UnitTrait {
     protected $MemcachedConnection = null;
 
     /**
-     * @return null
+     * @return \Carcass\Shard\Mysql_Shard
      */
     public function getShard() {
         if (null === $this->Shard) {
@@ -57,6 +57,20 @@ trait UnitTrait {
             $this->initializeShard();
         }
         $this->updateShard($OldShard);
+        return $this;
+    }
+
+    /**
+     * Explicitly force the unit to use $Shard for all further operations.
+     * Usable with empty units and shard operations which do not
+     * require shard unit. With existing units it's dangerous and apparently
+     * should never be used.
+     *
+     * @param ShardInterface $Shard
+     * @return $this
+     */
+    public function forceShard(ShardInterface $Shard) {
+        $this->Shard = $Shard;
         return $this;
     }
 
@@ -83,7 +97,7 @@ trait UnitTrait {
     }
 
     /**
-     * @return \Carcass\Connection\ConnectionInterface|null
+     * @return \Carcass\Connection\ConnectionInterface
      */
     public function getMemcachedConnection() {
         if (null === $this->MemcachedConnection) {

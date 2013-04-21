@@ -59,11 +59,12 @@ class Dispatcher {
 
     /**
      * @param \Exception $e
-     * @param null $level
+     * @param mixed $level
+     * @param string|null $prefix
      * @return $this
      */
-    public function logException(\Exception $e, $level = null) {
-        $this->logEvent($level ? : static::getExceptionLevel($e), static::formatExceptionMessage($e));
+    public function logException(\Exception $e, $level = null, $prefix = null) {
+        $this->logEvent($level ? : static::getExceptionLevel($e), ($prefix ? "$prefix: " : '') . static::formatExceptionMessage($e));
         return $this;
     }
 
