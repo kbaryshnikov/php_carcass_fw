@@ -9,6 +9,7 @@
 namespace Carcass\DevTools;
 
 use Carcass\Application as Application;
+use Carcass\Corelib\NullObject;
 
 /**
  * Debugger
@@ -20,6 +21,7 @@ class Debugger {
 
     protected $truncate = 0;
     protected $timers = [];
+    protected $timers_enabled = false;
 
     /**
      * @var BaseReporter
@@ -34,6 +36,23 @@ class Debugger {
             $this->setReporter($Reporter);
         }
     }
+
+    /**
+     * @return $this
+     */
+    public function enableTimers() {
+        $this->timers_enabled = true;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableTimers() {
+        $this->timers_enabled = false;
+        return $this;
+    }
+
 
     /**
      * @return bool
@@ -102,6 +121,9 @@ class Debugger {
      * @return Timer
      */
     public function createTimer($group, $message) {
+        if (!$this->timers_enabled) {
+            return new NullObject;
+        }
         $Timer = new Timer($message);
         return $this->timers[$group][] = $Timer;
     }
@@ -112,6 +134,9 @@ class Debugger {
      * @return $this
      */
     public function registerTimer($group, Timer $Timer) {
+        if (!$this->timers_enabled) {
+            return $this;
+        }
         $this->timers[$group][] = $Timer;
         return $this;
     }
@@ -121,6 +146,9 @@ class Debugger {
      * @return $this
      */
     public function dumpTimers($clean_stopped = false) {
+        if (!$this->timers_enabled) {
+            return $this;
+        }
         foreach ($this->timers as $group => &$timers) {
             $group_total = 0;
             $group_results = [];
@@ -128,7 +156,7 @@ class Debugger {
             foreach ($timers as $k => $Timer) {
                 /** @var Timer $Timer */
                 $value = $Timer->getValue();
-                $group_results[ sprintf('%3d: %0.8f', ++$i, $value ?: 0) ] = preg_replace('/\s+/', ' ', $Timer->getTitle());
+                $group_results[sprintf('%3d: %0.8f', ++$i, $value ? : 0)] = preg_replace('/\s+/', ' ', $Timer->getTitle());
                 if (null !== $value) {
                     $group_total += $value;
                 }
@@ -140,7 +168,7 @@ class Debugger {
                 unset($this->timers[$group]);
             }
             $group_total = sprintf('%0.4f', $group_total);
-            $this->dump($group_results, $group_total . ' ' .  trim(substr($group, 0, 15), '\\_ ') . '['.count($group_results).']', 'info');
+            $this->dump($group_results, $group_total . ' ' . trim(substr($group, 0, 15), '\\_ ') . '[' . count($group_results) . ']', 'info');
         }
         return $this;
     }
@@ -151,7 +179,7 @@ class Debugger {
      */
     public function truncate($string) {
         if (!isset($this->truncate)) {
-            $this->truncate = (int)Application\DI::getConfigReader()->getPath('application.debug.truncate', self::TRUNCATE_DEFAULT) ?: 0;
+            $this->truncate = (int)Application\DI::getConfigReader()->getPath('application.debug.truncate', self::TRUNCATE_DEFAULT) ? : 0;
         }
 
         if ($this->truncate > 0 && mb_strlen($string) > $this->truncate) {
@@ -161,6 +189,9 @@ class Debugger {
         return $string;
     }
 
+    /**
+     * @return void
+     */
     public function finalize() {
         $this->dumpTimers(true);
     }

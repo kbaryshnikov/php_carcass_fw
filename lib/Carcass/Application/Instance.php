@@ -502,6 +502,11 @@ class Instance {
     protected function setupDebugger() {
         if (($this->ConfigReader->getPath('application.debugger.enable') || !empty($_SERVER['DEBUG'])) && empty($_SERVER['NODEBUG'])) {
             $this->Debugger = new DevTools\Debugger($this->getDebuggerReporter());
+            if ($timers_config = $this->ConfigReader->getPath('application.debugger.timers')) {
+                if (true === $timers_config || $timers_config->get($this->app_env['run_mode'])) {
+                    $this->Debugger->enableTimers();
+                }
+            }
         } else {
             $this->Debugger = new DevTools\DebuggerStub;
         }
