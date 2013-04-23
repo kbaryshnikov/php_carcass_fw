@@ -246,10 +246,10 @@ class QueryTemplate extends StringTemplate {
      * Example: {{ like('?1%', prefix) }}
      *
      * @param string $template   'like' template; ?1 ?2 etc = placeholder for argument(s)
-     * @param string $s          arguments, _ % will be escaped
+     * @internal param vaargs arguments, _ % will be escaped
      * @return string
      */
-    public function like($template, $s /* ... */) {
+    public function like($template /* ... */) {
         $args = func_get_args();
         array_shift($args);
         array_walk(
@@ -267,6 +267,18 @@ class QueryTemplate extends StringTemplate {
                 $template
             )
         );
+    }
+
+    /**
+     * Set argument builder.
+     * Builds a comma-separated mysql SET value from $items
+     * keys with non-empty values.
+     *
+     * @param array $items   ex. [ 'foo' => true, 'bar' => 1, 'none' => false, 'none2' => null ]
+     * @return string        ex. 'foo,bar'
+     */
+    public function set(array $items) {
+        return $this->s(join(',', array_keys(array_filter($items))));
     }
 
     /**
