@@ -24,7 +24,7 @@ interface ControllerInterface {
 
     /**
      * @param $error_message
-     * @return void
+     * @return mixed
      */
     public function dispatchNotFound($error_message);
 

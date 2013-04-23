@@ -14,6 +14,7 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
         'News.ByTitle'      => '/news/{$title}',
         'News.ByIdAndTitle' => '/news/id/{#id}[-{$title}]',
         'Search'            => '/search/{+q}',
+        'Find'              => '/find/{*q}',
         'Nested'            => '/nested/[{#id}[-{$title}]]',
     ];
 
@@ -61,6 +62,24 @@ class Application_Web_Router_MapTest extends PHPUnit_Framework_TestCase {
         $C->expects($this->once())->method('dispatch')->with($this->equalTo('Search.Default'), $this->equalTo(new Corelib\Hash(['q'=>'1/2/3'])));
         /** @noinspection PhpParamsInspection */
         $R->route($this->getRequest('/search/1/2/3'), $C);
+    }
+
+    public function testOptionalSuffixEmptyArgs() {
+        $R = new Application\Web_Router_Map(self::$cfg);
+
+        $C = $this->getControllerMock();
+        $C->expects($this->once())->method('dispatch')->with($this->equalTo('Find.Default'), $this->equalTo(new Corelib\Hash(['q'=>''])));
+        /** @noinspection PhpParamsInspection */
+        $R->route($this->getRequest('/find/'), $C);
+    }
+
+    public function testOptionalSuffixArgs() {
+        $R = new Application\Web_Router_Map(self::$cfg);
+
+        $C = $this->getControllerMock();
+        $C->expects($this->once())->method('dispatch')->with($this->equalTo('Find.Default'), $this->equalTo(new Corelib\Hash(['q'=>'1/2/3'])));
+        /** @noinspection PhpParamsInspection */
+        $R->route($this->getRequest('/find/1/2/3'), $C);
     }
 
     public function testMixedArgs() {

@@ -124,13 +124,21 @@ abstract class Web_PageController extends Controller {
      * @throws \LogicException
      */
     protected function assembleRenderer($template_file = null) {
-        /** @var \Carcass\Config\ItemInterface $RendererCfg */
+        $RendererCfg = $this->getRendererConfiguration();
+        $class_name = Corelib\ObjectTools::resolveRelativeClassName($RendererCfg->get('class'), '\Carcass\Application\Web_Renderer_');
+        return new $class_name($RendererCfg->exportArrayFrom('args'), $template_file);
+    }
+
+    /**
+     * @return \Carcass\Config\ItemInterface
+     * @throws \LogicException
+     */
+    protected function getRendererConfiguration() {
         $RendererCfg = DI::getConfigReader()->getPath('web.renderer');
         if (!$RendererCfg) {
             throw new \LogicException('web.renderer is not defined in configuration');
         }
-        $class_name = Corelib\ObjectTools::resolveRelativeClassName($RendererCfg->get('class'), '\Carcass\Application\Web_Renderer_');
-        return new $class_name($RendererCfg->exportArrayFrom('args'), $template_file);
+        return $RendererCfg;
     }
 
     protected function initResultObject() {

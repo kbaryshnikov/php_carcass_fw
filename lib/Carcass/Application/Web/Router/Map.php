@@ -38,15 +38,12 @@ class Web_Router_Map implements Web_Router_Interface {
     /**
      * @param \Carcass\Corelib\Request $Request
      * @param ControllerInterface $Controller
+     * @return mixed
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
         $uri = $Request->Env->has('DOCUMENT_URI') ? $Request->Env->DOCUMENT_URI : strtok($Request->Env->REQUEST_URI, '?');
         $route = $this->findRoute($uri);
-        if (!$route) {
-            $Controller->dispatchNotFound("Route not found for $uri");
-        } else {
-            $Controller->dispatch($route[0], new Corelib\Hash($route[1]));
-        }
+        return $this->dispatchRoute($route, $Controller);
     }
 
     /**
@@ -102,6 +99,15 @@ class Web_Router_Map implements Web_Router_Interface {
         if (null === $url) {
             throw new \InvalidArgumentException("Route not registered: '$route'");
         }
+        return $this->createUrlInstance($url, $args);
+    }
+
+    /**
+     * @param string $url
+     * @param array $args
+     * @return Corelib\Url
+     */
+    protected function createUrlInstance($url, array $args) {
         return new Corelib\Url($url, $args);
     }
 
@@ -112,12 +118,14 @@ class Web_Router_Map implements Web_Router_Interface {
     protected function findRoute($uri) {
         $uri_len = strlen($uri);
         foreach ($this->routes as $prefix => $variants) {
-            if ($prefix == $uri && isset($variants[''])) {
-                return [$variants[''], []];
-            }
             $prefix_len = strlen($prefix);
             if ($prefix_len > $uri_len) {
                 continue;
+            }
+            if ($prefix_len == $uri_len) {
+                if ($prefix === $uri && isset($variants[''])) {
+                    return [$variants[''], []];
+                }
             }
             if (0 != strncmp($uri, $prefix, $prefix_len)) {
                 continue;
@@ -128,9 +136,11 @@ class Web_Router_Map implements Web_Router_Interface {
                     continue;
                 }
                 if (preg_match($regexp, $suffix, $matches)) {
-                    $args = Corelib\ArrayTools::filterAssoc($matches, function($key) {
-                        return is_string($key);
-                    });
+                    $args = Corelib\ArrayTools::filterAssoc(
+                        $matches, function ($key) {
+                            return is_string($key);
+                        }
+                    );
                     return [$route, $args];
                 }
             }
@@ -142,10 +152,12 @@ class Web_Router_Map implements Web_Router_Interface {
      * @param array $map
      */
     protected function loadMap(array $map) {
-        $this->rev_routes = Corelib\ArrayTools::mapAssoc($map, function(&$key, $value) {
-            $key = static::normalize($key);
-            return $value;
-        });
+        $this->rev_routes = Corelib\ArrayTools::mapAssoc(
+            $map, function (&$key, $value) {
+                $key = static::normalize($key);
+                return $value;
+            }
+        );
         $this->routes = $this->compileMap($this->rev_routes);
     }
 
@@ -166,7 +178,7 @@ class Web_Router_Map implements Web_Router_Interface {
      * @return string
      */
     protected static function normalize($route) {
-        return ucfirst(strtok($route, '.')) . '.' . ucfirst(strtok(null) ?: 'Default');
+        return ucfirst(strtok($route, '.')) . '.' . ucfirst(strtok(null) ? : 'Default');
     }
 
     /**
@@ -192,9 +204,11 @@ class Web_Router_Map implements Web_Router_Interface {
             }
             $routes[$prefix][$suffix_regexp] = $route;
         }
-        uksort($routes, function($a, $b) {
-            return strlen($b) - strlen($a);
-        });
+        uksort(
+            $routes, function ($a, $b) {
+                return strlen($b) - strlen($a);
+            }
+        );
         return $routes;
     }
 
@@ -205,6 +219,14 @@ class Web_Router_Map implements Web_Router_Interface {
             $route_name .= ".{$action}";
         }
         return $route_name;
+    }
+
+    protected function dispatchRoute($route, ControllerInterface $Controller) {
+        if (!$route) {
+            return $Controller->dispatchNotFound("Route not found");
+        } else {
+            return $Controller->dispatch($route[0], new Corelib\Hash($route[1]));
+        }
     }
 
 }

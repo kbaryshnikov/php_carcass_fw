@@ -76,7 +76,7 @@ class UrlTemplate {
         $regexp = preg_replace(
             array_keys(static::$var_type_regexps),
             array_values(static::$var_type_regexps),
-            static::parseOptionals( addcslashes($pattern, '.?*()^') )
+            static::parseOptionals( addcslashes($pattern, '.?()^') )
         );
         if (preg_match_all('/{.*}/', $regexp, $matches)) {
             throw new \RuntimeException("Incorrect selections: " . join(', ', $matches[0]));
@@ -92,7 +92,7 @@ class UrlTemplate {
         if (is_array($in)) {
             $in = '(?:' . substr($in[1], 1, -1) . ')?';
         }
-        return preg_replace_callback('/(?P<pn>\[((?' . '>[^\[\]]+)|(?P>pn))*\])/', [get_called_class(), __FUNCTION__], $in);
+        return preg_replace_callback('/(?P<pn>\[((?>[^\[\]]+)|(?P>pn))*\])/', [get_called_class(), __FUNCTION__], $in);
     }
 
     /**
@@ -203,11 +203,13 @@ class UrlTemplate {
             '/{\s*(#)\s*(\w+)\s*}/Ui' => '(?P<$2>\d+)',
             '/{\s*(\$)\s*(\w+)\s*}/Ui' => '(?P<$2>[^/]+)',
             '/{\s*(\+)\s*(\w+)\s*}/Ui' => '(?P<$2>.+)',
+            '/{\s*(\*)\s*(\w+)\s*}/Ui' => '(?P<$2>.*)',
         ],
         $var_type_castings = [
             '#' => array(__CLASS__, 'encodeIntElement'),
             '$' => array(__CLASS__, 'encodeUriElement'),
             '+' => 'trim',
+            '*' => 'trim',
         ];
 
 }

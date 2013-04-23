@@ -24,14 +24,15 @@ class Web_Router_Simple implements Web_Router_Interface {
     /**
      * @param \Carcass\Corelib\Request $Request
      * @param ControllerInterface $Controller
+     * @return mixed
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
         $uri   = $Request->Env->has('DOCUMENT_URI') ? $Request->Env->DOCUMENT_URI : strtok($Request->Env->REQUEST_URI, '?');
         $route = $this->findRoute($uri);
         if (!$route) {
-            $Controller->dispatchNotFound("Route not found for $uri");
+            return $Controller->dispatchNotFound("Route not found for $uri");
         } else {
-            $Controller->dispatch($route, new Corelib\Hash($Request->Args->exportArray()));
+            return $Controller->dispatch($route, new Corelib\Hash($Request->Args->exportArray()));
         }
     }
 

@@ -12,6 +12,7 @@ use Carcass\Corelib;
 class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Interface, Corelib\ExportableInterface, Corelib\FilterableInterface {
 
     protected $rendered_array = null;
+    protected $render_join_with = "";
 
     /**
      * @return array
@@ -33,11 +34,20 @@ class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Inter
     }
 
     /**
+     * @param $string
+     * @return $this
+     */
+    public function onRenderJoinElementsWith($string) {
+        $this->render_join_with = $string;
+        return $this;
+    }
+
+    /**
      * @param array $render_data
      * @return string
      */
     protected function doRender(array $render_data) {
         $this->rendered_array = $render_data;
-        return print_r($render_data, true);
+        return join($this->render_join_with, $render_data);
     }
 }

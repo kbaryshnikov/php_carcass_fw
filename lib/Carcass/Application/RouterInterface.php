@@ -19,6 +19,7 @@ interface RouterInterface {
     /**
      * @param \Carcass\Corelib\Request $Request
      * @param ControllerInterface $Controller
+     * @return mixed
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller);
 

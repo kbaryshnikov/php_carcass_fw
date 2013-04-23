@@ -1791,6 +1791,10 @@ class Compiler {
         unset($this->registeredVars[$name]);
     }
 
+    public function getVariable($name) {
+        return isset($this->registeredVars[$name]) ? $this->registeredVars[$name] : null;
+    }
+
     public function setImportDir($dirs) {
         $this->importDir = (array)$dirs;
     }

@@ -29,13 +29,14 @@ class Cli_Router implements RouterInterface {
      * If the argument is empty, dispatches the default.
      * @param \Carcass\Corelib\Request $Request
      * @param ControllerInterface $Controller
+     * @return mixed
      */
     public function route(Corelib\Request $Request, ControllerInterface $Controller) {
         $dispatcher_name = $this->getDispatcherName($Request->Args->get(0));
         try {
-            $Controller->dispatch($dispatcher_name, $Request->Args);
+            return $Controller->dispatch($dispatcher_name, $Request->Args);
         } catch (ImplementationNotFoundException $e) {
-            $Controller->dispatchNotFound("{$dispatcher_name}: {$e->getMessage()}");
+            return $Controller->dispatchNotFound("{$dispatcher_name}: {$e->getMessage()}");
         }
     }
 

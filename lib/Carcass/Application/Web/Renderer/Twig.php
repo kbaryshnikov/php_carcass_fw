@@ -107,8 +107,7 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
         }
         /** @noinspection PhpParamsInspection */
         $Env = new \Twig_Environment($this->assembleTwigLoader(), $env_args);
-        $Env->addFunction(new \Twig_SimpleFunction('url', [$this, 'getTwigUrl']));
-        $Env->addFunction(new \Twig_SimpleFunction('static', [$this, 'getTwigStaticUrl']));
+        $this->setupInternalExtensions($Env);
         foreach ($this->getSetting('extensions', []) as $ext_class => $ext_ctor_args) {
             /** @var \Twig_Extension $Extension */
             $Extension = Corelib\ObjectTools::construct(
@@ -158,6 +157,11 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
             $absolute = false;
         }
         return $absolute;
+    }
+
+    protected function setupInternalExtensions(\Twig_Environment $Env) {
+        $Env->addFunction(new \Twig_SimpleFunction('url', [$this, 'getTwigUrl']));
+        $Env->addFunction(new \Twig_SimpleFunction('static', [$this, 'getTwigStaticUrl']));
     }
 
     protected function assembleTwigLoader() {

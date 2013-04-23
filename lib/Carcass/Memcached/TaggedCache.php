@@ -213,6 +213,21 @@ class TaggedCache {
     }
 
     /**
+     * Flush specified tags
+     * @param array $tags
+     * @param array $args
+     * @return $this
+     */
+    public function flushTags(array $tags, array $args) {
+        foreach ($tags as $tag) {
+            $tag_key_template = $this->buildTagKeyTemplate($tag);
+            $TagKey = Key::create($tag_key_template, $this->key_options);
+            $TagKey and $this->getConnection()->delete($TagKey($args));
+        }
+        return $this;
+    }
+
+    /**
      * @param array $Keys
      * @param array $args
      * @return array|bool
@@ -338,12 +353,16 @@ class TaggedCache {
                 foreach ($this->tags[$importance] as $tag_template => $TagKey) {
                     $key = $TagKey($args);
                     if ($key) {
-                        $result[$importance][$tag_template] = self::TAG_NAMESPACE . $key;
+                        $result[$importance][$tag_template] = $this->buildTagKeyTemplate($key);
                     }
                 }
             }
         }
         return $result;
+    }
+
+    protected function buildTagKeyTemplate($key) {
+        return self::TAG_NAMESPACE . $key;
     }
 
     /**

@@ -14,7 +14,7 @@ use Carcass\Corelib;
  * Base web renderer
  * @package Carcass\Application
  */
-abstract class Web_Renderer_Base implements Web_Renderer_Interface {
+abstract class Web_Renderer_Base implements Web_Renderer_Interface, Corelib\RenderableInterface {
 
     /**
      * @var int
@@ -93,6 +93,17 @@ abstract class Web_Renderer_Base implements Web_Renderer_Interface {
                 $this->displayErrorBodyTo($Response);
             }
         }
+        return $this;
+    }
+
+    /**
+     * Nested rendering
+     *
+     * @param Corelib\ResultInterface $Result
+     * @return $this
+     */
+    public function renderTo(Corelib\ResultInterface $Result) {
+        $Result->assign($this->render());
         return $this;
     }
 
