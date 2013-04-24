@@ -277,7 +277,7 @@ class QueryTemplate extends StringTemplate {
      * @param array $items   ex. [ 'foo' => true, 'bar' => 1, 'none' => false, 'none2' => null ]
      * @return string        ex. 'foo,bar'
      */
-    public function set(array $items) {
+    public function setOf(array $items) {
         return $this->s(join(',', array_keys(array_filter($items))));
     }
 
