@@ -41,7 +41,8 @@ class TaggedCache {
      */
     public function __construct(Connection $Connection, array $tags = null, array $key_options = []) {
         $this->setConnection($Connection);
-        $tags and $this->setTags($tags, $key_options);
+        $this->setKeyOptions($key_options);
+        $tags and $this->setTags($tags);
     }
 
     /**
@@ -80,23 +81,26 @@ class TaggedCache {
      * To specify multiple hard tags, use arrag as the first item.
      *
      * @param array $tags
-     * @param array $key_options
      * @return self
      */
-    public function setTags(array $tags, array $key_options = []) {
+    public function setTags(array $tags) {
         $hard_tags = array_shift($tags);
         if (empty($hard_tags)) {
             $hard_tags = [];
         } elseif (!is_array($hard_tags)) {
             $hard_tags = [$hard_tags];
         }
-        $this->key_options = $key_options;
         $this->tags = $this->createKeys(
             [
                 self::TAG_HARD => $hard_tags,
                 self::TAG_SOFT => $tags,
             ]
         );
+        return $this;
+    }
+
+    public function setKeyOptions(array $options) {
+        $this->key_options = $options;
         return $this;
     }
 
@@ -352,6 +356,7 @@ class TaggedCache {
             } else {
                 foreach ($this->tags[$importance] as $tag_template => $TagKey) {
                     $key = $TagKey($args);
+                    $TagKey('setOptions', $this->key_options);
                     if ($key) {
                         $result[$importance][$tag_template] = $this->buildTagKeyTemplate($key);
                     }
@@ -373,6 +378,7 @@ class TaggedCache {
     protected function buildKeys(array $Keys, array $args) {
         $result = [];
         foreach ($Keys as $idx => $Key) {
+            $Key('setOptions', $this->key_options);
             $result[$idx] = $Key($args);
         }
         return $result;
