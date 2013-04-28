@@ -115,7 +115,7 @@ class UrlTemplate {
             }
             $cleaned_tpl = static::addQueryString($cleaned_tpl, $qs);
         }
-        return $cleaned_tpl;
+        return str_replace("\x00", '0', $cleaned_tpl);
     }
 
     /**

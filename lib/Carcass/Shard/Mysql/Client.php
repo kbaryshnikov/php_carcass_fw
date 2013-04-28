@@ -36,6 +36,11 @@ class Mysql_Client extends Mysql\Client {
     protected $sequence_table_name = self::DEFAULT_SEQUENCE_TABLE_NAME;
 
     /**
+     * @var bool
+     */
+    protected $is_su = false;
+
+    /**
      * @param UnitInterface $Unit
      * @param Mysql_QueryParser $QueryParser
      */
@@ -45,6 +50,46 @@ class Mysql_Client extends Mysql\Client {
         /** @var $Connection Mysql\Connection */
         $Connection = DI::getConnectionManager()->getConnection($Unit->getShard()->getDsn());
         parent::__construct($Connection, $QueryParser);
+    }
+
+    /**
+     * Upgrade connection to root privileges, or drop root privileges
+     * @param bool $enable
+     * @return $this
+     */
+    public function su($enable = true) {
+        if ($enable != $this->is_su) {
+            $this->is_su = $enable;
+            $Dsn = $this->Unit->getShard()->getDsn($this->is_su);
+            /** @var \Carcass\Mysql\Connection $Connection */
+            $Connection = DI::getConnectionManager()->getConnection($Dsn);
+            $this->setConnection($Connection);
+        }
+        return $this;
+    }
+
+    /**
+     * Run $fn with root database privileges
+     *
+     * @param callable $fn
+     * @param array $args
+     * @return mixed|null
+     * @throws \Exception
+     */
+    public function sudo(callable $fn, array $args = []) {
+        $result = null;
+        try {
+            $this->su(true);
+            $result = call_user_func_array($fn, $args);
+        } catch (\Exception $e) {
+            // pass
+        }
+        // finally:
+        $this->su(false);
+        if (isset($e)) {
+            throw $e;
+        }
+        return $result;
     }
 
     /**

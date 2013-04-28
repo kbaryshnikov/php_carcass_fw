@@ -63,6 +63,32 @@ class QueryDispatcher extends MemcachedDispatcher {
     }
 
     /**
+     * Upgrade connection to root privileges, or drop root privileges
+     * @param bool $enable
+     * @return $this
+     */
+    public function su($enable = true) {
+        /** @var Mysql_Client $Client */
+        $Client = $this->getDatabaseClient();
+        $Client->su($enable);
+        return $this;
+    }
+
+    /**
+     * Run $fn with root database privileges
+     *
+     * @param callable $fn
+     * @param array $args
+     * @return mixed|null
+     * @throws \Exception
+     */
+    public function sudo(callable $fn, array $args = []) {
+        /** @var Mysql_Client $Client */
+        $Client = $this->getDatabaseClient();
+        return $Client->sudo($fn, $args);
+    }
+
+    /**
      * @param array $options
      * @return \Carcass\Memcached\TaggedCache
      */

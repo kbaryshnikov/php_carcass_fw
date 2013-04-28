@@ -63,10 +63,11 @@ class Mysql_Shard extends Corelib\Hash implements ShardInterface {
     }
 
     /**
+     * @param bool $super
      * @return \Carcass\Connection\Dsn
      */
-    public function getDsn() {
-        return $this->getServer()->getDsn();
+    public function getDsn($super = false) {
+        return $this->getServer()->getDsn($super);
     }
 
     /**
