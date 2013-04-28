@@ -11,17 +11,17 @@ use Carcass\Corelib;
 
 class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Interface, Corelib\ExportableInterface, Corelib\FilterableInterface {
 
-    protected $rendered_array = null;
+    protected $rendered_result = null;
     protected $render_join_with = "";
 
     /**
      * @return array
      */
     public function exportArray() {
-        if (null === $this->rendered_array) {
-            $this->rendered_array = $this->RenderData->exportArray();
+        if (null === $this->rendered_result) {
+            $this->rendered_result = $this->RenderData->exportArray();
         }
-        return $this->rendered_array;
+        return $this->rendered_result;
     }
 
     /**
@@ -29,7 +29,7 @@ class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Inter
      * @return $this
      */
     public function filter(callable $fn) {
-        $this->rendered_array = $fn($this->exportArray());
+        $this->rendered_result = $fn($this->exportArray());
         return $this;
     }
 
@@ -47,7 +47,8 @@ class Web_Renderer_Array extends Web_Renderer_Base implements Web_Renderer_Inter
      * @return string
      */
     protected function doRender(array $render_data) {
-        $this->rendered_array = $render_data;
+        $this->rendered_result = $render_data;
         return join($this->render_join_with, $render_data);
     }
+
 }

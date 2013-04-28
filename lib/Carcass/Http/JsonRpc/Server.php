@@ -8,6 +8,7 @@
 
 namespace Carcass\Http;
 
+use Carcass\Application\Web_Renderer_Interface;
 use Carcass\Application\Web_Response;
 use Carcass\Corelib;
 use Carcass\Application\DI;
@@ -197,7 +198,7 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
         } elseif ($response instanceof Corelib\ExportableInterface) {
             $response = $response->exportArray();
         }
-        if (!is_array($response)) {
+        if (!is_array($response) && !is_string($response)) {
             DI::getLogger()->logWarning("Invalid response received from JSONRPC dispatcher function: " . var_export($response, true));
             throw JsonRpc_Exception::constructServerErrorException("Invalid method response received");
         }
