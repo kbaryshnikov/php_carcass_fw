@@ -423,6 +423,10 @@ class BaseDispatcher {
             $result = $this->getDatabaseClient()->getAll($sql_query_template, $args, $keys);
         }
 
+        if (!$count_modifier) {
+            $count = count($result);
+        }
+
         $this->last_count = $count;
         return $result;
     }

@@ -183,7 +183,7 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
 
     /**
      * @param $key
-     * @return mixed
+     * @return Field\FieldInterface|mixed
      */
     public function __get($key) {
         return $this->Fieldset->$key;
