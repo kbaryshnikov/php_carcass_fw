@@ -237,7 +237,7 @@ class TaggedCache {
      * @return array|bool
      */
     protected function dispatchGet(array $Keys, array $args) {
-        $tag_keys = $this->getHardTagKeys($args) ?: [];
+        $tag_keys = $this->getHardTagKeys($args) ? : [];
         $data_keys = $this->buildKeys($Keys, $args);
 
         $mc_result = $this->Connection->get(array_merge(array_values($tag_keys), array_values($data_keys)));
@@ -261,8 +261,11 @@ class TaggedCache {
                 DI::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' is not an array");
                 continue;
             }
-            if (!isset($mc_item[self::SUBKEY_TAGS], $mc_item[self::SUBKEY_DATA]) || !is_array($mc_item[self::SUBKEY_TAGS])) {
-                DI::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' has broken structure");
+            if (!array_key_exists(self::SUBKEY_DATA, $mc_item)
+                || !isset($mc_item[self::SUBKEY_TAGS])
+                || !is_array($mc_item[self::SUBKEY_TAGS])
+            ) {
+                DI::getLogger()->logEvent('Notice', "Malformed data in cache: '$key' has broken structure. Raw data:\n" . var_export($mc_item, true));
             }
             $key_tag_values = $mc_item[self::SUBKEY_TAGS];
             foreach ($tag_values as $tag_key => $tag_value) {
