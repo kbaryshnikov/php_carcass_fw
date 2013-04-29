@@ -22,10 +22,39 @@ class Web_RequestBuilder implements RequestBuilderInterface {
     public static function assembleRequest(array $app_env = []) {
         return new Corelib\Request([
             'Args'    => $_GET,
-            'Vars'    => $_SERVER['REQUEST_METHOD'] === 'POST' ? ((empty($_FILES) ? [] : $_FILES) + $_POST) : [],
+            'Vars'    => $_SERVER['REQUEST_METHOD'] === 'POST' ? ((empty($_FILES) ? [] : static::buildFiles($_FILES)) + $_POST) : [],
             'Env'     => static::setupWebEnv($_SERVER) + $app_env,
             'Cookies' => $_COOKIE,
         ]);
+    }
+
+    protected static function buildFiles(array $files) {
+        $result = [];
+        foreach ($files as $key => $value) {
+            $value = static::buildFile($value);
+            if ($value) {
+                $result[$key] = $value;
+            }
+        }
+        return $result;
+    }
+
+    protected static function buildFile(array $file) {
+        static $ref_key = 'tmp_name';
+        if (!isset($file[$ref_key])) {
+            return null;
+        }
+        if (is_array($file[$ref_key])) {
+            $result = [];
+            foreach ($file as $key => $key_values) {
+                foreach ($key_values as $file_no => $key_value) {
+                    $result[$file_no][$key] = $key_value;
+                }
+            }
+            return $result;
+        } else {
+            return $file;
+        }
     }
 
     protected static function setupWebEnv(array $env) {

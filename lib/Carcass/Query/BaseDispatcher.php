@@ -42,10 +42,11 @@ class BaseDispatcher {
      * @var callable|null
      */
     protected $result_converter_fn = null;
+
     /**
-     * @var bool
+     * @var callable|null
      */
-    protected $apply_converter_fn_to_inner_elements = false;
+    protected $rows_converter_fn = null;
 
     /**
      * @var Mysql\Client
@@ -165,7 +166,6 @@ class BaseDispatcher {
      * @return $this
      */
     public function setResultConverter(Callable $fn = null) {
-        $this->apply_converter_fn_to_inner_elements = false;
         $this->result_converter_fn = $fn;
         return $this;
     }
@@ -176,8 +176,7 @@ class BaseDispatcher {
      * @return $this
      */
     public function setRowsConverter(Callable $fn = null) {
-        $this->apply_converter_fn_to_inner_elements = true;
-        $this->result_converter_fn = $fn;
+        $this->rows_converter_fn = $fn;
         return $this;
     }
 
@@ -436,13 +435,15 @@ class BaseDispatcher {
      * @return array|mixed|null
      */
     protected function convertResult($result) {
-        if ($result && is_array($result) && $this->result_converter_fn) {
-            $fn = $this->result_converter_fn;
-            if ($this->apply_converter_fn_to_inner_elements) {
+        if ($result && is_array($result) && ($this->result_converter_fn || $this->rows_converter_fn)) {
+            if ($this->rows_converter_fn) {
+                $fn = $this->rows_converter_fn;
                 foreach ($result as $key => $value) {
                     $result[$key] = $fn($value, $key);
                 }
-            } else {
+            }
+            if ($this->result_converter_fn) {
+                $fn = $this->result_converter_fn;
                 $result = $fn($result);
             }
         }
