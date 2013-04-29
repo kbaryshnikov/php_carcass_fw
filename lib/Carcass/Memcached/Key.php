@@ -105,7 +105,7 @@ class Key {
      */
     public static function create($template, array $opts = []) {
         $Key = new self(new KeyBuilder($template, $opts));
-        return function() use ($Key, $template) {
+        $result = function() use ($Key, $template) {
             $args = func_get_args();
             if (empty($args)) {
                 $args = [[]];
@@ -121,6 +121,8 @@ class Key {
             }
             throw new \InvalidArgumentException("Invalid call");
         };
+        $result('setOptions', $opts);
+        return $result;
     }
 
 }

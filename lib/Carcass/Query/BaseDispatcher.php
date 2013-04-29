@@ -423,7 +423,7 @@ class BaseDispatcher {
             $result = $this->getDatabaseClient()->getAll($sql_query_template, $args, $keys);
         }
 
-        if (!$count_modifier) {
+        if (null === $count_modifier) {
             $count = count($result);
         }
 
@@ -438,9 +438,13 @@ class BaseDispatcher {
     protected function convertResult($result) {
         if ($result && is_array($result) && $this->result_converter_fn) {
             $fn = $this->result_converter_fn;
-            return $this->apply_converter_fn_to_inner_elements
-                ? array_map($fn, $result)
-                : $fn($result);
+            if ($this->apply_converter_fn_to_inner_elements) {
+                foreach ($result as $key => $value) {
+                    $result[$key] = $fn($value, $key);
+                }
+            } else {
+                $result = $fn($result);
+            }
         }
         return $result;
     }
