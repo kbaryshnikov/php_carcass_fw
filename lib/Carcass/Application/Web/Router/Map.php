@@ -117,7 +117,7 @@ class Web_Router_Map implements Web_Router_Interface {
      */
     protected function findRoute($uri) {
         $uri_len = strlen($uri);
-        foreach ($this->routes as $prefix => $variants) {
+        foreach ($this->routes ? : [] as $prefix => $variants) {
             $prefix_len = strlen($prefix);
             if ($prefix_len > $uri_len) {
                 continue;
@@ -131,7 +131,7 @@ class Web_Router_Map implements Web_Router_Interface {
                 continue;
             }
             $suffix = substr($uri, $prefix_len);
-            foreach ($variants as $regexp => $route) {
+            foreach ($variants ? : [] as $regexp => $route) {
                 if ($regexp === '') {
                     continue;
                 }
