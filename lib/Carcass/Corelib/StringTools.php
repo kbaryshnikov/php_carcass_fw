@@ -46,7 +46,6 @@ class StringTools {
      * @return mixed
      */
     public static function parseTemplate($template_string, array $args) {
-        /** @noinspection PhpUndefinedClassInspection */
         return StringTemplate::parseString($template_string, $args);
     }
 

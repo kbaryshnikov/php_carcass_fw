@@ -74,7 +74,6 @@ class FileIsValidImage extends Base {
      * @return bool
      */
     protected function isValidImage($filename) {
-        /** @noinspection PhpParamsInspection */
         $Imagick = new \Imagick;
         $Imagick->readImage($filename);
         $format = $Imagick->getImageFormat();

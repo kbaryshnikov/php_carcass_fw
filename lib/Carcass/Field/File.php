@@ -16,6 +16,8 @@ class File extends Base {
 
     protected $upload_struct;
 
+    protected $mime_type = null;
+
     /**
      * @param $value
      * @return bool
@@ -39,6 +41,7 @@ class File extends Base {
      */
     public function setValue($value) {
         $this->upload_struct = null;
+        $this->mime_type = null;
         if (empty($value)) {
             $this->value = null;
         } elseif (!$this->isValidUploadedFileStructure($value)) {
@@ -69,4 +72,27 @@ class File extends Base {
 
         return $set;
     }
+
+    public function getMimeType() {
+        if (null === $this->mime_type) {
+            $this->mime_type = $this->detectMimeType();
+        }
+        return $this->mime_type;
+    }
+
+    protected function detectMimeType() {
+        if ($this->value === self::INVALID_VALUE || null === $this->value) {
+            return null;
+        }
+        $finfo = finfo_open(FILEINFO_MIME);
+        try {
+            $mime = finfo_file($finfo, $this->value);
+            $mime = $mime ? trim(strtok($mime, ';')) : null;
+        } catch (\Exception $e) {
+            $mime = null;
+        }
+        finfo_close($finfo);
+        return $mime;
+    }
+
 }
