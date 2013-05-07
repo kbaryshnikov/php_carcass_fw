@@ -115,7 +115,7 @@ class Web_Router_Map implements Web_Router_Interface {
      * @param $uri
      * @return array|null
      */
-    protected function findRoute($uri) {
+    public function findRoute($uri) {
         $uri_len = strlen($uri);
         foreach ($this->routes ? : [] as $prefix => $variants) {
             $prefix_len = strlen($prefix);
