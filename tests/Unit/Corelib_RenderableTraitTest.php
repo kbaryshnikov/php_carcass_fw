@@ -133,5 +133,73 @@ class Corelib_RenderableTraitTest extends PHPUnit_Framework_TestCase {
         $this->setExpectedException('\InvalidArgumentException');
         (new RenderableTraitUser([]))->setRenderer('ffuuuu');
     }
+
+    public function testSubrender() {
+        $Result = new Corelib\Result;
+        $Result->bind(new Corelib_RenderableTraitTest_Outer);
+        $expected = [
+            'first' => 1,
+            'second' => 2,
+        ];
+        $actual = $Result->exportArray();
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testBindMerge() {
+        $Result = new Corelib\Result;
+
+        $Result->bind(new Corelib_RenderableTraitTest_Inner(['first' => 1]));
+        $Result->bindMerge(new Corelib_RenderableTraitTest_Inner(['second' => 2]));
+
+        $expected = [
+            'first' => 1,
+            'second' => 2,
+        ];
+
+        $actual = $Result->exportArray();
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testInnerBindMerge() {
+        $Result = new Corelib\Result;
+
+        $Result->inner->bind(new Corelib_RenderableTraitTest_Inner(['inner_first' => 1]));
+        $Result->inner->bindMerge(new Corelib_RenderableTraitTest_Inner(['inner_second' => 2]));
+
+        $expected = [
+            'inner' => [
+                'inner_first' => 1,
+                'inner_second' => 2,
+            ]
+        ];
+
+        $actual = $Result->exportArray();
+        $this->assertEquals($expected, $actual);
+    }
+
 }
 
+class Corelib_RenderableTraitTest_Outer implements Corelib\RenderableInterface {
+
+    public function renderTo(Corelib\ResultInterface $Result) {
+        $Result->first->bind(new Corelib_RenderableTraitTest_Inner(1));
+        $Result->second->bind(new Corelib_RenderableTraitTest_Inner(2));
+        return $this;
+    }
+
+}
+
+class Corelib_RenderableTraitTest_Inner implements Corelib\RenderableInterface {
+    
+    protected $id;
+
+    public function __construct($id) {
+        $this->id = $id;
+    }
+
+    public function renderTo(Corelib\ResultInterface $Result) {
+        $Result->assign($this->id);
+        return $this;
+    }
+
+}

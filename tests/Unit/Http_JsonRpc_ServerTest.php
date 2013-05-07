@@ -140,7 +140,7 @@ class Http_JsonRpc_ServerTest extends PHPUnit_Framework_TestCase {
             );
 
         $DispatcherFn = function ($method, Corelib\Hash $Args) {
-            return 'foo';
+            return new stdClass;
         };
 
         $Server = new Http\JsonRpc_Server($DispatcherFn);

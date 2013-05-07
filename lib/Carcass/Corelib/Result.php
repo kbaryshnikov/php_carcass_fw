@@ -23,6 +23,11 @@ class Result implements ResultInterface {
     /** @var RenderableInterface */
     protected $RenderableObject = null;
 
+    /** @var RenderableInterface[] */
+    protected $MergeObjects = [];
+
+    protected $merge_next = false;
+
     /**
      * Binds a renderable object. $RenderableObject->renderTo($this) will be called, implementation must assign().
      *
@@ -35,25 +40,67 @@ class Result implements ResultInterface {
     }
 
     /**
+     * Binds an extra renderable object which will be merged to main bound object.
+     *
+     * @param RenderableInterface $RenderableObject
+     * @return $this
+     */
+    public function bindMerge(RenderableInterface $RenderableObject) {
+        array_push($this->MergeObjects, $RenderableObject);
+        return $this;
+    }
+
+    /**
      * Assigns values. The preferred way is calling this method from inside Renderable::renderTo();
      * massive assign() calls from page controllers usually mean design problems.
      *
      * @param mixed $values
+     * @param boolean|null $merge
      * @return $this
      */
-    public function assign($values) {
+    public function assign($values, $merge = null) {
+        if (null === $merge) {
+            if ($this->merge_next) {
+                $merge = true;
+                $this->merge_next = false;
+            }
+        }
+        if ($merge) {
+            if ($values instanceof ExportableInterface) {
+                $values = $values->exportArray();
+            }
+            if (is_array($values)) {
+                ArrayTools::mergeInto($this->values, $values, [], true);
+                return $this;
+            }
+        }
         $this->values = $values;
         return $this;
     }
 
     /**
      * Fetches array. Passes RenderableObjects and nested results recursively.
+     * @throws \Exception
      * @return array
      */
     public function exportArray() {
         if (null !== $this->RenderableObject) {
             $this->RenderableObject->renderTo($this);
             $this->RenderableObject = null; // we should have assign()-ed values now, so should not call renderTo() twice.
+        }
+        while ($RenderableObject = array_pop($this->MergeObjects)) { // handle bindMerge'd objects
+            $this->merge_next = true;
+            $e = null;
+            try {
+                $RenderableObject->renderTo($this);
+            } catch (\Exception $e) {
+                // pass
+            }
+            // finally
+            $this->merge_next = false;
+            if ($e) {
+                throw $e;
+            }
         }
         if (ArrayTools::isTraversable($this->values)) {
             $result = array();
