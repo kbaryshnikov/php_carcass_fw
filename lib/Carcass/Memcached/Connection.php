@@ -181,6 +181,31 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         $this->MemcachedInstance = null;
     }
 
+    /**
+     * Dispatch delayed pseudo-transaction calls but leave pseudo-transaction status untouched.
+     * Useful for "savepoints" emulation
+     *
+     * @return $this
+     * @throws \Exception
+     */
+    public function dispatchDelayedCalls() {
+        $delay_mode = $this->delay_mode;
+        $this->delay_mode = false;
+        try {
+            while ($call = array_shift($this->delayed_calls)) {
+                $this->dispatch($call[0], $call[1], $call[2]);
+            }
+        } catch (\Exception $e) {
+            // pass
+        }
+        // finally:
+        $this->delay_mode = $delay_mode;
+        if (isset($e)) {
+            throw $e;
+        }
+        return $this;
+    }
+
     protected function beginTransaction() {
         $this->delay_mode = true;
         $this->delayed_calls = [];
@@ -188,9 +213,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
 
     protected function commitTransaction() {
         $this->delay_mode = false;
-        while ($call = array_shift($this->delayed_calls)) {
-            $this->dispatch($call[0], $call[1], $call[2]);
-        }
+        $this->dispatchDelayedCalls();
     }
 
     protected function rollbackTransaction() {

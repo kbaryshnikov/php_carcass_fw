@@ -14,8 +14,6 @@ use Carcass\Query;
 /**
  * Memcached list model
  *
- * @method Query\MemcachedDispatcher getQueryDispatcher()
- *
  * @package Carcass\Model
  */
 abstract class MemcachedList extends ListBase implements \Iterator, \ArrayAccess, \Countable, Corelib\ExportableInterface, Corelib\RenderableInterface, Query\ListReceiverInterface {

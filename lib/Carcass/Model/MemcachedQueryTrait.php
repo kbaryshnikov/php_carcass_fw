@@ -91,27 +91,6 @@ trait MemcachedQueryTrait {
     }
 
     /**
-     * @return Query\MemcachedDispatcher
-     *
-    protected function constructQueryDispatcher() {
-        return new Query\MemcachedDispatcher;
-    }
-
-    protected function configureAssembledQueryDispatcher(Query\BaseDispatcher $QueryDispatcher) {
-        if (!$QueryDispatcher instanceof Query\MemcachedDispatcher) {
-            throw new \InvalidArgumentException('instanceof Query\MemcachedDispatcher required');
-        }
-        $this->configureAssembledBaseQueryDispatcher($QueryDispatcher);
-        if (null !== $config_path = $this->getConfigMemcachedDsnPath()) {
-            $QueryDispatcher->setConfigDatabaseDsnPath($config_path);
-        }
-        return $QueryDispatcher
-            ->setTags($this->getCurrentCacheTags())
-            ->useCache($this->getCurrentCacheKey());
-    }
-     * */
-
-    /**
      * @return string|null
      */
     protected function getConfigMemcachedDsnPath() {
