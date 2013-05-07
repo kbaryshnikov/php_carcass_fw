@@ -32,15 +32,39 @@ class ArrayTools {
     }
 
     /**
+     * @param \Traversable $var
+     * @return array
+     * @throws \InvalidArgumentException
+     */
+    public static function traversableToArray($var) {
+        if (!static::isTraversable($var)) {
+            throw new \InvalidArgumentException('Traversable expected');
+        }
+        if (is_array($var)) {
+            return $var;
+        }
+        $result = [];
+        foreach ($var as $key => $value) {
+            if (static::isTraversable($value)) {
+                $result[$key] = static::traversableToArray($value);
+            } else {
+                $result[$key] = $value;
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Recursively merge arrays by keys with filter
      *
      * @param array &$a1
-     * @param array $a2
+     * @param array|\Traversable $a2
      * @param array $unset_values remove $a1 item if the same $a2 item strictly strictly exists in $unset_values
      * @param bool $replace overwrite existing
      * @return void
      */
-    public static function mergeInto(array &$a1, array $a2, array $unset_values = [], $replace = false) {
+    public static function mergeInto(array &$a1, $a2, array $unset_values = [], $replace = false) {
+        $a2 = static::traversableToArray($a2);
         foreach ($a2 as $k => $v) {
             if (count($unset_values) && in_array($v, $unset_values, true)) {
                 unset($a1[$k]);

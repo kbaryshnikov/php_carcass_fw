@@ -15,6 +15,11 @@ namespace Carcass\Corelib;
  */
 class Result implements ResultInterface {
 
+    /**
+     * @var Result[]
+     */
+    protected $subresults = [];
+
     protected $values = [];
 
     /** @var callable */
@@ -25,8 +30,6 @@ class Result implements ResultInterface {
 
     /** @var RenderableInterface[] */
     protected $MergeObjects = [];
-
-    protected $merge_next = false;
 
     /**
      * Binds a renderable object. $RenderableObject->renderTo($this) will be called, implementation must assign().
@@ -55,26 +58,10 @@ class Result implements ResultInterface {
      * massive assign() calls from page controllers usually mean design problems.
      *
      * @param mixed $values
-     * @param boolean|null $merge
      * @return $this
      */
-    public function assign($values, $merge = null) {
-        if (null === $merge) {
-            if ($this->merge_next) {
-                $merge = true;
-                $this->merge_next = false;
-            }
-        }
-        if ($merge) {
-            if ($values instanceof ExportableInterface) {
-                $values = $values->exportArray();
-            }
-            if (is_array($values)) {
-                ArrayTools::mergeInto($this->values, $values, [], true);
-                return $this;
-            }
-        }
-        $this->values = $values;
+    public function assign($values) {
+        $this->assignValue($values);
         return $this;
     }
 
@@ -89,19 +76,9 @@ class Result implements ResultInterface {
             $this->RenderableObject = null; // we should have assign()-ed values now, so should not call renderTo() twice.
         }
         while ($RenderableObject = array_pop($this->MergeObjects)) { // handle bindMerge'd objects
-            $this->merge_next = true;
-            $e = null;
-            try {
-                $RenderableObject->renderTo($this);
-            } catch (\Exception $e) {
-                // pass
-            }
-            // finally
-            $this->merge_next = false;
-            if ($e) {
-                throw $e;
-            }
+            $RenderableObject->renderTo($this);
         }
+        $this->exportSubresults();
         if (ArrayTools::isTraversable($this->values)) {
             $result = array();
             foreach ($this->values as $key => $values) {
@@ -120,10 +97,10 @@ class Result implements ResultInterface {
      * @return self
      */
     public function __get($k) {
-        if (!array_key_exists($k, $this->values)) {
-            $this->values[$k] = $this->constructSelfSubitem();
+        if (!array_key_exists($k, $this->subresults)) {
+            $this->subresults[$k] = $this->constructSelfSubitem();
         }
-        return $this->values[$k];
+        return $this->subresults[$k];
     }
 
     /**
@@ -184,6 +161,35 @@ class Result implements ResultInterface {
             throw new \InvalidArgumentException("array or instanceof RenderableInterface expected");
         }
         return $in;
+    }
+
+    protected function exportSubresults() {
+        foreach ($this->subresults as $key => $Result) {
+            $this->assignSubvalue($key, $Result->exportArray());
+            unset($this->subresults[$key]);
+        }
+    }
+
+    protected function assignValue($value, $replace = true) {
+        if (!is_array($value)) {
+            $this->values = $value;
+        } else {
+            if (!is_array($this->values)) {
+                $this->values = [];
+            }
+            ArrayTools::mergeInto($this->values, $value, [], $replace);
+        }
+    }
+
+    protected function assignSubvalue($key, $value, $replace = true) {
+        if (!is_array($value)) {
+            $this->values[$key] = $value;
+        } else {
+            if (!isset($this->values[$key]) || !is_array($this->values[$key])) {
+                $this->values[$key] = [];
+            }
+            ArrayTools::mergeInto($this->values[$key], $value, [], $replace);
+        }
     }
 
 }

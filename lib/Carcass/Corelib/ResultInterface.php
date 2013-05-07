@@ -18,10 +18,9 @@ interface ResultInterface extends ExportableInterface {
 
     /**
      * @param mixed $value
-     * @param null $merge
      * @return $this
      */
-    public function assign($value, $merge = null);
+    public function assign($value);
 
     /**
      * @param RenderableInterface|array $Object

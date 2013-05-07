@@ -195,6 +195,62 @@ class Corelib_RenderableTraitTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($expected, $Result->exportArray());
     }
 
+    public function testBindSubitems() {
+        $Result = new Corelib\Result;
+        $Result->bind(new Corelib_RenderableTraitTest_Inner(['x' => 1]));
+        $Result->inner->bind(new Corelib_RenderableTraitTest_Inner(['y' => 1]));
+        $expected = [
+            'x' => 1,
+            'inner' => [
+                'y' => 1,
+            ],
+        ];
+        $this->assertEquals($expected, $Result->exportArray());
+    }
+
+    public function testBindSubitemsMerge() {
+        $Result = new Corelib\Result;
+        $Result->bind(new Corelib_RenderableTraitTest_Inner(['x' => 1, 'inner' => ['x' => 1]]));
+        $Result->inner->bind(new Corelib_RenderableTraitTest_Inner(['y' => 1]));
+        $expected = [
+            'x' => 1,
+            'inner' => [
+                'x' => 1,
+                'y' => 1,
+            ],
+        ];
+        $this->assertEquals($expected, $Result->exportArray());
+    }
+
+    public function testBindSubitemsScalarPriority() {
+        $Result = new Corelib\Result;
+        $Result->bind(new Corelib_RenderableTraitTest_Inner(['x' => 1, 'inner' => ['y' => 'test']]));
+        $Result->inner->bind(new Corelib_RenderableTraitTest_Inner(['y' => 1]));
+        $expected = [
+            'x' => 1,
+            'inner' => [
+                'y' => 1,
+            ],
+        ];
+        $this->assertEquals($expected, $Result->exportArray());
+    }
+
+    public function testBindSubitemsBindMerge() {
+        $Result = new Corelib\Result;
+        $Result->bind(new Corelib_RenderableTraitTest_Inner(['x' => 1, 'inner' => ['x' => 1]]));
+        $Result->inner->bind(new Corelib_RenderableTraitTest_Inner(['y' => 1]));
+        $Result->inner->bindMerge(new Corelib_RenderableTraitTest_Inner(['z' => 1]));
+        $expected = [
+            'x' => 1,
+            'inner' => [
+                'x' => 1,
+                'y' => 1,
+                'z' => 1,
+            ],
+        ];
+        $this->assertEquals($expected, $Result->exportArray());
+    }
+
 }
 
 class Corelib_RenderableTraitTest_Outer implements Corelib\RenderableInterface {
