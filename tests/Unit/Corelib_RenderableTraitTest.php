@@ -177,6 +177,24 @@ class Corelib_RenderableTraitTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($expected, $actual);
     }
 
+    public function testBindArray() {
+        $expected = [
+            'inner' => $inner = [
+                'inner_first' => 1,
+                'inner_second' => 2,
+            ]
+        ];
+
+        $inner_merge = ['inner_third' => 3];
+        $expected['inner'] += $inner_merge;
+
+        $Result = new Corelib\Result;
+        $Result->inner->bind($inner);
+        $Result->inner->bindMerge($inner_merge);
+
+        $this->assertEquals($expected, $Result->exportArray());
+    }
+
 }
 
 class Corelib_RenderableTraitTest_Outer implements Corelib\RenderableInterface {

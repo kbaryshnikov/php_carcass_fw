@@ -31,22 +31,22 @@ class Result implements ResultInterface {
     /**
      * Binds a renderable object. $RenderableObject->renderTo($this) will be called, implementation must assign().
      *
-     * @param RenderableInterface $RenderableObject
+     * @param RenderableInterface|array $RenderableObject
      * @return $this
      */
-    public function bind(RenderableInterface $RenderableObject) {
-        $this->RenderableObject = $RenderableObject;
+    public function bind($RenderableObject) {
+        $this->RenderableObject = $this->toBindable($RenderableObject);
         return $this;
     }
 
     /**
      * Binds an extra renderable object which will be merged to main bound object.
      *
-     * @param RenderableInterface $RenderableObject
+     * @param RenderableInterface|array $RenderableObject
      * @return $this
      */
-    public function bindMerge(RenderableInterface $RenderableObject) {
-        array_push($this->MergeObjects, $RenderableObject);
+    public function bindMerge($RenderableObject) {
+        array_push($this->MergeObjects, $this->toBindable($RenderableObject));
         return $this;
     }
 
@@ -169,6 +169,21 @@ class Result implements ResultInterface {
      */
     protected function constructSelfSubitem() {
         return new static;
+    }
+
+    /**
+     * @param RenderableInterface|array $in
+     * @return RenderableInterface
+     * @throws \InvalidArgumentException
+     */
+    protected function toBindable($in) {
+        if (is_array($in)) {
+            $in = new Hash($in);
+        }
+        if (!$in instanceof RenderableInterface) {
+            throw new \InvalidArgumentException("array or instanceof RenderableInterface expected");
+        }
+        return $in;
     }
 
 }
