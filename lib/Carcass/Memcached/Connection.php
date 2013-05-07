@@ -240,14 +240,20 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         }
 
         if (!$no_delay && $this->delay_mode && true == static::$mc_methods[$method]) {
-            $this->delayed_calls[] = [$method, $args, $is_required];
+            $delayed_call = [$method, $args, $is_required];
+            $this->delayed_calls = array_filter(
+                $this->delayed_calls, function ($value) use ($delayed_call) {
+                    return $value != $delayed_call;
+                }
+            );
+            $this->delayed_calls[] = $delayed_call;
             return true;
         }
 
         $MemcachedInstance = $this->getMemcachedInstance();
 
         $result = $this->develCollectExecutionTime(
-            function() use ($method, $args) {
+            function () use ($method, $args) {
                 return $method . (isset($args[0]) ? ' ' . json_encode($args[0]) : '');
             },
             function () use ($MemcachedInstance, $method, $args) {

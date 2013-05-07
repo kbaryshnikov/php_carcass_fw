@@ -79,6 +79,20 @@ class Memcached_ConnectionTest extends PHPUnit_Framework_TestCase {
         $McConn->dispatchDelayedCalls();
     }
 
+    public function testDelayedCallsDeduplication() {
+        $McMock = $this->getMcMock();
+        $McMock->expects($this->once())->method('get')->with($this->equalTo('a'))->will($this->returnValue('a_value'));
+        $McConn = new Connection($this->getTestPool());
+        $McConn->setMemcacheInstance($McMock);
+        $McConn->begin();
+        $McConn->get('a');
+        $McConn->set('a', 1);
+        $McConn->set('a', 1);
+        $McConn->set('a', 1);
+        $McMock->expects($this->once())->method('set')->with($this->equalTo('a'), $this->equalTo(1))->will($this->returnValue(true));
+        $McConn->dispatchDelayedCalls();
+    }
+
     public function testPseudoTransactionRollback() {
         $McMock = $this->getMcMock();
         $McMock->expects($this->never())->method('set');
