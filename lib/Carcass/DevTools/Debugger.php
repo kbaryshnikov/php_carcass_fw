@@ -194,6 +194,7 @@ class Debugger {
      */
     public function finalize() {
         $this->dumpTimers(true);
+        $this->Reporter->finalize();
     }
 
 }

@@ -65,6 +65,10 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         'getExtendedStats' => false,
     ];
 
+    protected static $hit_miss_methods = [
+        'get' => true
+    ];
+
     /** @var \Carcass\Connection\DsnPool */
     protected $Pool;
     /** @var \Carcass\Memcached\KeyBuilder|null */
@@ -252,6 +256,8 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
 
         $MemcachedInstance = $this->getMemcachedInstance();
 
+        $get_hit_miss = isset(static::$hit_miss_methods[$method]) && !empty($args[0]);
+
         $result = $this->develCollectExecutionTime(
             function () use ($method, $args) {
                 return $method . (isset($args[0]) ? ' ' . json_encode($args[0]) : '');
@@ -260,7 +266,18 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
                 $result = call_user_func_array([$this->getMemcachedInstance(), $method], $args);
                 $this->last_args = $args;
                 return $result;
-            }
+            },
+            $get_hit_miss ? function ($result) use ($method, $args) {
+                $message = [];
+                if (!is_array($args[0])) {
+                    $message[] = $args[0] . ':' . ($result === false ? 'MISS' : 'HIT');
+                } else {
+                    foreach ($args[0] as $key) {
+                        $message[] = $key . ':' . ((is_array($result) && isset($result[$key]) && false !== $result[$key]) ? 'HIT' : 'MISS');
+                    }
+                }
+                return ' ' . join(' ', $message);
+            } : null
         );
 
         if (false === $result && $is_required) {

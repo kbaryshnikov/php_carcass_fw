@@ -68,7 +68,7 @@ trait TimerTrait {
         $Timer->stop();
 
         if ($append_message_fn) {
-            $Timer->appendTitle($append_message_fn());
+            $Timer->appendTitle($append_message_fn($result));
         }
 
         if ($e) {

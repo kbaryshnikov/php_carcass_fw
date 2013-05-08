@@ -27,6 +27,13 @@ abstract class BaseReporter {
     abstract public function dumpException(\Exception $Exception);
 
     /**
+     * @return void
+     */
+    public function finalize() {
+        // pass
+    }
+
+    /**
      * @param mixed $value
      * @return string
      */

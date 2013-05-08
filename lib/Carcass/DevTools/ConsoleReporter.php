@@ -134,4 +134,8 @@ class ConsoleReporter extends BaseReporter {
         }
     }
 
+    public function finalize() {
+        $this->write("---------------------------------------------------------------------------------------------------------\n");
+    }
+
 }
