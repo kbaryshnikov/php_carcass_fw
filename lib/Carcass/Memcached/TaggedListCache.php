@@ -158,6 +158,7 @@ class TaggedListCache {
      * @return bool
      */
     public function set(array $args, array $values, $offset = null) {
+
         if ($offset === null) {
             $offset = 0;
             if (null === $this->count) {
@@ -170,10 +171,10 @@ class TaggedListCache {
         $slices = $this->splitIntoSlices($values, $offset, $incomplete_slices);
 
         if (empty($slices)) {
-            return false;
+            $slices = [];
         }
 
-        if ($incomplete_slices) {
+        if ($slices && $incomplete_slices) {
             $completion_keys = $this->getKeys($incomplete_slices);
             $cached_data     = $this->TaggedCache->getMulti($completion_keys, $args);
             if ($cached_data) {
