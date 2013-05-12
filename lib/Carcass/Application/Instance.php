@@ -169,7 +169,7 @@ class Instance {
     protected function bootstrap() {
         $this->setupLocale();
         $this->setupErrorHandler();
-        $this->loadApplicationConfiguration();
+        $this->loadApplicationRootConfiguration();
         $this->setupRunMode();
         $this->setupAutoloader();
         $this->startTimer();
@@ -399,7 +399,7 @@ class Instance {
         ErrorHandler::register();
     }
 
-    protected function loadApplicationConfiguration() {
+    protected function loadApplicationRootConfiguration() {
         if (!empty($this->options['env_data'])) {
             $env_data = (array)$this->options['env_data'];
         } else {
