@@ -1,6 +1,5 @@
 <?php
 
-use \Carcass\Corelib;
 use \Carcass\Corelib\DIContainer;
 
 class Corelib_DIContainerTest extends PHPUnit_Framework_TestCase {

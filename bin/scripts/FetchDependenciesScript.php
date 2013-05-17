@@ -53,8 +53,8 @@ class FetchDependenciesScript extends Controller {
         return 0;
     }
 
-    protected function isLocal(array $config) {
-        return $config['type'] === 'local';
+    protected function isLocal(array $source_config) {
+        return $source_config['type'] === 'local';
     }
 
     protected function updateDependency($name, array $config) {
