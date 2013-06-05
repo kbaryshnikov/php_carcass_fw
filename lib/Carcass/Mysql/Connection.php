@@ -33,9 +33,9 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     const DSN_TYPE = 'mysql';
 
     const XA_STATE_NON_EXISTING = 0;
-    const XA_STATE_ACTIVE       = 1;
-    const XA_STATE_IDLE         = 2;
-    const XA_STATE_PREPARED     = 3;
+    const XA_STATE_ACTIVE = 1;
+    const XA_STATE_IDLE = 2;
+    const XA_STATE_PREPARED = 3;
 
     /**
      * @var \Carcass\Connection\Dsn
@@ -133,6 +133,30 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
      */
     public function getLastInsertId() {
         return $this->getConnection()->insert_id ? : null;
+    }
+
+    /**
+     * @param string $db_name
+     * @return $this
+     * @throws \RuntimeException
+     */
+    public function selectDatabase($db_name) {
+        $result = $this->getConnection()->select_db($db_name);
+        if (!$result) {
+            throw new \RuntimeException(
+                "Could not select database '$db_name'."
+                . ' Error #' . $this->getConnection()->errno . ': ' . $this->getConnection()->error
+            );
+        }
+        $this->Dsn->set('name', $db_name);
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCurrentDatabaseName() {
+        return $this->Dsn->get('name') ? : null;
     }
 
     /**
@@ -268,7 +292,7 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
      */
     protected function createConnectionByCurrentDsn() {
         return $this->develCollectExecutionTime(
-            function() {
+            function () {
                 return 'connect: ' . $this->Dsn;
             },
             function () {

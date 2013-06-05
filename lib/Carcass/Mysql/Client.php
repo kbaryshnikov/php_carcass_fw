@@ -14,8 +14,10 @@ namespace Carcass\Mysql;
  * Proxies missing methods to $Connection via __call:
  * @method int getAffectedRows()
  * @method int getLastInsertId()
- * @method string escapeString()
- * @method string getDsn()
+ * @method string escapeString(string $str)
+ * @method \Carcass\Connection\Dsn getDsn()
+ * @method \Carcass\Mysql\Client selectDatabase(string $db_name)
+ * @method string|null getCurrentDatabaseName()
  *
  * @package Carcass\Mysql
  */
@@ -284,7 +286,11 @@ class Client {
         if (!method_exists($this->Connection, $method)) {
             throw new \BadMethodCallException('Undefined method: ' . $method);
         }
-        return call_user_func_array([$this->Connection, $method], $args);
+        $result = call_user_func_array([$this->Connection, $method], $args);
+        if ($result === $this->Connection) {
+            $result = $this;
+        }
+        return $result;
     }
 
 }
