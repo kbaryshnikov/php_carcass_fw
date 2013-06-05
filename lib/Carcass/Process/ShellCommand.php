@@ -106,7 +106,7 @@ class ShellCommand {
         $command = escapeshellcmd($this->cmd) . ' ' . $args;
 
         $descriptorspec = [
-            self::STDIN  => ["pipe", "r"],
+            self::STDIN  => is_resource($this->input) ? $this->input : ["pipe", "r"],
             self::STDOUT => $this->getDescriptor($stdout),
             self::STDERR => $this->getDescriptor($stderr),
         ];
@@ -115,7 +115,7 @@ class ShellCommand {
         if (!is_resource($process)) {
             throw new \RuntimeException("Cannot execute command: [{$command}]");
         }
-        if ($this->input) {
+        if ($this->input && !is_resource($this->input)) {
             foreach ($this->input as $line) {
                 fwrite($pipes[self::STDIN], $line);
             }
