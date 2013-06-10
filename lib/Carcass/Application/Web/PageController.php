@@ -51,11 +51,15 @@ abstract class Web_PageController extends Controller {
         if (null !== $init_result) {
             $result = $init_result;
         } else {
-            $result = $this->$method($Args);
+            $result = $this->executeActionMethod($method, $Args);
         }
         $action_result = $this->handleActionResult($result);
         $this->finalizeAfterAction();
         return $action_result;
+    }
+
+    protected function executeActionMethod($method, Corelib\Hash $Args) {
+        return $this->$method($Args);
     }
 
     protected function initBeforeAction() {
