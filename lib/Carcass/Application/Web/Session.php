@@ -14,8 +14,8 @@ use Carcass\Corelib;
  * Web Session implementation.
  *
  * @method mixed get($key, $default_value = null)
- * @method Web_Session set($key, $value)
- * @method Web_Session delete($key)
+ * @method \Carcass\Application\Web_Session set($key, $value)
+ * @method \Carcass\Application\Web_Session delete($key)
  * @package Carcass\Application
  */
 class Web_Session {
