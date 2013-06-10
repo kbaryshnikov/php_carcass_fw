@@ -20,6 +20,8 @@ use Carcass\Connection;
  */
 class Instance {
 
+    const API_VERSION = 20130610;
+
     protected static $env_defaults = [
         'configuration_name' => null,
         'lib_path'           => [],
@@ -170,6 +172,7 @@ class Instance {
         $this->setupLocale();
         $this->setupErrorHandler();
         $this->loadApplicationRootConfiguration();
+        $this->checkMinApiVersionRequirement();
         $this->setupRunMode();
         $this->setupAutoloader();
         $this->startTimer();
@@ -430,6 +433,14 @@ class Instance {
         }
     }
 
+    protected function checkMinApiVersionRequirement() {
+        if (isset($this->app_env['min_carcass_api_version'])) {
+            $min_api_version = (int)$this->app_env['min_carcass_api_version'];
+            if (self::API_VERSION < $min_api_version) {
+                throw new \RuntimeException("Application requires Carcass api version >= $min_api_version, current api version is " . self::API_VERSION);
+            }
+        }
+    }
 
     protected function setupRunMode() {
         if (empty($this->app_env['run_mode'])) {
