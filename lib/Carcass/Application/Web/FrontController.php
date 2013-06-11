@@ -79,8 +79,14 @@ class Web_FrontController implements FrontControllerInterface {
         $page_fq_class = Instance::getFqClassName($controller);
 
         /** @var ControllerInterface $Page */
-        $Page = new $page_fq_class($this->Request, $this->Response, $this->Router);
+        $Page = new $page_fq_class($this->buildPageRequest($Args), $this->Response, $this->Router);
         return $this->dispatchPageAction($Page, $action, $Args);
+    }
+
+    protected function buildPageRequest(Corelib\Hash $Args) {
+        $PageRequest = clone $this->Request;
+        $PageRequest->Args->import($Args);
+        return $PageRequest;
     }
 
     protected function dispatchPageAction(ControllerInterface $Page, $action, Corelib\Hash $Args) {
