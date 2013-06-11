@@ -136,11 +136,14 @@ class Manager {
      * Calls $fn for each connection in the registry, as $fn($Connection, $connection_dsn)
      *
      * @param callable $fn
+     * @param string|null $instance_of  apply $fn only to instances of $instance_of
      * @return $this
      */
-    public function forEachConnection(Callable $fn) {
+    public function forEachConnection(Callable $fn, $instance_of = null) {
         foreach ($this->registry as $dsn => $Connection) {
-            $fn($Connection, $dsn);
+            if (null === $instance_of || $Connection instanceof $instance_of) {
+                $fn($Connection, $dsn);
+            }
         }
         return $this;
     }
@@ -149,14 +152,17 @@ class Manager {
      * Calls $fn for each transactional connection in the registry, as $fn($Connection, $connection_dsn)
      *
      * @param callable $fn
-     * @param null|bool $xa: true = XA connections only, false = non-XA connections only, null = any transactional connection
+     * @param null|bool $xa              true = XA connections only, false = non-XA connections only, null = any transactional connection
+     * @param string|null $instance_of   apply $fn only to instances of $instance_of
      * @return $this
      */
-    public function forEachTransactionalConnection(Callable $fn, $xa = null) {
+    public function forEachTransactionalConnection(Callable $fn, $xa = null, $instance_of = null) {
         foreach ($this->registry as $dsn => $Connection) {
             if ($Connection instanceof TransactionalConnectionInterface) {
                 if (null === $xa || $xa === $Connection instanceof XaTransactionalConnectionInterface) {
-                    $fn($Connection, $dsn);
+                    if (null === $instance_of || $Connection instanceof $instance_of) {
+                        $fn($Connection, $dsn);
+                    }
                 }
             }
         }
