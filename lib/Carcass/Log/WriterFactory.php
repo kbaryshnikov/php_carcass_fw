@@ -58,23 +58,4 @@ class WriterFactory {
         return new SyslogWriter(isset($arguments['ident']) ? $arguments['ident'] : null);
     }
 
-    /**
-     * @param array $arguments
-     * @return MailWriter
-     * @throws \InvalidArgumentException
-     */
-    public static function assembleMailWriter(array $arguments) {
-        if (!isset($arguments['recipient'])) {
-            throw new \InvalidArgumentException('Required argument missing: "recipient"');
-        }
-        if (!isset($arguments['sender'])) {
-            throw new \InvalidArgumentException('Required argument missing: "sender"');
-        }
-        return new MailWriter(
-            Mail\Factory::createMailer(),
-            $arguments['recipient'],
-            $arguments['sender']
-        );
-    }
-
 }
