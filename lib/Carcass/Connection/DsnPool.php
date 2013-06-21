@@ -73,9 +73,8 @@ class DsnPool extends Corelib\Hash implements DsnInterface {
             }
         }
 
-        $this[] = $item;
-
         $this->string_id = null;
+        $this[] = $item;
         return $this;
     }
 

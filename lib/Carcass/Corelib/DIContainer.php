@@ -9,7 +9,7 @@
 namespace Carcass\Corelib;
 
 use Carcass\Application\PathManager;
-use Carcass\Config\ItemInterface;
+use Carcass\Config\Item;
 use Carcass\Connection\Manager;
 use Carcass\DevTools\Debugger;
 use Carcass\Log\Dispatcher as LogDispatcher;
@@ -21,8 +21,8 @@ use InvalidArgumentException;
  * Simple pseudo-IoC implementation.
  *
  * Below are a few commonly used definitions just for IDE hints.
- * @property ItemInterface ConfigReader
- * @method ItemInterface getConfigReader()
+ * @property Item ConfigReader
+ * @method Item getConfigReader()
  * @property Manager ConnectionManager
  * @method Manager getConnectionManager()
  * @property LogDispatcher Logger

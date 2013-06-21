@@ -91,6 +91,7 @@ class Cli_FrontController implements FrontControllerInterface {
 
     /**
      * @param $error_message
+     * @return void
      */
     public function dispatchNotFound($error_message) {
         $this->Response->setStatus(self::INPUT_ERROR)->writeErrorLn($error_message);

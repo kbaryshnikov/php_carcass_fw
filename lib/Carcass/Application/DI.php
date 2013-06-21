@@ -18,7 +18,7 @@ use Carcass\Corelib;
  * See __callStatic() for details.
  *
  * @method static \Carcass\Application\Autoloader getAutoloader();
- * @method static \Carcass\Config\ItemInterface getConfigReader()
+ * @method static \Carcass\Config\Item getConfigReader()
  * @method static \Carcass\Connection\Manager getConnectionManager()
  * @method static \Carcass\Log\Dispatcher getLogger()
  * @method static \Carcass\DevTools\Debugger getDebugger()

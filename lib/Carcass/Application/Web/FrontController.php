@@ -111,6 +111,7 @@ class Web_FrontController implements FrontControllerInterface {
 
     /**
      * @param $error_message
+     * @return void
      */
     public function dispatchNotFound($error_message) {
         $this->Response->writeHttpError(404, null, $error_message);

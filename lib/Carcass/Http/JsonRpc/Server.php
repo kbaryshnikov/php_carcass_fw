@@ -8,7 +8,6 @@
 
 namespace Carcass\Http;
 
-use Carcass\Application\Web_Renderer_Interface;
 use Carcass\Application\Web_Response;
 use Carcass\Corelib;
 use Carcass\Application\DI;
@@ -49,7 +48,7 @@ class JsonRpc_Server implements Corelib\RenderableInterface {
      * @return bool
      */
     public function dispatchJsonString($json_string) {
-        /** @var $Request JsonRpc_Request */
+        /** @var $Request JsonRpc_Request|JsonRpc_BatchRequest */
         $Request = null;
         try {
             $Request = JsonRpc_Request::factory($json_string, $this->batch_mode);

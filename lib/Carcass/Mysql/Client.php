@@ -6,7 +6,9 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
+/** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
 namespace Carcass\Mysql;
+use Carcass\Connection\Dsn;
 
 /**
  * MySQL Client
@@ -14,9 +16,9 @@ namespace Carcass\Mysql;
  * Proxies missing methods to $Connection via __call:
  * @method int getAffectedRows()
  * @method int getLastInsertId()
- * @method string escapeString(string $str)
+ * @method string escapeString($str)
  * @method \Carcass\Connection\Dsn getDsn()
- * @method \Carcass\Mysql\Client selectDatabase(string $db_name)
+ * @method Client selectDatabase($db_name)
  * @method string|null getCurrentDatabaseName()
  *
  * @package Carcass\Mysql

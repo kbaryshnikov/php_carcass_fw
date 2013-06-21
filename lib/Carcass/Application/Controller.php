@@ -51,6 +51,7 @@ abstract class Controller implements ControllerInterface {
 
     /**
      * @param string $error_message
+     * @return void
      * @throws \RuntimeException
      */
     public function dispatchNotFound($error_message) {
