@@ -21,10 +21,14 @@ class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
     const DEFAULT_MC_KEY = 's_{{ session_id }}';
     const DEFAULT_MC_EXPIRE = 86400;
 
+    const DEFAULT_BIND_MC_KEY = 'sb_{{ uid }}';
+
     /** @var string */
     protected $mc_key_tmpl = self::DEFAULT_MC_KEY;
     /** @var int */
     protected $mc_expire = self::DEFAULT_MC_EXPIRE;
+    /** @var string */
+    protected $mc_key_bind = self::DEFAULT_BIND_MC_KEY;
     /** @var \Carcass\Memcached\Connection */
     protected $Memcached;
 
@@ -101,11 +105,44 @@ class Web_Session_MemcachedStorage implements Web_Session_StorageInterface {
     }
 
     /**
+     * Returns session id bound to bind_uid
+     * @param string $bind_uid
+     * @return string|null
+     */
+    public function getBoundSid($bind_uid) {
+        return $this->Memcached->get($this->getBindMcacheKey($bind_uid)) ?: null;
+    }
+
+    /**
+     * Updates the session id bound to current bind_uid
+     *
+     * @param string $bind_uid
+     * @param string|null $session_id
+     * @return $this
+     */
+    public function setBoundSid($bind_uid, $session_id) {
+        if ($session_id) {
+            $this->Memcached->set($this->getBindMcacheKey($bind_uid), $session_id);
+        } else {
+            $this->Memcached->delete($this->getBindMcacheKey($bind_uid));
+        }
+        return $this;
+    }
+
+    /**
      * @param string $session_id
      * @return string
      */
     protected function getMcacheKey($session_id) {
         return Corelib\StringTemplate::constructFromString($this->mc_key_tmpl)->parse(['session_id' => $session_id]);
+    }
+
+    /**
+     * @param string $bind_uid
+     * @return string
+     */
+    protected function getBindMcacheKey($bind_uid) {
+        return Corelib\StringTemplate::constructFromString($this->mc_key_bind)->parse(['uid' => $bind_uid]);
     }
 
     /**

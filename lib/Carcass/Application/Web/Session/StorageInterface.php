@@ -35,4 +35,21 @@ interface Web_Session_StorageInterface {
      */
     public function delete($session_id);
 
+    /**
+     * Returns session id bound to current bind_uid
+     *
+     * @param string $bind_uid
+     * @return string|null
+     */
+    public function getBoundSid($bind_uid);
+
+    /**
+     * Updates the session id bound to current bind_uid
+     *
+     * @param string $bind_uid
+     * @param string|null $session_id
+     * @return $this
+     */
+    public function setBoundSid($bind_uid, $session_id);
+
 }

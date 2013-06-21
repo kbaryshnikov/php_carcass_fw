@@ -14,14 +14,16 @@ use Carcass\Corelib;
  * Web Session implementation.
  *
  * @method mixed get($key, $default_value = null)
- * @method \Carcass\Application\Web_Session set($key, $value)
- * @method \Carcass\Application\Web_Session delete($key)
+ * @method array exportArray()
+ * @method Web_Session set($key, $value)
+ * @method Web_Session delete($key)
  * @package Carcass\Application
  */
 class Web_Session {
 
     const DEFAULT_COOKIE_NAME = 's';
     const DEFAULT_COOKIE_LIFETIME = 0;
+    const SESSION_ID_REGEXP = '/^[a-zA-Z0-9_-]{22}$/';
 
     /**
      * @var bool|null
@@ -103,6 +105,49 @@ class Web_Session {
     }
 
     /**
+     * Bind $uid to this session
+     * @param string $uid
+     * @return $this
+     */
+    public function bind($uid) {
+        $this->ensureUidIsValid($uid);
+        $this->ensureSessionIsStarted();
+        if ($this->PersistentStorage) {
+            $this->PersistentStorage->setBoundSid($uid, $this->session_id);
+        }
+        return $this;
+    }
+
+    /**
+     * Check whether $uid is bound to this session
+     * @param string $uid
+     * @return bool true if $uid is bound to this session, otherwise false
+     */
+    public function isBoundTo($uid) {
+        $this->ensureUidIsValid($uid);
+        $this->ensureSessionIsStarted();
+        $bound_sid = $this->getBoundSessionId($uid);
+        return $bound_sid === $this->session_id;
+    }
+
+    protected function getBoundSessionId($uid) {
+        return $this->PersistentStorage ? $this->PersistentStorage->getBoundSid($uid) : null;
+    }
+
+    /**
+     * Unbind $uid from any session
+     * @param string $uid
+     * @return $this
+     */
+    public function unbind($uid) {
+        $this->ensureUidIsValid($uid);
+        if ($this->PersistentStorage) {
+            $this->PersistentStorage->setBoundSid($uid, null);
+        }
+        return $this;
+    }
+
+    /**
      * @param $method
      * @param array $args
      * @return mixed
@@ -142,7 +187,7 @@ class Web_Session {
             $this->PersistentStorage->delete($this->session_id);
         }
         $this->Data->clear();
-        $this->generateSessionId();
+        $this->session_id = null;
         return $this;
     }
 
@@ -189,6 +234,15 @@ class Web_Session {
     }
 
     /**
+     * @param bool $bool
+     * @return $this
+     */
+    public function setUserAgentSupportsCookies($bool = true) {
+        $this->user_agent_supports_cookies = (bool)$bool;
+        return $this;
+    }
+
+    /**
      * Returns the session identifier
      * @return string
      */
@@ -198,14 +252,15 @@ class Web_Session {
 
     /**
      * @param $session_id
+     * @throws \InvalidArgumentException
      * @return $this
      */
     public function setSessionId($session_id) {
         if (!$session_id) {
-            $session_id = $this->generateSessionId();
+            $this->generateSessionId();
+        } else {
+            $this->assignSessionId($session_id);
         }
-        $this->session_id = $session_id;
-        $this->loadDataFromPersistentStorage();
         return $this;
     }
 
@@ -221,6 +276,40 @@ class Web_Session {
         return $this;
     }
 
+    /**
+     * @param string|null $session_id, null = autodetect/autogenerate
+     * @return $this
+     * @throws \LogicException
+     */
+    public function start($session_id = null) {
+        if ($this->session_id !== null) {
+            throw new \LogicException("Session is already started");
+        }
+        if ($session_id) {
+            $this->assignSessionId($session_id);
+        } else {
+            $this->ensureSessionIsStarted();
+        }
+        return $this;
+    }
+
+    protected function generateSessionId() {
+        return $this->assignSessionId(Corelib\StringTools::webSafeBase64Encode(Corelib\Crypter::getRandomBytes(16)));
+    }
+
+    protected function assignSessionId($session_id) {
+        if (null === $session_id) {
+            $this->session_id = null;
+        } else {
+            if (!$this->isValidSessionId($session_id)) {
+                throw new \InvalidArgumentException("Incorrect session id: " . (is_scalar($session_id) ? "'$session_id'" : '[' . gettype($session_id) . ']'));
+            }
+            $this->session_id = $session_id;
+            $this->loadDataFromPersistentStorage();
+        }
+        return $this;
+    }
+
     protected function ensureSessionIsStarted() {
         if (!empty($this->session_id)) {
             return;
@@ -229,8 +318,6 @@ class Web_Session {
         if (!$this->loadSessionIdFromRequest()) {
             $this->generateSessionId();
         }
-
-        $this->loadDataFromPersistentStorage();
     }
 
     protected function loadDataFromPersistentStorage() {
@@ -253,12 +340,13 @@ class Web_Session {
      * @return bool
      */
     protected function isValidSessionId($session_id) {
-        return is_string($session_id) && preg_match('/^[a-zA-Z0-9_-]{22}$/', $session_id);
+        return is_string($session_id) && preg_match(self::SESSION_ID_REGEXP, $session_id);
     }
 
     protected function loadSessionIdFromRequest() {
-        $sources_to_try = array('Cookies', 'Vars', 'Args');
-        $result = null;
+        static $sources_to_try = ['Cookies', 'Vars', 'Args'];
+
+        $found_sid = null;
         $found_in = null;
 
         foreach ($sources_to_try as $source) {
@@ -266,7 +354,7 @@ class Web_Session {
                 $value = $this->Request->get($source)->get($this->cookie_name);
                 if ($this->isValidSessionId($value)) {
                     $found_in = $source;
-                    $result = $value;
+                    $found_sid = $value;
                     break;
                 }
             }
@@ -274,11 +362,15 @@ class Web_Session {
 
         $this->user_agent_supports_cookies = ($found_in === 'Cookies');
 
-        return $this->session_id = $result;
+        if ($found_sid) {
+            $this->assignSessionId($found_sid);
+            return true;
+        }
+        return false;
     }
 
-    protected function generateSessionId() {
-        return $this->session_id = Corelib\StringTools::webSafeBase64Encode(Corelib\Crypter::getRandomBytes(16));
+    protected function ensureUidIsValid($uid) {
+        Corelib\Assert::that('uid is a non-empty scalar value')->isNotEmpty($uid)->isScalar($uid);
     }
 
 }

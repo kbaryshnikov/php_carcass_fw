@@ -21,6 +21,7 @@ use Carcass\Corelib;
 class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
 
     const DEFAULT_SESSION_FILE_TEMPLATE = '%s.sess';
+    const DEFAULT_SESSION_BIND_FILE_TEMPLATE = 'bind.%s.sess';
     const DEFAULT_GC_PROBABILITY        = 0.005;
     const DEFAULT_GC_EXPIRATION         = 1800;
 
@@ -30,6 +31,8 @@ class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
     protected $directory = null;
     /** @var string */
     protected $file_tmpl = self::DEFAULT_SESSION_FILE_TEMPLATE;
+    /** @var string */
+    protected $bind_file_tmpl = self::DEFAULT_SESSION_BIND_FILE_TEMPLATE;
     /** @var float */
     protected $gc_probability = self::DEFAULT_GC_PROBABILITY;
     /** @var int */
@@ -100,6 +103,52 @@ class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
     }
 
     /**
+     * Returns session id bound to current bind_uid
+     *
+     * @param string $bind_uid
+     * @return string|null
+     */
+    public function getBoundSid($bind_uid) {
+        $filename = $this->getBoundSid($bind_uid);
+        if (!file_exists($filename)) {
+            return null;
+        }
+        try {
+            return file_get_contents($filename);
+        } catch (WarningException $e) {
+            if (false !== strpos($e->getMessage(), 'No such file or directory')) {
+                DI::getDebugger()->dumpException($e);
+                DI::getLogger()->logException($e);
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Updates the session id bound to current bind_uid
+     *
+     * @param string $bind_uid
+     * @param string|null $session_id
+     * @return $this
+     */
+    public function setBoundSid($bind_uid, $session_id) {
+        $filename = $this->getBoundSid($bind_uid);
+        if ($session_id) {
+            file_put_contents($filename, $session_id);
+        } elseif (file_exists($filename)) {
+            try {
+                unlink($filename);
+            } catch (WarningException $e) {
+                if (false !== strpos($e->getMessage(), 'No such file or directory')) {
+                    DI::getDebugger()->dumpException($e);
+                    DI::getLogger()->logException($e);
+                }
+            }
+        }
+        return $this;
+    }
+
+    /**
      * Triggers the garbage collector with a probability.
      */
     public function __destruct() {
@@ -118,6 +167,14 @@ class Web_Session_FilesystemStorage implements Web_Session_StorageInterface {
      */
     protected function getSessionFilePath($session_id) {
         return $this->directory . sprintf($this->file_tmpl, $session_id);
+    }
+
+    /**
+     * @param string $bind_uid
+     * @return string
+     */
+    protected function getSessionBindFilePath($bind_uid) {
+        return $this->directory . sprintf($this->bind_file_tmpl, $bind_uid);
     }
 
     protected function gc() {
