@@ -6,10 +6,8 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-namespace Carcass\Less;
-
 /**
- * lessphp v0.3.8
+ * lessphp v0.3.9
  * http://leafo.net/lessphp
  *
  * less css compiler, adapted from http://lesscss.org
@@ -18,6 +16,7 @@ namespace Carcass\Less;
  * licensed under mit or gplv3, see license
  */
 
+namespace Carcass\Less;
 
 /**
  * The less compiler and parser.
@@ -81,8 +80,8 @@ class Compiler {
     // attempts to find the path of an import url, returns null for css files
     protected function findImport($url) {
         foreach ((array)$this->importDir as $dir) {
-            $full = $dir.(substr($dir, -1) != '/' ? '/' : '').$url;
-            if ($this->fileExists($file = $full.'.less') || $this->fileExists($file = $full)) {
+            $full = $dir . (substr($dir, -1) != '/' ? '/' : '') . $url;
+            if ($this->fileExists($file = $full . '.less') || $this->fileExists($file = $full)) {
                 return $file;
             }
         }
@@ -95,8 +94,11 @@ class Compiler {
     }
 
     static public function compressList($items, $delim) {
-        if (!isset($items[1]) && isset($items[0])) return $items[0];
-        else return array('list', $delim, $items);
+        if (!isset($items[1]) && isset($items[0])) {
+            return $items[0];
+        } else {
+            return array('list', $delim, $items);
+        }
     }
 
     static public function preg_quote($what) {
@@ -109,15 +111,21 @@ class Compiler {
         }
 
         $str = $this->coerceString($importPath);
-        if ($str === null) return false;
+        if ($str === null) {
+            return false;
+        }
 
         $url = $this->compileValue($this->lib_e($str));
 
         // don't import if it ends in css
-        if (substr_compare($url, '.css', -4, 4) === 0) return false;
+        if (substr_compare($url, '.css', -4, 4) === 0) {
+            return false;
+        }
 
         $realPath = $this->findImport($url);
-        if ($realPath === null) return false;
+        if ($realPath === null) {
+            return false;
+        }
 
         if ($this->importDisabled) {
             return array(false, "/* import disabled */");
@@ -143,7 +151,8 @@ class Compiler {
             if (isset($parentBlock->children[$childName])) {
                 $parentBlock->children[$childName] = array_merge(
                     $parentBlock->children[$childName],
-                    $child);
+                    $child
+                );
             } else {
                 $parentBlock->children[$childName] = $child;
             }
@@ -200,25 +209,25 @@ class Compiler {
      */
     protected function compileBlock($block) {
         switch ($block->type) {
-        case "root":
-            $this->compileRoot($block);
-            break;
-        case null:
-            $this->compileCSSBlock($block);
-            break;
-        case "media":
-            $this->compileMedia($block);
-            break;
-        case "directive":
-            $name = "@" . $block->name;
-            if (!empty($block->value)) {
-                $name .= " " . $this->compileValue($this->reduce($block->value));
-            }
+            case "root":
+                $this->compileRoot($block);
+                break;
+            case null:
+                $this->compileCSSBlock($block);
+                break;
+            case "media":
+                $this->compileMedia($block);
+                break;
+            case "directive":
+                $name = "@" . $block->name;
+                if (!empty($block->value)) {
+                    $name .= " " . $this->compileValue($this->reduce($block->value));
+                }
 
-            $this->compileNestedBlock($block, array($name));
-            break;
-        default:
-            $this->throwError("unknown block type: $block->type\n");
+                $this->compileNestedBlock($block, array($name));
+                break;
+            default:
+                $this->throwError("unknown block type: $block->type\n");
         }
     }
 
@@ -303,21 +312,21 @@ class Compiler {
 
         foreach ($props as $prop) {
             switch ($prop[0]) {
-            case "assign":
-                if (isset($prop[1][0]) && $prop[1][0] == $this->vPrefix) {
-                    $vars[] = $prop;
-                } else {
+                case "assign":
+                    if (isset($prop[1][0]) && $prop[1][0] == $this->vPrefix) {
+                        $vars[] = $prop;
+                    } else {
+                        $other[] = $prop;
+                    }
+                    break;
+                case "import":
+                    $id = self::$nextImportId++;
+                    $prop[] = $id;
+                    $imports[] = $prop;
+                    $other[] = array("import_mixin", $id);
+                    break;
+                default:
                     $other[] = $prop;
-                }
-                break;
-            case "import":
-                $id = self::$nextImportId++;
-                $prop[] = $id;
-                $imports[] = $prop;
-                $other[] = array("import_mixin", $id);
-                break;
-            default:
-                $other[] = $prop;
             }
         }
 
@@ -334,22 +343,25 @@ class Compiler {
             $parts = array();
             foreach ($query as $q) {
                 switch ($q[0]) {
-                case "mediaType":
-                    $parts[] = implode(" ", array_slice($q, 1));
-                    break;
-                case "mediaExp":
-                    if (isset($q[2])) {
-                        $parts[] = "($q[1]: " .
-                            $this->compileValue($this->reduce($q[2])) . ")";
-                    } else {
-                        $parts[] = "($q[1])";
-                    }
-                    break;
+                    case "mediaType":
+                        $parts[] = implode(" ", array_slice($q, 1));
+                        break;
+                    case "mediaExp":
+                        if (isset($q[2])) {
+                            $parts[] = "($q[1]: " .
+                                $this->compileValue($this->reduce($q[2])) . ")";
+                        } else {
+                            $parts[] = "($q[1])";
+                        }
+                        break;
+                    case "variable":
+                        $parts[] = $this->compileValue($this->reduce($q));
+                        break;
                 }
             }
 
             if (count($parts) > 0) {
-                $compiledQueries[] =  implode(" and ", $parts);
+                $compiledQueries[] = implode(" and ", $parts);
             }
         }
 
@@ -363,8 +375,8 @@ class Compiler {
 
     protected function multiplyMedia($env, $childQueries = null) {
         if (is_null($env) ||
-            !empty($env->block->type) && $env->block->type != "media")
-        {
+            !empty($env->block->type) && $env->block->type != "media"
+        ) {
             return $childQueries;
         }
 
@@ -452,7 +464,7 @@ class Compiler {
         foreach ($selectors as $s) {
             if (is_array($s)) {
                 list(, $value) = $s;
-                $out[] = $this->compileValue($this->reduce($value));
+                $out[] = trim($this->compileValue($this->reduce($value)));
             } else {
                 $out[] = $s;
             }
@@ -482,7 +494,9 @@ class Compiler {
                     }
 
                     $passed = $this->reduce($guard) == self::$TRUE;
-                    if ($negate) $passed = !$passed;
+                    if ($negate) {
+                        $passed = !$passed;
+                    }
 
                     $this->popEnv();
 
@@ -494,7 +508,9 @@ class Compiler {
                     }
                 }
 
-                if ($groupPassed) break;
+                if ($groupPassed) {
+                    break;
+                }
             }
 
             if (!$groupPassed) {
@@ -512,20 +528,20 @@ class Compiler {
         // try to match by arity or by argument literal
         foreach ($block->args as $i => $arg) {
             switch ($arg[0]) {
-            case "lit":
-                if (empty($callingArgs[$i]) || !$this->eq($arg[1], $callingArgs[$i])) {
-                    return false;
-                }
-                break;
-            case "arg":
-                // no arg and no default value
-                if (!isset($callingArgs[$i]) && !isset($arg[2])) {
-                    return false;
-                }
-                break;
-            case "rest":
-                $i--; // rest can be empty
-                break 2;
+                case "lit":
+                    if (empty($callingArgs[$i]) || !$this->eq($arg[1], $callingArgs[$i])) {
+                        return false;
+                    }
+                    break;
+                case "arg":
+                    // no arg and no default value
+                    if (!isset($callingArgs[$i]) && !isset($arg[2])) {
+                        return false;
+                    }
+                    break;
+                case "rest":
+                    $i--; // rest can be empty
+                    break 2;
             }
         }
 
@@ -550,9 +566,13 @@ class Compiler {
     }
 
     // attempt to find blocks matched by path and args
-    protected function findBlocks($searchIn, $path, $args, $seen=array()) {
-        if ($searchIn == null) return null;
-        if (isset($seen[$searchIn->id])) return null;
+    protected function findBlocks($searchIn, $path, $args, $seen = array()) {
+        if ($searchIn == null) {
+            return null;
+        }
+        if (isset($seen[$searchIn->id])) {
+            return null;
+        }
         $seen[$searchIn->id] = true;
 
         $name = $path[0];
@@ -569,8 +589,10 @@ class Compiler {
             } else {
                 $matches = array();
                 foreach ($blocks as $subBlock) {
-                    $subMatches = $this->findBlocks($subBlock,
-                        array_slice($path, 1), $args, $seen);
+                    $subMatches = $this->findBlocks(
+                        $subBlock,
+                        array_slice($path, 1), $args, $seen
+                    );
 
                     if (!is_null($subMatches)) {
                         foreach ($subMatches as $sm) {
@@ -583,7 +605,9 @@ class Compiler {
             }
         }
 
-        if ($searchIn->parent === $searchIn) return null;
+        if ($searchIn->parent === $searchIn) {
+            return null;
+        }
         return $this->findBlocks($searchIn->parent, $path, $args, $seen);
     }
 
@@ -598,7 +622,9 @@ class Compiler {
                     $value = $values[$i];
                 } elseif (isset($a[2])) {
                     $value = $a[2];
-                } else $value = null;
+                } else {
+                    $value = null;
+                }
 
                 $value = $this->reduce($value);
                 $this->set($a[1], $value);
@@ -623,108 +649,116 @@ class Compiler {
         $this->sourceLoc = isset($prop[-1]) ? $prop[-1] : -1;
 
         switch ($prop[0]) {
-        case 'assign':
-            list(, $name, $value) = $prop;
-            if ($name[0] == $this->vPrefix) {
-                $this->set($name, $value);
-            } else {
-                $out->lines[] = $this->formatter->property($name,
-                        $this->compileValue($this->reduce($value)));
-            }
-            break;
-        case 'block':
-            list(, $child) = $prop;
-            $this->compileBlock($child);
-            break;
-        case 'mixin':
-            list(, $path, $args, $suffix) = $prop;
+            case 'assign':
+                list(, $name, $value) = $prop;
+                if ($name[0] == $this->vPrefix) {
+                    $this->set($name, $value);
+                } else {
+                    $out->lines[] = $this->formatter->property(
+                        $name,
+                        $this->compileValue($this->reduce($value))
+                    );
+                }
+                break;
+            case 'block':
+                list(, $child) = $prop;
+                $this->compileBlock($child);
+                break;
+            case 'mixin':
+                list(, $path, $args, $suffix) = $prop;
 
-            $args = array_map(array($this, "reduce"), (array)$args);
-            $mixins = $this->findBlocks($block, $path, $args);
+                $args = array_map(array($this, "reduce"), (array)$args);
+                $mixins = $this->findBlocks($block, $path, $args);
 
-            if ($mixins === null) {
-                // fwrite(STDERR,"failed to find block: ".implode(" > ", $path)."\n");
-                break; // throw error here??
-            }
-
-            foreach ($mixins as $mixin) {
-                $haveScope = false;
-                if (isset($mixin->parent->scope)) {
-                    $haveScope = true;
-                    $mixinParentEnv = $this->pushEnv();
-                    $mixinParentEnv->storeParent = $mixin->parent->scope;
+                if ($mixins === null) {
+                    // fwrite(STDERR,"failed to find block: ".implode(" > ", $path)."\n");
+                    break; // throw error here??
                 }
 
-                $haveArgs = false;
-                if (isset($mixin->args)) {
-                    $haveArgs = true;
-                    $this->pushEnv();
-                    $this->zipSetArgs($mixin->args, $args);
-                }
-
-                $oldParent = $mixin->parent;
-                if ($mixin != $block) $mixin->parent = $block;
-
-                foreach ($this->sortProps($mixin->props) as $subProp) {
-                    if ($suffix !== null &&
-                        $subProp[0] == "assign" &&
-                        is_string($subProp[1]) &&
-                        $subProp[1]{0} != $this->vPrefix)
-                    {
-                        $subProp[2] = array(
-                            'list', ' ',
-                            array($subProp[2], array('keyword', $suffix))
-                        );
+                foreach ($mixins as $mixin) {
+                    $haveScope = false;
+                    if (isset($mixin->parent->scope)) {
+                        $haveScope = true;
+                        $mixinParentEnv = $this->pushEnv();
+                        $mixinParentEnv->storeParent = $mixin->parent->scope;
                     }
 
-                    $this->compileProp($subProp, $mixin, $out);
+                    $haveArgs = false;
+                    if (isset($mixin->args)) {
+                        $haveArgs = true;
+                        $this->pushEnv();
+                        $this->zipSetArgs($mixin->args, $args);
+                    }
+
+                    $oldParent = $mixin->parent;
+                    if ($mixin != $block) {
+                        $mixin->parent = $block;
+                    }
+
+                    foreach ($this->sortProps($mixin->props) as $subProp) {
+                        if ($suffix !== null &&
+                            $subProp[0] == "assign" &&
+                            is_string($subProp[1]) &&
+                            $subProp[1]{0} != $this->vPrefix
+                        ) {
+                            $subProp[2] = array(
+                                'list', ' ',
+                                array($subProp[2], array('keyword', $suffix))
+                            );
+                        }
+
+                        $this->compileProp($subProp, $mixin, $out);
+                    }
+
+                    $mixin->parent = $oldParent;
+
+                    if ($haveArgs) {
+                        $this->popEnv();
+                    }
+                    if ($haveScope) {
+                        $this->popEnv();
+                    }
                 }
 
-                $mixin->parent = $oldParent;
+                break;
+            case 'raw':
+                $out->lines[] = $prop[1];
+                break;
+            case "directive":
+                list(, $name, $value) = $prop;
+                $out->lines[] = "@$name " . $this->compileValue($this->reduce($value)) . ';';
+                break;
+            case "comment":
+                $out->lines[] = $prop[1];
+                break;
+            case "import";
+                list(, $importPath, $importId) = $prop;
+                $importPath = $this->reduce($importPath);
 
-                if ($haveArgs) $this->popEnv();
-                if ($haveScope) $this->popEnv();
-            }
+                if (!isset($this->env->imports)) {
+                    $this->env->imports = array();
+                }
 
-            break;
-        case 'raw':
-            $out->lines[] = $prop[1];
-            break;
-        case "directive":
-            list(, $name, $value) = $prop;
-            $out->lines[] = "@$name " . $this->compileValue($this->reduce($value)).';';
-            break;
-        case "comment":
-            $out->lines[] = $prop[1];
-            break;
-        case "import";
-            list(, $importPath, $importId) = $prop;
-            $importPath = $this->reduce($importPath);
+                $result = $this->tryImport($importPath, $block, $out);
 
-            if (!isset($this->env->imports)) {
-                $this->env->imports = array();
-            }
+                $this->env->imports[$importId] = $result === false ?
+                    array(false, "@import " . $this->compileValue($importPath) . ";") :
+                    $result;
 
-            $result = $this->tryImport($importPath, $block, $out);
+                break;
+            case "import_mixin":
+                list(, $importId) = $prop;
+                $import = $this->env->imports[$importId];
+                if ($import[0] === false) {
+                    $out->lines[] = $import[1];
+                } else {
+                    list(, $bottom, $parser, $importDir) = $import;
+                    $this->compileImportedProps($bottom, $block, $out, $parser, $importDir);
+                }
 
-            $this->env->imports[$importId] = $result === false ?
-                array(false, "@import " . $this->compileValue($importPath).";") :
-                $result;
-
-            break;
-        case "import_mixin":
-            list(,$importId) = $prop;
-            $import = $this->env->imports[$importId];
-            if ($import[0] === false) {
-                $out->lines[] = $import[1];
-            } else {
-                list(, $bottom, $parser, $importDir) = $import;
-                $this->compileImportedProps($bottom, $block, $out, $parser, $importDir);
-            }
-
-            break;
-        default:
-            $this->throwError("unknown op: {$prop[0]}\n");
+                break;
+            default:
+                $this->throwError("unknown op: {$prop[0]}\n");
         }
     }
 
@@ -742,65 +776,65 @@ class Compiler {
      */
     protected function compileValue($value) {
         switch ($value[0]) {
-        case 'list':
-            // [1] - delimiter
-            // [2] - array of values
-            return implode($value[1], array_map(array($this, 'compileValue'), $value[2]));
-        case 'raw_color':
-            if (!empty($this->formatter->compressColors)) {
-                return $this->compileValue($this->coerceColor($value));
-            }
-            return $value[1];
-        case 'keyword':
-            // [1] - the keyword
-            return $value[1];
-        case 'number':
-            list(, $num, $unit) = $value;
-            // [1] - the number
-            // [2] - the unit
-            if ($this->numberPrecision !== null) {
-                $num = round($num, $this->numberPrecision);
-            }
-            return $num . $unit;
-        case 'string':
-            // [1] - contents of string (includes quotes)
-            list(, $delim, $content) = $value;
-            foreach ($content as &$part) {
-                if (is_array($part)) {
-                    $part = $this->compileValue($part);
+            case 'list':
+                // [1] - delimiter
+                // [2] - array of values
+                return implode($value[1], array_map(array($this, 'compileValue'), $value[2]));
+            case 'raw_color':
+                if (!empty($this->formatter->compressColors)) {
+                    return $this->compileValue($this->coerceColor($value));
                 }
-            }
-            return $delim . implode($content) . $delim;
-        case 'color':
-            // [1] - red component (either number or a %)
-            // [2] - green component
-            // [3] - blue component
-            // [4] - optional alpha component
-            list(, $r, $g, $b) = $value;
-            $r = round($r);
-            $g = round($g);
-            $b = round($b);
-
-            if (count($value) == 5 && $value[4] != 1) { // rgba
-                return 'rgba('.$r.','.$g.','.$b.','.$value[4].')';
-            }
-
-            $h = sprintf("#%02x%02x%02x", $r, $g, $b);
-
-            if (!empty($this->formatter->compressColors)) {
-                // Converting hex color to short notation (e.g. #003399 to #039)
-                if ($h[1] === $h[2] && $h[3] === $h[4] && $h[5] === $h[6]) {
-                    $h = '#' . $h[1] . $h[3] . $h[5];
+                return $value[1];
+            case 'keyword':
+                // [1] - the keyword
+                return $value[1];
+            case 'number':
+                list(, $num, $unit) = $value;
+                // [1] - the number
+                // [2] - the unit
+                if ($this->numberPrecision !== null) {
+                    $num = round($num, $this->numberPrecision);
                 }
-            }
+                return $num . $unit;
+            case 'string':
+                // [1] - contents of string (includes quotes)
+                list(, $delim, $content) = $value;
+                foreach ($content as &$part) {
+                    if (is_array($part)) {
+                        $part = $this->compileValue($part);
+                    }
+                }
+                return $delim . implode($content) . $delim;
+            case 'color':
+                // [1] - red component (either number or a %)
+                // [2] - green component
+                // [3] - blue component
+                // [4] - optional alpha component
+                list(, $r, $g, $b) = $value;
+                $r = round($r);
+                $g = round($g);
+                $b = round($b);
 
-            return $h;
+                if (count($value) == 5 && $value[4] != 1) { // rgba
+                    return 'rgba(' . $r . ',' . $g . ',' . $b . ',' . $value[4] . ')';
+                }
 
-        case 'function':
-            list(, $name, $args) = $value;
-            return $name.'('.$this->compileValue($args).')';
-        default: // assumed to be unit
-            $this->throwError("unknown value type: $value[0]");
+                $h = sprintf("#%02x%02x%02x", $r, $g, $b);
+
+                if (!empty($this->formatter->compressColors)) {
+                    // Converting hex color to short notation (e.g. #003399 to #039)
+                    if ($h[1] === $h[2] && $h[3] === $h[4] && $h[5] === $h[6]) {
+                        $h = '#' . $h[1] . $h[3] . $h[5];
+                    }
+                }
+
+                return $h;
+
+            case 'function':
+                list(, $name, $args) = $value;
+                return $name . '(' . $this->compileValue($args) . ')';
+            default: // assumed to be unit
+                $this->throwError("unknown value type: $value[0]");
         }
         return null;
     }
@@ -833,17 +867,24 @@ class Compiler {
         return $this->toBool($value[0] == "number" && $value[2] == "em");
     }
 
-    protected function lib_rgbahex($color) {
-        $color = $this->coerceColor($color);
-        if (is_null($color))
-            $this->throwError("color expected for rgbahex");
-
-        return sprintf("#%02x%02x%02x%02x",
-            isset($color[4]) ? $color[4]*255 : 255,
-            $color[1],$color[2], $color[3]);
+    protected function lib_isrem($value) {
+        return $this->toBool($value[0] == "number" && $value[2] == "rem");
     }
 
-    protected function lib_argb($color){
+    protected function lib_rgbahex($color) {
+        $color = $this->coerceColor($color);
+        if (is_null($color)) {
+            $this->throwError("color expected for rgbahex");
+        }
+
+        return sprintf(
+            "#%02x%02x%02x%02x",
+            isset($color[4]) ? $color[4] * 255 : 255,
+            $color[1], $color[2], $color[3]
+        );
+    }
+
+    protected function lib_argb($color) {
         return $this->lib_rgbahex($color);
     }
 
@@ -867,7 +908,9 @@ class Compiler {
     }
 
     protected function lib__sprintf($args) {
-        if ($args[0] != "list") return $args;
+        if ($args[0] != "list") {
+            return $args;
+        }
         $values = $args[2];
         $string = array_shift($values);
         $template = $this->compileValue($this->lib_e($string));
@@ -885,8 +928,10 @@ class Compiler {
 
                 $i++;
                 $rep = $this->compileValue($this->lib_e($val));
-                $template = preg_replace('/'.self::preg_quote($match).'/',
-                    $rep, $template, 1);
+                $template = preg_replace(
+                    '/' . self::preg_quote($match) . '/',
+                    $rep, $template, 1
+                );
             }
         }
 
@@ -907,6 +952,16 @@ class Compiler {
     protected function lib_round($arg) {
         $value = $this->assertNumber($arg);
         return array("number", round($value), $arg[2]);
+    }
+
+    protected function lib_unit($arg) {
+        if ($arg[0] == "list") {
+            list($number, $newUnit) = $arg[2];
+            return array("number", $this->assertNumber($number),
+                $this->compileValue($this->lib_e($newUnit)));
+        } else {
+            return array("number", $this->assertNumber($arg), "");
+        }
     }
 
     /**
@@ -962,20 +1017,22 @@ class Compiler {
         $hsl = $this->toHSL($color);
 
         $hsl[1] = $hsl[1] + $delta % 360;
-        if ($hsl[1] < 0) $hsl[1] += 360;
+        if ($hsl[1] < 0) {
+            $hsl[1] += 360;
+        }
 
         return $this->toRGB($hsl);
     }
 
     protected function lib_fadeout($args) {
         list($color, $delta) = $this->colorArgs($args);
-        $color[4] = $this->clamp((isset($color[4]) ? $color[4] : 1) - $delta/100);
+        $color[4] = $this->clamp((isset($color[4]) ? $color[4] : 1) - $delta / 100);
         return $color;
     }
 
     protected function lib_fadein($args) {
         list($color, $delta) = $this->colorArgs($args);
-        $color[4] = $this->clamp((isset($color[4]) ? $color[4] : 1) + $delta/100);
+        $color[4] = $this->clamp((isset($color[4]) ? $color[4] : 1) + $delta / 100);
         return $color;
     }
 
@@ -1012,15 +1069,16 @@ class Compiler {
 
     protected function lib_percentage($arg) {
         $num = $this->assertNumber($arg);
-        return array("number", $num*100, "%");
+        return array("number", $num * 100, "%");
     }
 
     // mixes two colors by weight
     // mix(@color1, @color2, @weight);
     // http://sass-lang.com/docs/yardoc/Sass/Script/Functions.html#mix-instance_method
     protected function lib_mix($args) {
-        if ($args[0] != "list" || count($args[2]) < 3)
+        if ($args[0] != "list" || count($args[2]) < 3) {
             $this->throwError("mix expects (color1, color2, weight)");
+        }
 
         list($first, $second, $weight) = $args[2];
         $first = $this->assertColor($first);
@@ -1033,7 +1091,7 @@ class Compiler {
         $w = $weight * 2 - 1;
         $a = $first_a - $second_a;
 
-        $w1 = (($w * $a == -1 ? $w : ($w + $a)/(1 + $w * $a)) + 1) / 2.0;
+        $w1 = (($w * $a == -1 ? $w : ($w + $a) / (1 + $w * $a)) + 1) / 2.0;
         $w2 = 1.0 - $w1;
 
         $new = array('color',
@@ -1049,20 +1107,45 @@ class Compiler {
         return $this->fixColor($new);
     }
 
+    protected function lib_contrast($args) {
+        if ($args[0] != 'list' || count($args[2]) < 3) {
+            return array(array('color', 0, 0, 0), 0);
+        }
+
+        list($inputColor, $darkColor, $lightColor) = $args[2];
+
+        $inputColor = $this->assertColor($inputColor);
+        $darkColor = $this->assertColor($darkColor);
+        $lightColor = $this->assertColor($lightColor);
+        $hsl = $this->toHSL($inputColor);
+
+        if ($hsl[3] > 50) {
+            return $darkColor;
+        }
+
+        return $lightColor;
+    }
+
     protected function assertColor($value, $error = "expected color value") {
         $color = $this->coerceColor($value);
-        if (is_null($color)) $this->throwError($error);
+        if (is_null($color)) {
+            $this->throwError($error);
+        }
         return $color;
     }
 
     protected function assertNumber($value, $error = "expecting number") {
-        if ($value[0] == "number") return $value[1];
+        if ($value[0] == "number") {
+            return $value[1];
+        }
         $this->throwError($error);
         return null;
     }
 
     protected function toHSL($color) {
-        if ($color[0] == 'hsl') return $color;
+        if ($color[0] == 'hsl') {
+            return $color;
+        }
         $H = 0;
 
         $r = $color[1] / 255;
@@ -1076,34 +1159,50 @@ class Compiler {
         if ($min == $max) {
             $S = $H = 0;
         } else {
-            if ($L < 0.5)
-                $S = ($max - $min)/($max + $min);
-            else
-                $S = ($max - $min)/(2.0 - $max - $min);
+            if ($L < 0.5) {
+                $S = ($max - $min) / ($max + $min);
+            } else {
+                $S = ($max - $min) / (2.0 - $max - $min);
+            }
 
-            if ($r == $max) $H = ($g - $b)/($max - $min);
-            elseif ($g == $max) $H = 2.0 + ($b - $r)/($max - $min);
-            elseif ($b == $max) $H = 4.0 + ($r - $g)/($max - $min);
+            if ($r == $max) {
+                $H = ($g - $b) / ($max - $min);
+            } elseif ($g == $max) {
+                $H = 2.0 + ($b - $r) / ($max - $min);
+            } elseif ($b == $max) {
+                $H = 4.0 + ($r - $g) / ($max - $min);
+            }
 
         }
 
         $out = array('hsl',
-            ($H < 0 ? $H + 6 : $H)*60,
-            $S*100,
-            $L*100,
+            ($H < 0 ? $H + 6 : $H) * 60,
+            $S * 100,
+            $L * 100,
         );
 
-        if (count($color) > 4) $out[] = $color[4]; // copy alpha
+        if (count($color) > 4) {
+            $out[] = $color[4];
+        } // copy alpha
         return $out;
     }
 
     protected function toRGB_helper($comp, $temp1, $temp2) {
-        if ($comp < 0) $comp += 1.0;
-        elseif ($comp > 1) $comp -= 1.0;
+        if ($comp < 0) {
+            $comp += 1.0;
+        } elseif ($comp > 1) {
+            $comp -= 1.0;
+        }
 
-        if (6 * $comp < 1) return $temp1 + ($temp2 - $temp1) * 6 * $comp;
-        if (2 * $comp < 1) return $temp2;
-        if (3 * $comp < 2) return $temp1 + ($temp2 - $temp1)*((2/3) - $comp) * 6;
+        if (6 * $comp < 1) {
+            return $temp1 + ($temp2 - $temp1) * 6 * $comp;
+        }
+        if (2 * $comp < 1) {
+            return $temp2;
+        }
+        if (3 * $comp < 2) {
+            return $temp1 + ($temp2 - $temp1) * ((2 / 3) - $comp) * 6;
+        }
 
         return $temp1;
     }
@@ -1113,7 +1212,9 @@ class Compiler {
      * Expects H to be in range of 0 to 360, S and L in 0 to 100
      */
     protected function toRGB($color) {
-        if ($color == 'color') return $color;
+        if ($color[0] == 'color') {
+            return $color;
+        }
 
         $H = $color[1] / 360;
         $S = $color[2] / 100;
@@ -1123,19 +1224,21 @@ class Compiler {
             $r = $g = $b = $L;
         } else {
             $temp2 = $L < 0.5 ?
-                $L*(1.0 + $S) :
+                $L * (1.0 + $S) :
                 $L + $S - $L * $S;
 
             $temp1 = 2.0 * $L - $temp2;
 
-            $r = $this->toRGB_helper($H + 1/3, $temp1, $temp2);
+            $r = $this->toRGB_helper($H + 1 / 3, $temp1, $temp2);
             $g = $this->toRGB_helper($H, $temp1, $temp2);
-            $b = $this->toRGB_helper($H - 1/3, $temp1, $temp2);
+            $b = $this->toRGB_helper($H - 1 / 3, $temp1, $temp2);
         }
 
         // $out = array('color', round($r*255), round($g*255), round($b*255));
-        $out = array('color', $r*255, $g*255, $b*255);
-        if (count($color) > 4) $out[] = $color[4]; // copy alpha
+        $out = array('color', $r * 255, $g * 255, $b * 255);
+        if (count($color) > 4) {
+            $out[] = $color[4];
+        } // copy alpha
         return $out;
     }
 
@@ -1149,7 +1252,9 @@ class Compiler {
      */
     protected function funcToColor($func) {
         $fname = $func[1];
-        if ($func[2][0] != 'list') return false; // need a list of arguments
+        if ($func[2][0] != 'list') {
+            return false;
+        } // need a list of arguments
         $rawComponents = $func[2][2];
 
         if ($fname == 'hsl' || $fname == 'hsla') {
@@ -1159,21 +1264,27 @@ class Compiler {
                 $val = $this->reduce($c);
                 $val = isset($val[1]) ? floatval($val[1]) : 0;
 
-                if ($i == 0) $clamp = 360;
-                elseif ($i < 3) $clamp = 100;
-                else $clamp = 1;
+                if ($i == 0) {
+                    $clamp = 360;
+                } elseif ($i < 3) {
+                    $clamp = 100;
+                } else {
+                    $clamp = 1;
+                }
 
                 $hsl[] = $this->clamp($val, $clamp);
                 $i++;
             }
 
-            while (count($hsl) < 4) $hsl[] = 0;
+            while (count($hsl) < 4) {
+                $hsl[] = 0;
+            }
             return $this->toRGB($hsl);
 
         } elseif ($fname == 'rgb' || $fname == 'rgba') {
             $components = array();
             $i = 1;
-            foreach    ($rawComponents as $c) {
+            foreach ($rawComponents as $c) {
                 $c = $this->reduce($c);
                 if ($i < 4) {
                     if ($c[0] == "number" && $c[2] == "%") {
@@ -1187,11 +1298,15 @@ class Compiler {
                     } else {
                         $components[] = floatval($c[1]);
                     }
-                } else break;
+                } else {
+                    break;
+                }
 
                 $i++;
             }
-            while (count($components) < 3) $components[] = 0;
+            while (count($components) < 3) {
+                $components[] = 0;
+            }
             array_unshift($components, 'color');
             return $this->fixColor($components);
         }
@@ -1201,98 +1316,118 @@ class Compiler {
 
     protected function reduce($value, $forExpression = false) {
         switch ($value[0]) {
-        case "variable":
-            $key = $value[1];
-            if (is_array($key)) {
-                $key = $this->reduce($key);
-                $key = $this->vPrefix . $this->compileValue($this->lib_e($key));
-            }
+            case "interpolate":
+                $reduced = $this->reduce($value[1]);
+                $var = $this->compileValue($reduced);
+                $res = $this->reduce(array("variable", $this->vPrefix . $var));
 
-            $seen =& $this->env->seenNames;
-
-            if (!empty($seen[$key])) {
-                $this->throwError("infinite loop detected: $key");
-            }
-
-            $seen[$key] = true;
-            $out = $this->reduce($this->get($key, self::$defaultValue));
-            $seen[$key] = false;
-            return $out;
-        case "list":
-            foreach ($value[2] as &$item) {
-                $item = $this->reduce($item, $forExpression);
-            }
-            return $value;
-        case "expression":
-            return $this->evaluate($value);
-        case "string":
-            foreach ($value[2] as &$part) {
-                if (is_array($part)) {
-                    $strip = $part[0] == "variable";
-                    $part = $this->reduce($part);
-                    if ($strip) $part = $this->lib_e($part);
-                }
-            }
-            return $value;
-        case "escape":
-            list(,$inner) = $value;
-            return $this->lib_e($this->reduce($inner));
-        case "function":
-            $color = $this->funcToColor($value);
-            if ($color) return $color;
-
-            list(, $name, $args) = $value;
-            if ($name == "%") $name = "_sprintf";
-            $f = isset($this->libFunctions[$name]) ?
-                $this->libFunctions[$name] : array($this, 'lib_'.$name);
-
-            if (is_callable($f)) {
-                if ($args[0] == 'list')
-                    $args = self::compressList($args[2], $args[1]);
-
-                $ret = call_user_func($f, $this->reduce($args, true), $this);
-
-                if (is_null($ret)) {
-                    return array("string", "", array(
-                        $name, "(", $args, ")"
-                    ));
+                if (empty($value[2])) {
+                    $res = $this->lib_e($res);
                 }
 
-                // convert to a typed value if the result is a php primitive
-                if (is_numeric($ret)) $ret = array('number', $ret, "");
-                elseif (!is_array($ret)) $ret = array('keyword', $ret);
-
-                return $ret;
-            }
-
-            // plain function, reduce args
-            $value[2] = $this->reduce($value[2]);
-            return $value;
-        case "unary":
-            list(, $op, $exp) = $value;
-            $exp = $this->reduce($exp);
-
-            if ($exp[0] == "number") {
-                switch ($op) {
-                case "+":
-                    return $exp;
-                case "-":
-                    $exp[1] *= -1;
-                    return $exp;
+                return $res;
+            case "variable":
+                $key = $value[1];
+                if (is_array($key)) {
+                    $key = $this->reduce($key);
+                    $key = $this->vPrefix . $this->compileValue($this->lib_e($key));
                 }
-            }
-            return array("string", "", array($op, $exp));
+
+                $seen =& $this->env->seenNames;
+
+                if (!empty($seen[$key])) {
+                    $this->throwError("infinite loop detected: $key");
+                }
+
+                $seen[$key] = true;
+                $out = $this->reduce($this->get($key, self::$defaultValue));
+                $seen[$key] = false;
+                return $out;
+            case "list":
+                foreach ($value[2] as &$item) {
+                    $item = $this->reduce($item, $forExpression);
+                }
+                return $value;
+            case "expression":
+                return $this->evaluate($value);
+            case "string":
+                foreach ($value[2] as &$part) {
+                    if (is_array($part)) {
+                        $strip = $part[0] == "variable";
+                        $part = $this->reduce($part);
+                        if ($strip) {
+                            $part = $this->lib_e($part);
+                        }
+                    }
+                }
+                return $value;
+            case "escape":
+                list(, $inner) = $value;
+                return $this->lib_e($this->reduce($inner));
+            case "function":
+                $color = $this->funcToColor($value);
+                if ($color) {
+                    return $color;
+                }
+
+                list(, $name, $args) = $value;
+                if ($name == "%") {
+                    $name = "_sprintf";
+                }
+                $f = isset($this->libFunctions[$name]) ?
+                    $this->libFunctions[$name] : array($this, 'lib_' . $name);
+
+                if (is_callable($f)) {
+                    if ($args[0] == 'list') {
+                        $args = self::compressList($args[2], $args[1]);
+                    }
+
+                    $ret = call_user_func($f, $this->reduce($args, true), $this);
+
+                    if (is_null($ret)) {
+                        return array("string", "", array(
+                            $name, "(", $args, ")"
+                        ));
+                    }
+
+                    // convert to a typed value if the result is a php primitive
+                    if (is_numeric($ret)) {
+                        $ret = array('number', $ret, "");
+                    } elseif (!is_array($ret)) {
+                        $ret = array('keyword', $ret);
+                    }
+
+                    return $ret;
+                }
+
+                // plain function, reduce args
+                $value[2] = $this->reduce($value[2]);
+                return $value;
+            case "unary":
+                list(, $op, $exp) = $value;
+                $exp = $this->reduce($exp);
+
+                if ($exp[0] == "number") {
+                    switch ($op) {
+                        case "+":
+                            return $exp;
+                        case "-":
+                            $exp[1] *= -1;
+                            return $exp;
+                    }
+                }
+                return array("string", "", array($op, $exp));
         }
 
         if ($forExpression) {
             switch ($value[0]) {
-            case "keyword":
-                if ($color = $this->coerceColor($value)) {
-                    return $color;
-                }
-                break;
-            case "raw_color":
-                return $this->coerceColor($value);
+                case "keyword":
+                    if ($color = $this->coerceColor($value)) {
+                        return $color;
+                    }
+                    break;
+                case "raw_color":
+                    return $this->coerceColor($value);
             }
         }
 
@@ -1302,8 +1437,9 @@ class Compiler {
 
     // coerce a value for use in color operation
     protected function coerceColor($value) {
-        switch($value[0]) {
-            case 'color': return $value;
+        switch ($value[0]) {
+            case 'color':
+                return $value;
             case 'raw_color':
                 $c = array("color", 0, 0, 0);
                 $colorStr = substr($value[1], 1);
@@ -1314,15 +1450,20 @@ class Compiler {
                     $t = $num % $width;
                     $num /= $width;
 
-                    $c[$i] = $t * (256/$width) + $t * floor(16/$width);
+                    $c[$i] = $t * (256 / $width) + $t * floor(16 / $width);
                 }
 
                 return $c;
             case 'keyword':
                 $name = $value[1];
                 if (isset(self::$cssColors[$name])) {
-                    list($r, $g, $b) = explode(',', self::$cssColors[$name]);
-                    return array('color', $r, $g, $b);
+                    $rgba = explode(',', self::$cssColors[$name]);
+
+                    if (isset($rgba[3])) {
+                        return array('color', $rgba[0], $rgba[1], $rgba[2], $rgba[3]);
+                    }
+
+                    return array('color', $rgba[0], $rgba[1], $rgba[2]);
                 }
                 return null;
         }
@@ -1332,10 +1473,10 @@ class Compiler {
     // make something string like into a string
     protected function coerceString($value) {
         switch ($value[0]) {
-        case "string":
-            return $value;
-        case "keyword":
-            return array("string", "", array($value[1]));
+            case "string":
+                return $value;
+            case "keyword":
+                return array("string", "", array($value[1]));
         }
         return null;
     }
@@ -1349,8 +1490,11 @@ class Compiler {
     }
 
     protected function toBool($a) {
-        if ($a) return self::$TRUE;
-        else return self::$FALSE;
+        if ($a) {
+            return self::$TRUE;
+        } else {
+            return self::$FALSE;
+        }
     }
 
     // evaluate an expression
@@ -1377,7 +1521,7 @@ class Compiler {
         }
 
         if ($op == "=") {
-            return $this->toBool($this->eq($left, $right) );
+            return $this->toBool($this->eq($left, $right));
         }
 
         if ($op == "+" && !is_null($str = $this->stringConcatenate($left, $right))) {
@@ -1388,13 +1532,19 @@ class Compiler {
         $fname = "op_${ltype}_${rtype}";
         if (is_callable(array($this, $fname))) {
             $out = $this->$fname($op, $left, $right);
-            if (!is_null($out)) return $out;
+            if (!is_null($out)) {
+                return $out;
+            }
         }
 
         // make the expression look it did before being parsed
         $paddedOp = $op;
-        if ($whiteBefore) $paddedOp = " " . $paddedOp;
-        if ($whiteAfter) $paddedOp .= " ";
+        if ($whiteBefore) {
+            $paddedOp = " " . $paddedOp;
+        }
+        if ($whiteAfter) {
+            $paddedOp .= " ";
+        }
 
         return array("string", "", array($left, $paddedOp, $right));
     }
@@ -1419,8 +1569,12 @@ class Compiler {
     // make sure a color's components don't go out of bounds
     protected function fixColor($c) {
         foreach (range(1, 3) as $i) {
-            if ($c[$i] < 0) $c[$i] = 0;
-            if ($c[$i] > 255) $c[$i] = 255;
+            if ($c[$i] < 0) {
+                $c[$i] = 0;
+            }
+            if ($c[$i] > 255) {
+                $c[$i] = 255;
+            }
         }
 
         return $c;
@@ -1434,10 +1588,14 @@ class Compiler {
     }
 
     protected function op_color_number($op, $lft, $rgt) {
-        if ($rgt[0] == '%') $rgt[1] /= 100;
+        if ($rgt[0] == '%') {
+            $rgt[1] /= 100;
+        }
 
-        return $this->op_color_color($op, $lft,
-            array_fill(1, count($lft) - 1, $rgt[1]));
+        return $this->op_color_color(
+            $op, $lft,
+            array_fill(1, count($lft) - 1, $rgt[1])
+        );
     }
 
     protected function op_color_color($op, $left, $right) {
@@ -1447,27 +1605,56 @@ class Compiler {
             $lval = isset($left[$i]) ? $left[$i] : 0;
             $rval = isset($right[$i]) ? $right[$i] : 0;
             switch ($op) {
-            case '+':
-                $out[] = $lval + $rval;
-                break;
-            case '-':
-                $out[] = $lval - $rval;
-                break;
-            case '*':
-                $out[] = $lval * $rval;
-                break;
-            case '%':
-                $out[] = $lval % $rval;
-                break;
-            case '/':
-                if ($rval == 0) $this->throwError("evaluate error: can't divide by zero");
-                $out[] = $lval / $rval;
-                break;
-            default:
-                $this->throwError('evaluate error: color op number failed on op '.$op);
+                case '+':
+                    $out[] = $lval + $rval;
+                    break;
+                case '-':
+                    $out[] = $lval - $rval;
+                    break;
+                case '*':
+                    $out[] = $lval * $rval;
+                    break;
+                case '%':
+                    $out[] = $lval % $rval;
+                    break;
+                case '/':
+                    if ($rval == 0) {
+                        $this->throwError("evaluate error: can't divide by zero");
+                    }
+                    $out[] = $lval / $rval;
+                    break;
+                default:
+                    $this->throwError('evaluate error: color op number failed on op ' . $op);
             }
         }
         return $this->fixColor($out);
+    }
+
+    function lib_red($color) {
+        $color = $this->coerceColor($color);
+        if (is_null($color)) {
+            $this->throwError('color expected for red()');
+        }
+
+        return $color[1];
+    }
+
+    function lib_green($color) {
+        $color = $this->coerceColor($color);
+        if (is_null($color)) {
+            $this->throwError('color expected for green()');
+        }
+
+        return $color[2];
+    }
+
+    function lib_blue($color) {
+        $color = $this->coerceColor($color);
+        if (is_null($color)) {
+            $this->throwError('color expected for blue()');
+        }
+
+        return $color[3];
     }
 
     // operator on two numbers
@@ -1476,32 +1663,34 @@ class Compiler {
 
         $value = 0;
         switch ($op) {
-        case '+':
-            $value = $left[1] + $right[1];
-            break;
-        case '*':
-            $value = $left[1] * $right[1];
-            break;
-        case '-':
-            $value = $left[1] - $right[1];
-            break;
-        case '%':
-            $value = $left[1] % $right[1];
-            break;
-        case '/':
-            if ($right[1] == 0) $this->throwError('parse error: divide by zero');
-            $value = $left[1] / $right[1];
-            break;
-        case '<':
-            return $this->toBool($left[1] < $right[1]);
-        case '>':
-            return $this->toBool($left[1] > $right[1]);
-        case '>=':
-            return $this->toBool($left[1] >= $right[1]);
-        case '=<':
-            return $this->toBool($left[1] <= $right[1]);
-        default:
-            $this->throwError('parse error: unknown number operator: '.$op);
+            case '+':
+                $value = $left[1] + $right[1];
+                break;
+            case '*':
+                $value = $left[1] * $right[1];
+                break;
+            case '-':
+                $value = $left[1] - $right[1];
+                break;
+            case '%':
+                $value = $left[1] % $right[1];
+                break;
+            case '/':
+                if ($right[1] == 0) {
+                    $this->throwError('parse error: divide by zero');
+                }
+                $value = $left[1] / $right[1];
+                break;
+            case '<':
+                return $this->toBool($left[1] < $right[1]);
+            case '>':
+                return $this->toBool($left[1] > $right[1]);
+            case '>=':
+                return $this->toBool($left[1] >= $right[1]);
+            case '=<':
+                return $this->toBool($left[1] <= $right[1]);
+            default:
+                $this->throwError('parse error: unknown number operator: ' . $op);
         }
 
         return array("number", $value, $unit);
@@ -1545,7 +1734,7 @@ class Compiler {
 
 
     // get the highest occurrence entry for a name
-    protected function get($name, $default=null) {
+    protected function get($name, $default = null) {
         $current = $this->env;
 
         $isArguments = $name == $this->vPrefix . 'arguments';
@@ -1554,9 +1743,9 @@ class Compiler {
                 return array('list', ' ', $current->arguments);
             }
 
-            if (isset($current->store[$name]))
+            if (isset($current->store[$name])) {
                 return $current->store[$name];
-            else {
+            } else {
                 $current = isset($current->storeParent) ?
                     $current->storeParent : $current->parent;
             }
@@ -1570,7 +1759,9 @@ class Compiler {
         $this->pushEnv();
         $parser = new Parser($this, __METHOD__);
         foreach ($args as $name => $strValue) {
-            if ($name{0} != '@') $name = '@'.$name;
+            if ($name{0} != '@') {
+                $name = '@' . $name;
+            }
             $parser->count = 0;
             $parser->buffer = (string)$strValue;
             if (!$parser->propertyValue($value)) {
@@ -1620,7 +1811,7 @@ class Compiler {
 
     public function compileFile($fname, $outFname = null) {
         if (!is_readable($fname)) {
-            throw new Exception('load error: failed to find '.$fname);
+            throw new Exception('load error: failed to find ' . $fname);
         }
 
         $pi = pathinfo($fname);
@@ -1628,7 +1819,7 @@ class Compiler {
         $oldImport = $this->importDir;
 
         $this->importDir = (array)$this->importDir;
-        $this->importDir[] = $pi['dirname'].'/';
+        $this->importDir[] = $pi['dirname'] . '/';
 
         $this->allParsedFiles = array();
         $this->addParsedFile($fname);
@@ -1680,13 +1871,13 @@ class Compiler {
         if (is_string($in)) {
             $root = $in;
         } elseif (is_array($in) and isset($in['root'])) {
-            if ($force or ! isset($in['files'])) {
+            if ($force or !isset($in['files'])) {
                 // If we are forcing a recompile or if for some reason the
                 // structure does not contain any file information we should
                 // specify the root to trigger a rebuild.
                 $root = $in['root'];
             } elseif (isset($in['files']) and is_array($in['files'])) {
-                foreach ($in['files'] as $fname => $ftime ) {
+                foreach ($in['files'] as $fname => $ftime) {
                     if (!file_exists($fname) or filemtime($fname) > $ftime) {
                         // One of the files we knew about previously has changed
                         // so we should look at our incoming root again.
@@ -1758,9 +1949,10 @@ class Compiler {
     protected function newFormatter() {
         $className = "Formatter_Lessjs";
         if (!empty($this->formatterName)) {
-            if (!is_string($this->formatterName))
+            if (!is_string($this->formatterName)) {
                 return $this->formatterName;
-            $className = "Formatter_$this->formatterName";
+            }
+            $className = 'Formatter_' . ucfirst($this->formatterName);
         }
         $className = __NAMESPACE__ . '\\' . $className;
 
@@ -1840,153 +2032,154 @@ class Compiler {
     }
 
     static protected $cssColors = array(
-        'aliceblue' => '240,248,255',
-        'antiquewhite' => '250,235,215',
-        'aqua' => '0,255,255',
-        'aquamarine' => '127,255,212',
-        'azure' => '240,255,255',
-        'beige' => '245,245,220',
-        'bisque' => '255,228,196',
-        'black' => '0,0,0',
-        'blanchedalmond' => '255,235,205',
-        'blue' => '0,0,255',
-        'blueviolet' => '138,43,226',
-        'brown' => '165,42,42',
-        'burlywood' => '222,184,135',
-        'cadetblue' => '95,158,160',
-        'chartreuse' => '127,255,0',
-        'chocolate' => '210,105,30',
-        'coral' => '255,127,80',
-        'cornflowerblue' => '100,149,237',
-        'cornsilk' => '255,248,220',
-        'crimson' => '220,20,60',
-        'cyan' => '0,255,255',
-        'darkblue' => '0,0,139',
-        'darkcyan' => '0,139,139',
-        'darkgoldenrod' => '184,134,11',
-        'darkgray' => '169,169,169',
-        'darkgreen' => '0,100,0',
-        'darkgrey' => '169,169,169',
-        'darkkhaki' => '189,183,107',
-        'darkmagenta' => '139,0,139',
-        'darkolivegreen' => '85,107,47',
-        'darkorange' => '255,140,0',
-        'darkorchid' => '153,50,204',
-        'darkred' => '139,0,0',
-        'darksalmon' => '233,150,122',
-        'darkseagreen' => '143,188,143',
-        'darkslateblue' => '72,61,139',
-        'darkslategray' => '47,79,79',
-        'darkslategrey' => '47,79,79',
-        'darkturquoise' => '0,206,209',
-        'darkviolet' => '148,0,211',
-        'deeppink' => '255,20,147',
-        'deepskyblue' => '0,191,255',
-        'dimgray' => '105,105,105',
-        'dimgrey' => '105,105,105',
-        'dodgerblue' => '30,144,255',
-        'firebrick' => '178,34,34',
-        'floralwhite' => '255,250,240',
-        'forestgreen' => '34,139,34',
-        'fuchsia' => '255,0,255',
-        'gainsboro' => '220,220,220',
-        'ghostwhite' => '248,248,255',
-        'gold' => '255,215,0',
-        'goldenrod' => '218,165,32',
-        'gray' => '128,128,128',
-        'green' => '0,128,0',
-        'greenyellow' => '173,255,47',
-        'grey' => '128,128,128',
-        'honeydew' => '240,255,240',
-        'hotpink' => '255,105,180',
-        'indianred' => '205,92,92',
-        'indigo' => '75,0,130',
-        'ivory' => '255,255,240',
-        'khaki' => '240,230,140',
-        'lavender' => '230,230,250',
-        'lavenderblush' => '255,240,245',
-        'lawngreen' => '124,252,0',
-        'lemonchiffon' => '255,250,205',
-        'lightblue' => '173,216,230',
-        'lightcoral' => '240,128,128',
-        'lightcyan' => '224,255,255',
+        'aliceblue'            => '240,248,255',
+        'antiquewhite'         => '250,235,215',
+        'aqua'                 => '0,255,255',
+        'aquamarine'           => '127,255,212',
+        'azure'                => '240,255,255',
+        'beige'                => '245,245,220',
+        'bisque'               => '255,228,196',
+        'black'                => '0,0,0',
+        'blanchedalmond'       => '255,235,205',
+        'blue'                 => '0,0,255',
+        'blueviolet'           => '138,43,226',
+        'brown'                => '165,42,42',
+        'burlywood'            => '222,184,135',
+        'cadetblue'            => '95,158,160',
+        'chartreuse'           => '127,255,0',
+        'chocolate'            => '210,105,30',
+        'coral'                => '255,127,80',
+        'cornflowerblue'       => '100,149,237',
+        'cornsilk'             => '255,248,220',
+        'crimson'              => '220,20,60',
+        'cyan'                 => '0,255,255',
+        'darkblue'             => '0,0,139',
+        'darkcyan'             => '0,139,139',
+        'darkgoldenrod'        => '184,134,11',
+        'darkgray'             => '169,169,169',
+        'darkgreen'            => '0,100,0',
+        'darkgrey'             => '169,169,169',
+        'darkkhaki'            => '189,183,107',
+        'darkmagenta'          => '139,0,139',
+        'darkolivegreen'       => '85,107,47',
+        'darkorange'           => '255,140,0',
+        'darkorchid'           => '153,50,204',
+        'darkred'              => '139,0,0',
+        'darksalmon'           => '233,150,122',
+        'darkseagreen'         => '143,188,143',
+        'darkslateblue'        => '72,61,139',
+        'darkslategray'        => '47,79,79',
+        'darkslategrey'        => '47,79,79',
+        'darkturquoise'        => '0,206,209',
+        'darkviolet'           => '148,0,211',
+        'deeppink'             => '255,20,147',
+        'deepskyblue'          => '0,191,255',
+        'dimgray'              => '105,105,105',
+        'dimgrey'              => '105,105,105',
+        'dodgerblue'           => '30,144,255',
+        'firebrick'            => '178,34,34',
+        'floralwhite'          => '255,250,240',
+        'forestgreen'          => '34,139,34',
+        'fuchsia'              => '255,0,255',
+        'gainsboro'            => '220,220,220',
+        'ghostwhite'           => '248,248,255',
+        'gold'                 => '255,215,0',
+        'goldenrod'            => '218,165,32',
+        'gray'                 => '128,128,128',
+        'green'                => '0,128,0',
+        'greenyellow'          => '173,255,47',
+        'grey'                 => '128,128,128',
+        'honeydew'             => '240,255,240',
+        'hotpink'              => '255,105,180',
+        'indianred'            => '205,92,92',
+        'indigo'               => '75,0,130',
+        'ivory'                => '255,255,240',
+        'khaki'                => '240,230,140',
+        'lavender'             => '230,230,250',
+        'lavenderblush'        => '255,240,245',
+        'lawngreen'            => '124,252,0',
+        'lemonchiffon'         => '255,250,205',
+        'lightblue'            => '173,216,230',
+        'lightcoral'           => '240,128,128',
+        'lightcyan'            => '224,255,255',
         'lightgoldenrodyellow' => '250,250,210',
-        'lightgray' => '211,211,211',
-        'lightgreen' => '144,238,144',
-        'lightgrey' => '211,211,211',
-        'lightpink' => '255,182,193',
-        'lightsalmon' => '255,160,122',
-        'lightseagreen' => '32,178,170',
-        'lightskyblue' => '135,206,250',
-        'lightslategray' => '119,136,153',
-        'lightslategrey' => '119,136,153',
-        'lightsteelblue' => '176,196,222',
-        'lightyellow' => '255,255,224',
-        'lime' => '0,255,0',
-        'limegreen' => '50,205,50',
-        'linen' => '250,240,230',
-        'magenta' => '255,0,255',
-        'maroon' => '128,0,0',
-        'mediumaquamarine' => '102,205,170',
-        'mediumblue' => '0,0,205',
-        'mediumorchid' => '186,85,211',
-        'mediumpurple' => '147,112,219',
-        'mediumseagreen' => '60,179,113',
-        'mediumslateblue' => '123,104,238',
-        'mediumspringgreen' => '0,250,154',
-        'mediumturquoise' => '72,209,204',
-        'mediumvioletred' => '199,21,133',
-        'midnightblue' => '25,25,112',
-        'mintcream' => '245,255,250',
-        'mistyrose' => '255,228,225',
-        'moccasin' => '255,228,181',
-        'navajowhite' => '255,222,173',
-        'navy' => '0,0,128',
-        'oldlace' => '253,245,230',
-        'olive' => '128,128,0',
-        'olivedrab' => '107,142,35',
-        'orange' => '255,165,0',
-        'orangered' => '255,69,0',
-        'orchid' => '218,112,214',
-        'palegoldenrod' => '238,232,170',
-        'palegreen' => '152,251,152',
-        'paleturquoise' => '175,238,238',
-        'palevioletred' => '219,112,147',
-        'papayawhip' => '255,239,213',
-        'peachpuff' => '255,218,185',
-        'peru' => '205,133,63',
-        'pink' => '255,192,203',
-        'plum' => '221,160,221',
-        'powderblue' => '176,224,230',
-        'purple' => '128,0,128',
-        'red' => '255,0,0',
-        'rosybrown' => '188,143,143',
-        'royalblue' => '65,105,225',
-        'saddlebrown' => '139,69,19',
-        'salmon' => '250,128,114',
-        'sandybrown' => '244,164,96',
-        'seagreen' => '46,139,87',
-        'seashell' => '255,245,238',
-        'sienna' => '160,82,45',
-        'silver' => '192,192,192',
-        'skyblue' => '135,206,235',
-        'slateblue' => '106,90,205',
-        'slategray' => '112,128,144',
-        'slategrey' => '112,128,144',
-        'snow' => '255,250,250',
-        'springgreen' => '0,255,127',
-        'steelblue' => '70,130,180',
-        'tan' => '210,180,140',
-        'teal' => '0,128,128',
-        'thistle' => '216,191,216',
-        'tomato' => '255,99,71',
-        'turquoise' => '64,224,208',
-        'violet' => '238,130,238',
-        'wheat' => '245,222,179',
-        'white' => '255,255,255',
-        'whitesmoke' => '245,245,245',
-        'yellow' => '255,255,0',
-        'yellowgreen' => '154,205,50'
+        'lightgray'            => '211,211,211',
+        'lightgreen'           => '144,238,144',
+        'lightgrey'            => '211,211,211',
+        'lightpink'            => '255,182,193',
+        'lightsalmon'          => '255,160,122',
+        'lightseagreen'        => '32,178,170',
+        'lightskyblue'         => '135,206,250',
+        'lightslategray'       => '119,136,153',
+        'lightslategrey'       => '119,136,153',
+        'lightsteelblue'       => '176,196,222',
+        'lightyellow'          => '255,255,224',
+        'lime'                 => '0,255,0',
+        'limegreen'            => '50,205,50',
+        'linen'                => '250,240,230',
+        'magenta'              => '255,0,255',
+        'maroon'               => '128,0,0',
+        'mediumaquamarine'     => '102,205,170',
+        'mediumblue'           => '0,0,205',
+        'mediumorchid'         => '186,85,211',
+        'mediumpurple'         => '147,112,219',
+        'mediumseagreen'       => '60,179,113',
+        'mediumslateblue'      => '123,104,238',
+        'mediumspringgreen'    => '0,250,154',
+        'mediumturquoise'      => '72,209,204',
+        'mediumvioletred'      => '199,21,133',
+        'midnightblue'         => '25,25,112',
+        'mintcream'            => '245,255,250',
+        'mistyrose'            => '255,228,225',
+        'moccasin'             => '255,228,181',
+        'navajowhite'          => '255,222,173',
+        'navy'                 => '0,0,128',
+        'oldlace'              => '253,245,230',
+        'olive'                => '128,128,0',
+        'olivedrab'            => '107,142,35',
+        'orange'               => '255,165,0',
+        'orangered'            => '255,69,0',
+        'orchid'               => '218,112,214',
+        'palegoldenrod'        => '238,232,170',
+        'palegreen'            => '152,251,152',
+        'paleturquoise'        => '175,238,238',
+        'palevioletred'        => '219,112,147',
+        'papayawhip'           => '255,239,213',
+        'peachpuff'            => '255,218,185',
+        'peru'                 => '205,133,63',
+        'pink'                 => '255,192,203',
+        'plum'                 => '221,160,221',
+        'powderblue'           => '176,224,230',
+        'purple'               => '128,0,128',
+        'red'                  => '255,0,0',
+        'rosybrown'            => '188,143,143',
+        'royalblue'            => '65,105,225',
+        'saddlebrown'          => '139,69,19',
+        'salmon'               => '250,128,114',
+        'sandybrown'           => '244,164,96',
+        'seagreen'             => '46,139,87',
+        'seashell'             => '255,245,238',
+        'sienna'               => '160,82,45',
+        'silver'               => '192,192,192',
+        'skyblue'              => '135,206,235',
+        'slateblue'            => '106,90,205',
+        'slategray'            => '112,128,144',
+        'slategrey'            => '112,128,144',
+        'snow'                 => '255,250,250',
+        'springgreen'          => '0,255,127',
+        'steelblue'            => '70,130,180',
+        'tan'                  => '210,180,140',
+        'teal'                 => '0,128,128',
+        'thistle'              => '216,191,216',
+        'tomato'               => '255,99,71',
+        'transparent'          => '0,0,0,0',
+        'turquoise'            => '64,224,208',
+        'violet'               => '238,130,238',
+        'wheat'                => '245,222,179',
+        'white'                => '255,255,255',
+        'whitesmoke'           => '245,245,245',
+        'yellow'               => '255,255,0',
+        'yellowgreen'          => '154,205,50'
     );
 }
 
