@@ -21,13 +21,16 @@ class CompileLessScript extends Controller {
             $input_dir = dirname($in);
             if (!$input_dir || '.' === $input_dir) {
                 $input_dir = getcwd();
+            } else {
+                if ($input_dir[0] !== '/') {
+                    $input_dir = getcwd() . '/' . $input_dir;
+                }
             }
 
             $filter_mask = basename($in);
             if (!$filter_mask) {
                 $filter_mask = '*.less';
             }
-
         }
 
         $css_files = (new Fs\Iterator($input_dir))
