@@ -24,7 +24,8 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
         $return_full_path = true,
         $include_files = true,
         $include_folders = false,
-        $include_hidden = false;
+        $include_hidden = false,
+        $recurse = false;
 
     /**
      * @param string $folder Folder to scan
@@ -78,10 +79,15 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
             throw new \InvalidArgumentException('String, array, or null required');
         }
         if (is_string($fnmatch_mask)) {
-            $fnmatch_mask = [$fnmatch_mask]; 
+            $fnmatch_mask = [$fnmatch_mask];
         }
-        $this->setProp('filter_mask', $fnmatch_mask ?: null);
-        if ($fnmatch_mask && array_filter($fnmatch_mask, function($value) { return substr($value, 0, 1) == '.'; })) {
+        $this->setProp('filter_mask', $fnmatch_mask ? : null);
+        if ($fnmatch_mask && array_filter(
+                $fnmatch_mask, function ($value) {
+                    return substr($value, 0, 1) == '.';
+                }
+            )
+        ) {
             $this->setProp('include_hidden', true);
         }
         return $this;
@@ -89,7 +95,7 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     /**
      * setReturnFullPath
-     * 
+     *
      * @param bool $bool_return_full_path if false, only filenames are returned
      * @return $this
      */
@@ -99,9 +105,9 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
     }
 
     /**
-     * setIncludeFolders 
-     * 
-     * @param bool $bool_include_folders 
+     * setIncludeFolders
+     *
+     * @param bool $bool_include_folders
      * @return $this
      */
     public function setIncludeFolders($bool_include_folders = true) {
@@ -111,7 +117,7 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
 
     /**
      * setIncludeFiles
-     * 
+     *
      * @param bool $bool_include_files
      * @return $this
      */
@@ -121,9 +127,9 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
     }
 
     /**
-     * setIncludeHidden 
-     * 
-     * @param bool $bool_include_hidden 
+     * setIncludeHidden
+     *
+     * @param bool $bool_include_hidden
      * @return $this
      */
     public function setIncludeHidden($bool_include_hidden = true) {
@@ -132,13 +138,24 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
     }
 
     /**
-     * setSort 
-     * 
+     * setSort
+     *
      * @param bool $enable
      * @return $this
      */
     public function setSort($enable = true) {
         $this->setProp('sort', (bool)$enable);
+        return $this;
+    }
+
+    /**
+     * Recurse into subdirectories
+     *
+     * @param bool $enable
+     * @return $this
+     */
+    public function setRecurse($enable = true) {
+        $this->setProp('recurse', (bool)$enable);
         return $this;
     }
 
@@ -184,7 +201,7 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
      */
     public function valid() {
         $this->getFiles();
-        return ( $this->current() !== false );
+        return ($this->current() !== false);
     }
 
     /**
@@ -210,31 +227,46 @@ class Iterator implements \Iterator, Corelib\ExportableInterface {
     }
 
     protected function loadFilesList() {
-        $result = [];
-
-        $dir_handle = opendir($this->folder);
-        if ($dir_handle) {
-            while (false !== ($filename = readdir($dir_handle))) {
-                $is_dir = is_dir($this->folder . '/' . $filename);
-                if ($filename == '.' || $filename == '..' 
-                    || (!$this->include_folders && $is_dir)
-                    || (!$this->include_files && !$is_dir)
-                    || (!$this->include_hidden && $filename{0} == '.')
-                ) {
-                    continue;
-                }
-                if (null === $this->filter_mask || $this->fnmatch($filename)) {
-                    $result[] = ($this->return_full_path ? ($this->folder . '/') : '') . $filename . (is_dir($filename) ? '/' : '');
-                }
-            }
-            closedir($dir_handle);
-        }
+        $result = $this->readDirectory($this->folder);
 
         if ($this->sort) {
             sort($result);
         }
 
         $this->files = $result;
+        return $result;
+    }
+
+    protected function readDirectory($directory, $prefix = '') {
+        $result = [];
+        $dir_handle = opendir($directory);
+        if ($dir_handle) {
+            while (false !== ($filename = readdir($dir_handle))) {
+                $is_dir = is_dir($directory . '/' . $filename);
+                if ($filename == '.' || $filename == '..'
+                    || (!$this->include_files && !$is_dir)
+                    || (!$this->include_hidden && $filename{0} == '.')
+                ) {
+                    continue;
+                }
+                if ($is_dir) {
+                    if ($this->recurse) {
+                        $result = array_merge($result, $this->readDirectory($directory . '/' . $filename, $prefix . $filename . '/'));
+                    }
+                    if (!$this->include_folders) {
+                        continue;
+                    }
+                }
+                if (null === $this->filter_mask || $this->fnmatch($filename)) {
+                    $result[] = (
+                        $this->return_full_path
+                            ? ($directory . '/')
+                            : $prefix
+                        ) . $filename . ($is_dir ? '/' : '');
+                }
+            }
+            closedir($dir_handle);
+        }
         return $result;
     }
 
