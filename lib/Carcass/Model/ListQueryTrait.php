@@ -194,7 +194,7 @@ trait ListQueryTrait {
      */
     protected function constructItem(array $data) {
         $Item = $this->constructItemModel();
-        $data and $Item->fetchFromArray($data);
+        $data and $Item->importItem($data);
         $this->applyAllForItem($Item);
         return $Item;
     }
