@@ -20,7 +20,7 @@ use Carcass\Connection;
  */
 class Instance {
 
-    const API_VERSION = 20130621;
+    const API_VERSION = 20130715;
 
     protected static $env_defaults = [
         'configuration_name' => null,
@@ -125,11 +125,14 @@ class Instance {
 
     /**
      * Returns the application environment variable value
-     * @param string $key Environment variable name
+     * @param string|null $key Environment variable name, or env array if null
      * @param null $default_value
      * @return mixed
      */
-    public static function getEnv($key, $default_value = null) {
+    public static function getEnv($key = null, $default_value = null) {
+        if ($key === null) {
+            return static::$instance->app_env;
+        }
         return array_key_exists($key, static::$instance->app_env) ? static::$instance->app_env[$key] : $default_value;
     }
 
