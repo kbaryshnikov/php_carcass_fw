@@ -25,7 +25,8 @@ class Client {
         $status = null,
         $url = null,
         $post_body = null,
-        $post_body_charset = null;
+        $post_body_charset = null,
+        $headers = [];
 
     protected $curl_options = [
         CURLOPT_HEADER         => 0,
@@ -93,10 +94,7 @@ class Client {
         }
         if ($this->mode === CURLOPT_POST) {
             $curlopts[CURLOPT_POSTFIELDS] = $this->post_body;
-            $curlopts[CURLOPT_HTTPHEADER] = array(
-                'Content-Type: application/x-www-form-urlencoded; charset=' . $this->post_body_charset,
-                'Cache-Control: no-cache',
-            );
+            $curlopts[CURLOPT_HTTPHEADER] = $this->getRequestHeaders();
         }
 
         $this->error = null;
@@ -117,7 +115,7 @@ class Client {
                 $this->status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 if ($treat_40x_50x_as_error && $this->status >= 400) {
                     $this->error = "{$this->status} status returned";
-                    $result      = false;
+                    $result = false;
                 }
             }
         } else {
@@ -181,8 +179,8 @@ class Client {
      * @return $this
      */
     public function setPost($post_body, $post_body_charset = null) {
-        $this->mode              = CURLOPT_POST;
-        $this->post_body         = is_array($post_body) ? http_build_query($post_body) : $post_body;
+        $this->mode = CURLOPT_POST;
+        $this->post_body = is_array($post_body) ? http_build_query($post_body) : $post_body;
         $this->post_body_charset = $post_body_charset ? : self::DEFAULT_POST_BODY_CHARSET;
         return $this;
     }
@@ -192,7 +190,7 @@ class Client {
      * @return $this
      */
     public function setMethod($method) {
-        $method          = strtoupper($method);
+        $method = strtoupper($method);
         $method_constant = 'CURLOPT_' . $method;
         if (defined($method_constant)) {
             $this->mode = constant($method_constant);
@@ -201,5 +199,51 @@ class Client {
         }
         return $this;
     }
+
+    /**
+     * @param string $key
+     * @param string $value
+     * @return $this
+     */
+    public function addHeader($key, $value) {
+        if (isset($this->headers[$key]) && !is_array($this->headers[$key])) {
+            $this->headers[$key] = [$this->headers[$key]];
+        }
+        $this->headers[$key][] = $value;
+        return $this;
+    }
+
+    /**
+     * @param array $headers
+     * @return $this
+     */
+    public function setHeaders(array $headers) {
+        $this->headers = $headers;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getRequestHeaders() {
+        $headers = $this->headers;
+        if (!isset($headers['Cache-Control'])) {
+            $headers['Cache-Control'] = ['no-cache'];
+        }
+        if (!isset($headers['Content-Type'])) {
+            $headers['Content-Type'] = ['application/x-www-form-urlencoded; charset=' . $this->post_body_charset];
+        }
+        $result = [];
+        foreach ($headers as $key => $values) {
+            if (!is_array($values)) {
+                $values = [$values];
+            }
+            foreach ($values as $value) {
+                $result[] = $key . ': ' . $value;
+            }
+        }
+        return $result;
+    }
+
 
 }
