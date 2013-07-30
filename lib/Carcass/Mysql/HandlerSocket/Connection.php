@@ -151,7 +151,21 @@ class HandlerSocket_Connection implements ConnectionInterface {
             $query,
             function () use ($h, $query, &$raw_response) {
                 fwrite($h, $query . "\n");
-                $result = explode("\t", rtrim($raw_response = fgets($h)));
+                $result = array_map(
+                    function ($value) {
+                        if ($value === "\x00") {
+                            return null;
+                        }
+                        return preg_replace_callback(
+                            "/\x01(.)/",
+                            function ($match) {
+                                return chr(ord($match[1]) - 0x40);
+                            },
+                            $value
+                        );
+                    },
+                    explode("\t", rtrim($raw_response = fgets($h), "\r\n"))
+                );
                 return $result;
             },
             function () use (&$raw_response) {
@@ -168,7 +182,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
             $this->last_error = $result;
             if ($this->exception_on_errors) {
                 throw new \RuntimeException("Query [" . join(' ', $tokens) . "] failed: ["
-                    . join(" ", $this->last_error) . "]");
+                . join(" ", $this->last_error) . "]");
             }
             return false;
         }
