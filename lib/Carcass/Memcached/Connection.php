@@ -316,7 +316,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
      * @return KeyBuilder
      */
     protected function getKeyBuilder($template) {
-        if (null === $this->KeyBuilder) {
+        if (null === $this->KeyBuilder || $this->KeyBuilder->getTemplate() !== $template) {
             $this->KeyBuilder = $this->assembleKeyBuilder();
         } else {
             $this->KeyBuilder->cleanAll();
