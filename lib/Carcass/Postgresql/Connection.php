@@ -112,7 +112,7 @@ class Connection extends Database\Connection implements ConnectionInterface, XaT
         if (null === $sequence) {
             $query = 'SELECT lastval()';
         } else {
-            $query = sprintf("SELECT currval(%s)", $this->escapeString($sequence));
+            $query = sprintf("SELECT currval('%s')", $this->escapeString($sequence));
         }
         $res_h = pg_query($this->getConnectionHandle(), $query);
         if (false === $res_h) {
