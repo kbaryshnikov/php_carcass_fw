@@ -6,16 +6,14 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-namespace Carcass\Mysql;
+namespace Carcass\Postgresql;
 
 use Carcass\Database;
 
 /**
- * MySQL Client
+ * PostgreSQL Client
  *
- * @method Client selectDatabase($db_name)
- *
- * @package Carcass\Mysql
+ * @package Carcass\Postgresql
  */
 class Client extends Database\Client {
 

@@ -8,13 +8,14 @@
 
 namespace Carcass\Mysql;
 
-use \Carcass\Connection\ConnectionInterface;
-use \Carcass\Connection\XaTransactionalConnectionInterface;
-use \Carcass\Connection\XaTransactionalConnectionTrait;
-use \Carcass\Connection\Dsn;
-use \Carcass\Corelib;
-use \Carcass\Application\DI;
-use \Carcass\DevTools;
+use Carcass\Connection\ConnectionInterface;
+use Carcass\Connection\XaTransactionalConnectionInterface;
+use Carcass\Connection\XaTransactionalConnectionTrait;
+use Carcass\Connection\Dsn;
+use Carcass\Corelib;
+use Carcass\Application\DI;
+use Carcass\DevTools;
+use Carcass\Database;
 
 /**
  * MySQL Connection.
@@ -23,12 +24,7 @@ use \Carcass\DevTools;
  *
  * @package Carcass\Mysql
  */
-class Connection implements ConnectionInterface, XaTransactionalConnectionInterface {
-    use XaTransactionalConnectionTrait;
-    use DevTools\TimerTrait;
-    use Corelib\UniqueObjectIdTrait {
-        Corelib\UniqueObjectIdTrait::getUniqueObjectId as getConnectionId;
-    }
+class Connection extends Database\Connection implements ConnectionInterface, XaTransactionalConnectionInterface {
 
     const DSN_TYPE = 'mysql';
 
@@ -37,14 +33,6 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     const XA_STATE_IDLE = 2;
     const XA_STATE_PREPARED = 3;
 
-    /**
-     * @var \Carcass\Connection\Dsn
-     */
-    protected $Dsn;
-    /**
-     * @var QueryParser
-     */
-    protected $QueryParser = null;
     /**
      * @var \mysqli
      */
@@ -55,49 +43,29 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     protected $xa_state = self::XA_STATE_NON_EXISTING;
 
     /**
-     * @param \Carcass\Connection\Dsn $Dsn
-     * @return static
-     */
-    public static function constructWithDsn(Dsn $Dsn) {
-        return new static($Dsn);
-    }
-
-    /**
-     * @return \Carcass\Connection\Dsn
-     */
-    public function getDsn() {
-        return $this->Dsn;
-    }
-
-    /**
-     * @param \Carcass\Connection\Dsn $Dsn
+     * @param Dsn $Dsn
      */
     public function __construct(Dsn $Dsn) {
-        Corelib\Assert::that('DSN has type ' . static::DSN_TYPE)->is(static::DSN_TYPE, $Dsn->getType());
-
+        parent::__construct($Dsn);
         static $reporting_was_setup = false;
         if (!$reporting_was_setup) {
             \mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
             $reporting_was_setup = true;
         }
-
-        $this->Dsn = $Dsn;
     }
 
     /**
-     * @param $query
-     * @return bool|\mysqli_result
+     * @return Client
      */
-    public function executeQuery($query) {
-        $this->triggerScheduledTransaction();
-        return $this->doExecuteQuery($query);
+    public function assembleClient() {
+        return new Client($this);
     }
 
     /**
      * @param \mysqli_result $result
      * @return array|null
      */
-    public function fetch(\mysqli_result $result = null) {
+    public function fetch($result = null) {
         $result = $this->getResult($result)->fetch_assoc();
         return $result === false ? null : $result;
     }
@@ -106,8 +74,8 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
      * @param \mysqli_result $result
      * @return $this
      */
-    public function freeResult(\mysqli_result $result = null) {
-        if (null !== $result = $this->getResult($result)) {
+    public function freeResult($result = null) {
+        if (null !== $result = $this->getResult($result, true)) {
             $result->free();
         }
         return $this;
@@ -117,7 +85,7 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
      * @param \mysqli_result $result
      * @return int
      */
-    public function getNumRows(\mysqli_result $result = null) {
+    public function getNumRows($result = null) {
         return $this->getResult($result)->num_rows;
     }
 
@@ -129,9 +97,9 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     }
 
     /**
-     * @return null
+     * @return int|null
      */
-    public function getLastInsertId() {
+    public function getLastInsertId($sequence_ignored = null) {
         return $this->getConnection()->insert_id ? : null;
     }
 
@@ -153,20 +121,12 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
     }
 
     /**
-     * @return string|null
-     */
-    public function getCurrentDatabaseName() {
-        return $this->Dsn->get('name') ? : null;
-    }
-
-    /**
      * @return bool
      */
     public function close() {
         $result = true;
         if ($this->Connection) {
             $result = $this->Connection->close();
-
             $this->Connection = null;
         }
         return $result;
@@ -330,14 +290,6 @@ class Connection implements ConnectionInterface, XaTransactionalConnectionInterf
         }
 
         return $this->last_result = $result;
-    }
-
-    protected function develGetTimerGroup() {
-        return 'mysql';
-    }
-
-    protected function develGetTimerMessage($message) {
-        return sprintf('[%s] %s', $this->getConnectionId(), $message);
     }
 
 }

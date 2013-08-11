@@ -11,7 +11,7 @@ namespace Carcass\Query;
 use Carcass\Corelib;
 use Carcass\Application\DI;
 use Carcass\Model;
-use Carcass\Mysql;
+use Carcass\Database;
 use Carcass\Connection;
 
 /**
@@ -49,7 +49,7 @@ class BaseDispatcher {
     protected $rows_converter_fn = null;
 
     /**
-     * @var Mysql\Client
+     * @var Database\Client
      */
     protected $DatabaseClient = null;
     /**
@@ -66,7 +66,7 @@ class BaseDispatcher {
      */
     public function fetchRow($sql_query_template) {
         return $this->setFetchWith(
-            function (Mysql\Client $Db, array $args) use ($sql_query_template) {
+            function (Database\Client $Db, array $args) use ($sql_query_template) {
                 return $Db->getRow($sql_query_template, $this->getArgs($args));
             }
         );
@@ -79,7 +79,7 @@ class BaseDispatcher {
      */
     public function fetchAll($sql_query_template, array $keys = []) {
         return $this->setFetchWith(
-            function (Mysql\Client $Db, array $args) use ($sql_query_template, $keys) {
+            function (Database\Client $Db, array $args) use ($sql_query_template, $keys) {
                 return $Db->getAll($sql_query_template, $this->getArgs($args), $keys);
             }
         );
@@ -93,7 +93,7 @@ class BaseDispatcher {
      */
     public function fetchCol($sql_query_template, $col = null, $valcol = null) {
         return $this->setFetchWith(
-            function (Mysql\Client $Db, array $args) use ($sql_query_template, $col, $valcol) {
+            function (Database\Client $Db, array $args) use ($sql_query_template, $col, $valcol) {
                 return $Db->getCol($sql_query_template, $this->getArgs($args), $col, $valcol);
             }
         );
@@ -139,13 +139,13 @@ class BaseDispatcher {
     }
 
     /**
-     * @param callable $fn (Mysql\Client $Db, array $args, &$count) -> array
+     * @param callable $fn (Database\Client $Db, array $args, &$count) -> array
      * @param callable|null $finally_fn
      * @return $this
      */
     public function fetchListWith(Callable $fn, Callable $finally_fn = null) {
         return $this->setFetchWith(
-            function (Mysql\Client $Db, $args) use ($fn, $finally_fn) {
+            function (Database\Client $Db, $args) use ($fn, $finally_fn) {
                 $count = null;
                 $args = $this->mixListArgsInto($args);
                 $do_fn = function() use ($fn, $Db, $args, &$count) {
@@ -245,13 +245,14 @@ class BaseDispatcher {
     /**
      * @param string $sql_query_template
      * @param array $args
+     * @param string|null $sequence last insert id sequence name, ignored by MySQL
      * @return mixed
      */
-    public function insert($sql_query_template, array $args = array()) {
+    public function insert($sql_query_template, array $args = [], $sequence = null) {
         $this->doModify(
-            function (Mysql\Client $Db, $args) use ($sql_query_template) {
+            function (Database\Client $Db, $args) use ($sql_query_template, $sequence) {
                 $affected_rows = $Db->query($sql_query_template, $this->getArgs($args));
-                $this->last_insert_id = $affected_rows ? $Db->getLastInsertId() : null;
+                $this->last_insert_id = $affected_rows ? $Db->getLastInsertId($sequence) : null;
                 return $affected_rows;
             }, $args, false
         );
@@ -263,9 +264,9 @@ class BaseDispatcher {
      * @param array $args
      * @return mixed
      */
-    public function modify($sql_query_template, array $args = array()) {
+    public function modify($sql_query_template, array $args = []) {
         return $this->doModify(
-            function (Mysql\Client $Db, $args) use ($sql_query_template) {
+            function (Database\Client $Db, $args) use ($sql_query_template) {
                 return $Db->query($sql_query_template, $this->getArgs($args));
             }, $args, false
         );
@@ -451,14 +452,14 @@ class BaseDispatcher {
     }
 
     /**
-     * @return \Carcass\Mysql\Client
+     * @return \Carcass\Database\Client
      */
     protected function assembleDatabaseClient() {
-        /** @var Mysql\Connection $Connection */
+        /** @var Database\Connection $Connection */
         $Connection = DI::getConnectionManager()->getConnection(
             DI::getConfigReader()->getPath($this->getConfigDatabaseDsnPath())
         );
-        return new Mysql\Client($Connection);
+        return $Connection->assembleClient();
     }
 
     /**

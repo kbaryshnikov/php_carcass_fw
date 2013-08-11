@@ -6,13 +6,14 @@
  * @license   http://www.gnu.org/licenses/gpl.html GPL
  */
 
-namespace Carcass\Mysql;
+namespace Carcass\Postgresql;
 
 use Carcass\Database;
 
 /**
- * MySQL Query Parser
- * @package Carcass\Mysql
+ * PostgreSQL Query Parser
+ *
+ * @package Carcass\Postgresql
  */
 class QueryParser extends Database\QueryParser {
 
