@@ -21,6 +21,7 @@ class Manager {
         'mysql'     => '\Carcass\Mysql\Connection',
         'hs'        => '\Carcass\Mysql\HandlerSocket_Connection',
         'pgsql'     => '\Carcass\Postgresql\Connection',
+        'mongodb'   => '\Carcass\Tokumx\Connection',
     ];
 
     protected $registry = [];

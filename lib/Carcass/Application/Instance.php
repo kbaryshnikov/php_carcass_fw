@@ -27,6 +27,7 @@ class Instance {
         'lib_path'           => [],
         'run_mode'           => null,
         'namespace'          => null,
+        'error_handler'      => null,
     ];
 
     protected static $opt_defaults = [
@@ -173,8 +174,8 @@ class Instance {
 
     protected function bootstrap() {
         $this->setupLocale();
-        $this->setupErrorHandler();
         $this->loadApplicationRootConfiguration();
+        $this->setupErrorHandler();
         $this->checkMinApiVersionRequirement();
         $this->setupRunMode();
         $this->setupAutoloader();
@@ -272,7 +273,7 @@ class Instance {
             $setupFn($this->DI, $dep_map);
         } else {
             throw new \LogicException("Cannot setupDependencies() for {$this->app_env['run_mode']} mode: no setup function "
-                . "is defined in configuration, and mode is not supported internally");
+            . "is defined in configuration, and mode is not supported internally");
         }
 
         $extras = $this->ConfigReader->getPath('application.bootstrap.extras');
@@ -402,7 +403,11 @@ class Instance {
 
     protected function setupErrorHandler() {
         require_once __DIR__ . '/ErrorHandler.php';
-        ErrorHandler::register();
+        if (empty($this->app_env['error_handler'])) {
+            ErrorHandler::register();
+        } else {
+            ErrorHandler::register(null, $this->app_env['error_handler']);
+        }
     }
 
     protected function loadApplicationRootConfiguration() {

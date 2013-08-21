@@ -46,7 +46,7 @@ class ErrorHandler {
             return;
         }
         $exception = array_key_exists($errno, self::$class_by_errno) ? self::$class_by_errno[$errno] : 'ErrorException';
-        $class     = __NAMESPACE__ . '\\' . $exception;
+        $class = __NAMESPACE__ . '\\' . $exception;
         throw new $class($errstr, $errno, 0, $errfile, $errline);
     }
 
@@ -54,9 +54,10 @@ class ErrorHandler {
      * Registers the error handler
      *
      * @param int|null $level error level, null for current error_reporting value
+     * @param callable|null $handler custom error handler function
      */
-    public static function register($level = null) {
-        set_error_handler([get_called_class(), '__errorHandler'], $level !== null ? $level : error_reporting());
+    public static function register($level = null, callable $handler = null) {
+        set_error_handler($handler ? : [get_called_class(), '__errorHandler'], $level !== null ? $level : error_reporting());
     }
 
 }

@@ -63,7 +63,7 @@ trait TransactionalConnectionTrait {
         }
         if (null === $this->transaction_id) {
             if ($this->ConnectionManager) {
-                $this->transaction_id = $this->ConnectionManager->getTransactionId('T');
+                $this->transaction_id = $this->ConnectionManager->getTransactionId();
             }
             if (null === $this->transaction_id) {
                 $this->transaction_id = UniqueId::generate();

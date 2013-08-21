@@ -32,3 +32,11 @@ function test_postgresql_get_dsn() {
 function test_postgresql_get_connection() {
     return pg_connect('host=127.0.0.1 user=test password=test dbname=test');
 }
+
+function test_tokumx_get_dsn() {
+    return 'mongodb://127.0.0.1:27017/test';
+}
+
+function test_tokumx_get_db() {
+    return (new MongoClient('mongodb://127.0.0.1:27017'))->test;
+}
