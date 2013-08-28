@@ -42,6 +42,9 @@ class TestListBaseModel extends Model\ListBase {
                     {{ END }}
                     {{ UNLESS COUNT }}
                         id, email
+                        {{ IF add_extra_field }}
+                           , 1 as extra_field
+                        {{ END }}
                     {{ END }}
                 FROM
                     t
@@ -86,11 +89,11 @@ class ModelBaseListTest extends PHPUnit_Framework_TestCase {
 
     protected function fill() {
         $tokens = [];
-        $id     = 1;
+        $id = 1;
         foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $letter) {
-            $email               = $letter . '@domain.com';
+            $email = $letter . '@domain.com';
             $this->stub_values[] = ['id' => $id++, 'email' => $email];
-            $tokens[]            = "('$email')";
+            $tokens[] = "('$email')";
         }
         $values = join(',', $tokens);
         $this->Db->executeQuery("INSERT INTO t (email) VALUES $values");
@@ -106,7 +109,7 @@ class ModelBaseListTest extends PHPUnit_Framework_TestCase {
         /** @var $Item \TestListItemBaseModel */
         foreach ($Model as $idx => $Item) {
             $this->assertInstanceOf('\TestListItemBaseModel', $Item);
-            $expected_id    = $this->stub_values[$idx]['id'];
+            $expected_id = $this->stub_values[$idx]['id'];
             $expected_email = $this->stub_values[$idx]['email'];
             $this->assertEquals($expected_id, $Item->id);
             $this->assertEquals($expected_email, $Item->email);
@@ -124,7 +127,7 @@ class ModelBaseListTest extends PHPUnit_Framework_TestCase {
         /** @var $Item \TestListItemBaseModel */
         foreach ($Model as $idx => $Item) {
             $this->assertInstanceOf('\TestListItemBaseModel', $Item);
-            $expected_id    = $this->stub_values[$idx]['id'];
+            $expected_id = $this->stub_values[$idx]['id'];
             $expected_email = $this->stub_values[$idx]['email'];
             $this->assertEquals($expected_id, $Item->id);
             $this->assertEquals($expected_email, $Item->email);
@@ -141,10 +144,10 @@ class ModelBaseListTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(6, $Model->getCount());
 
         $Item = $Model[0];
-        $idx  = 1;
+        $idx = 1;
 
         $this->assertInstanceOf('\TestListItemBaseModel', $Item);
-        $expected_id    = $this->stub_values[$idx]['id'];
+        $expected_id = $this->stub_values[$idx]['id'];
         $expected_email = $this->stub_values[$idx]['email'];
         $this->assertEquals($expected_id, $Item->id);
         $this->assertEquals($expected_email, $Item->email);
@@ -160,10 +163,10 @@ class ModelBaseListTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, count($Model));
 
         $Item = $Model[0];
-        $idx  = 1;
+        $idx = 1;
 
         $this->assertInstanceOf('\TestListItemBaseModel', $Item);
-        $expected_id    = $this->stub_values[$idx]['id'];
+        $expected_id = $this->stub_values[$idx]['id'];
         $expected_email = $this->stub_values[$idx]['email'];
         $this->assertEquals($expected_id, $Item->id);
         $this->assertEquals($expected_email, $Item->email);
@@ -249,6 +252,15 @@ class ModelBaseListTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('xzb@domain.com', $Model[1]->email);
         $this->assertEquals('xzc@domain.com', $Model[2]->email);
         $this->assertEquals('xzd@domain.com', $Model[3]->email);
+    }
+
+    public function testItemModelFieldsetIsInitializedInDynamicModeFromListModel() {
+        $this->fill();
+        $Model = new TestListBaseModel;
+        $Model->setLimit(2)->load(['add_extra_field' => true]);
+        /** @var TestListItemBaseModel $Item */
+        $Item = $Model[0];
+        $this->assertEquals(1, $Item->extra_field);
     }
 
 }
