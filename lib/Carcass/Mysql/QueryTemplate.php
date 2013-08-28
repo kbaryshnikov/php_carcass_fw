@@ -19,6 +19,24 @@ class QueryTemplate extends Database\QueryTemplate {
 
     protected $ansi_name_escape_mode = false;
 
+    /**
+     * @param $limit
+     * @param $offset
+     * @return string
+     */
+    public function limit($limit, $offset = 0) {
+        $tokens = [];
+        if ($limit > 0) {
+            $tokens[] = 'LIMIT ' . $this->lim($limit);
+        } elseif ($offset > 0) {
+            $tokens[] = 'LIMIT 18446744073709551615';
+        }
+        if ($offset > 0) {
+            $tokens[] = 'OFFSET ' . $this->lim($offset);
+        }
+        return join(' ', $tokens);
+    }
+
     public function setAnsiNameEscaping($bool = true) {
         $this->ansi_name_escape_mode = (bool)$bool;
         return $this;

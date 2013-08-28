@@ -124,8 +124,6 @@ abstract class QueryTemplate extends StringTemplate {
         $tokens = [];
         if ($limit > 0) {
             $tokens[] = 'LIMIT ' . $this->lim($limit);
-        } elseif ($offset > 0) {
-            $tokens[] = 'LIMIT 18446744073709551615';
         }
         if ($offset > 0) {
             $tokens[] = 'OFFSET ' . $this->lim($offset);
