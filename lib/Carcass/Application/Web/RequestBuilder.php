@@ -58,9 +58,10 @@ class Web_RequestBuilder implements RequestBuilderInterface {
     }
 
     protected static function setupWebEnv(array $env) {
-        $env['HOST']   = static::detectHostname($env);
+        $env['HOST'] = static::detectHostname($env);
         $env['SCHEME'] = (!empty($env['HTTPS']) && 0 != strcasecmp($env['HTTPS'], 'off') && 0 != strcasecmp($env['HTTPS'], 'http'))
             ? 'https' : 'http';
+        $env['PORT'] = static::detectPort($env, $env['SCHEME']);
         return $env;
     }
 
@@ -76,6 +77,27 @@ class Web_RequestBuilder implements RequestBuilderInterface {
             $host = php_uname('h');
         }
         return rtrim(strtolower($host), '.');
+    }
+
+    protected static function detectPort($env, $scheme) {
+        if (empty($env['SERVER_PORT'])) {
+            return null;
+        }
+        switch ($scheme) {
+            case 'http':
+                $default_proto_port = 80;
+                break;
+            case 'https':
+                $default_proto_port = 443;
+                break;
+            default:
+                $default_proto_port = null;
+                break;
+        }
+        if ($default_proto_port !== null && $env['SERVER_PORT'] == $default_proto_port) {
+            return null;
+        }
+        return $env['SERVER_PORT'];
     }
 
 }
