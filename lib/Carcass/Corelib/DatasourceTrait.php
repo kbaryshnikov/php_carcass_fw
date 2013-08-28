@@ -50,7 +50,7 @@ trait DatasourceTrait {
             $Item = $this->get($key);
             if ($subpath !== false) {
                 if ($Item instanceof static) {
-                    return $Item->get($subpath, $default_value);
+                    return $Item->getPath($subpath, $default_value);
                 } elseif (is_array($Item)) {
                     return ArrayTools::getPath($Item, $subpath, $default_value);
                 }
