@@ -10,12 +10,12 @@ class TestMemcachedModel extends Model\Memcached {
 
     protected static
         $cache_key = 'test_{{ i(id) }}',
-        $cache_tags = [ 'Test_{{ i(id) }}' ];
+        $cache_tags = ['Test_{{ i(id) }}'];
 
     public static function getModelRules() {
         return [
-            'id'        => [ 'isValidId' ],
-            'email'     => [ 'isNotEmpty', 'isValidEmail' ]
+            'id'    => ['isValidId'],
+            'email' => ['isNotEmpty', 'isValidEmail']
         ];
     }
 
@@ -51,6 +51,10 @@ class TestMemcachedModel extends Model\Memcached {
         return $this->doModify('DELETE FROM t WHERE id = {{ i(id) }}');
     }
 
+    public function getAffectedRows() {
+        return $this->getQueryDispatcher()->getDatabaseClient()->getAffectedRows();
+    }
+
 }
 
 class ModelMemcachedTest extends PHPUnit_Framework_TestCase {
@@ -79,6 +83,8 @@ class ModelMemcachedTest extends PHPUnit_Framework_TestCase {
         $M->email = 'mail@test.com';
         $id = $M->insert();
 
+        $this->assertEquals(1, $M->getAffectedRows());
+
         $this->assertEquals(1, $id);
         $this->assertFalse($MCT->get($cache_key, $cache_args));
 
@@ -90,6 +96,8 @@ class ModelMemcachedTest extends PHPUnit_Framework_TestCase {
 
         $M->email = 'new@test.com';
         $this->assertEquals(1, $M->update());
+
+        $this->assertEquals(1, $M->getAffectedRows());
 
         $this->assertFalse($MCT->get($cache_key, $cache_args));
 

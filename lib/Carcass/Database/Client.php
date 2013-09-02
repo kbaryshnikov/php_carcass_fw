@@ -30,6 +30,9 @@ abstract class Client {
      */
     protected $QueryParser = null;
 
+    /** @var int */
+    protected $last_affected_rows = null;
+
     /**
      * @param Connection $Connection
      * @param QueryParser $QueryParser
@@ -67,7 +70,14 @@ abstract class Client {
      */
     public function query($template, array $args = []) {
         $this->executeQueryTemplate($template, $args);
-        return $this->Connection->getAffectedRows();
+        return $this->last_affected_rows = $this->Connection->getAffectedRows();
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getAffectedRows() {
+        return $this->last_affected_rows;
     }
 
     /**

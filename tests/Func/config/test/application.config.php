@@ -9,6 +9,7 @@ return [
 
     'debugger' => [
 //        'enable' => true,
+//        'timers' => true,
         'reporter' => 'console:stderr',
     ],
 
