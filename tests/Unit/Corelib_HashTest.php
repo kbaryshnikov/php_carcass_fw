@@ -129,4 +129,26 @@ class Corelib_HashTest extends PHPUnit_Framework_TestCase {
         $Hash->renderTo($Result);
     }
 
+    public function testExportFilteredArray() {
+        $Hash = new Hash(['x' => 1, 'y' => 2, 3 => 3, 'z' => null]);
+        $filtered = $Hash->exportFilteredArray(['y', 'z']);
+        $this->assertInternalType('array', $filtered);
+        $this->assertCount(2, $filtered);
+        $this->assertSame(2, $filtered['y']);
+        $this->assertNull($filtered['z']);
+
+        $this->assertEquals(1, $Hash['x']);
+    }
+
+    public function testExportFilteredHash() {
+        $Hash = new Hash(['x' => 1, 'y' => 2, 3 => 3, 'z' => null]);
+        $Filtered = $Hash->exportFilteredHash(['y', 'z']);
+        $this->assertInstanceOf('\Carcass\Corelib\Hash', $Filtered);
+        $this->assertEquals($Hash->isTainted(), $Filtered->isTainted());
+        $this->assertCount(2, $Filtered);
+        $this->assertSame(2, $Filtered['y']);
+        $this->assertNull($Filtered->get('z'));
+
+        $this->assertEquals(1, $Hash['x']);
+    }
 }

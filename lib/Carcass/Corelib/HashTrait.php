@@ -19,6 +19,7 @@ trait HashTrait {
         ArrayObjectDataReceiverTrait::setArrayObjectItemByKey insteadof ArrayObjectTrait;
         ArrayObjectDataReceiverTrait::unsetArrayObjectItemByKey insteadof ArrayObjectTrait;
     }
+    use FilterableDatasourceTrait;
 
     protected $storage = [];
 

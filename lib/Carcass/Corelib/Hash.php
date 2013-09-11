@@ -17,7 +17,7 @@ namespace Carcass\Corelib;
  * @property mixed Cookie
  * @package Carcass\Corelib
  */
-class Hash implements \Iterator, \ArrayAccess, \Countable, DatasourceRefInterface, DataReceiverInterface, ExportableInterface, ImportableInterface, RenderableInterface {
+class Hash implements \Iterator, \ArrayAccess, \Countable, DatasourceRefInterface, DataReceiverInterface, ExportableInterface, ImportableInterface, RenderableInterface, FilterableDatasourceInterface {
     use HashTrait;
 
     /**
