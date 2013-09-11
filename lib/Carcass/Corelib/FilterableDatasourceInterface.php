@@ -18,11 +18,11 @@ interface FilterableDatasourceInterface {
      * @param array $allowed_fields
      * @return array
      */
-    public function exportFilteredArray($allowed_fields);
+    public function exportFilteredArray(array $allowed_fields);
 
     /**
      * @param array $allowed_fields
      * @return Hash
      */
-    public function exportFilteredHash($allowed_fields);
+    public function exportFilteredHash(array $allowed_fields);
 }

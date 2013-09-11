@@ -20,7 +20,7 @@ trait FilterableDatasourceTrait {
      * @param array $allowed_fields
      * @return array
      */
-    public function exportFilteredArray($allowed_fields) {
+    public function exportFilteredArray(array $allowed_fields) {
         /** @var Hash $this */
         $filtered = $this->exportArray();
         foreach ($filtered as $key => $value) {
@@ -35,7 +35,7 @@ trait FilterableDatasourceTrait {
      * @param array $allowed_fields
      * @return Hash
      */
-    public function exportFilteredHash($allowed_fields) {
+    public function exportFilteredHash(array $allowed_fields) {
         /** @var Hash $this */
         $Filtered = clone $this;
         foreach ($Filtered as $key => $value) {
