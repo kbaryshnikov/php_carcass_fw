@@ -74,15 +74,18 @@ class Captcha_Imagick implements Captcha_Interface {
     /**
      * @param \Carcass\Application\Web_Response $Response
      * @return $this
-     * @throws \LogicException
      */
     public function output(Application\Web_Response $Response) {
-        if (empty($this->font_file)) {
-            throw new \LogicException('setFontFile() required');
-        }
         $Response->sendHeader('Content-type', 'image/jpeg');
         $Response->write($this->generateImage());
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function export() {
+        return $this->generateImage();
     }
 
     /**
@@ -176,9 +179,13 @@ class Captcha_Imagick implements Captcha_Interface {
     }
 
     /**
+     * @throws \LogicException
      * @return string
      */
     protected function generateImage() {
+        if (empty($this->font_file)) {
+            throw new \LogicException('setFontFile() required');
+        }
         mt_srand(crc32($this->text));
         /** @noinspection PhpParamsInspection */
         $i = new \Imagick;

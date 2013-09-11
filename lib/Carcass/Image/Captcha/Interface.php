@@ -39,4 +39,9 @@ interface Captcha_Interface {
      */
     public function output(Application\Web_Response $Response);
 
+    /**
+     * @return string image blob
+     */
+    public function export();
+
 }
