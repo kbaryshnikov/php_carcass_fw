@@ -11,6 +11,8 @@ namespace Carcass\Corelib;
 /**
  * Implementation of FilterableDatasourceInterface.
  *
+ * User must implement:
+ * @method array getDataArrayPtr() must return reference to internal values storage
  *
  * @package Carcass\Corelib
  */
@@ -38,9 +40,10 @@ trait FilterableDatasourceTrait {
     public function exportFilteredHash(array $allowed_fields) {
         /** @var Hash $this */
         $Filtered = clone $this;
-        foreach ($Filtered as $key => $value) {
+        $ptr = &$Filtered->getDataArrayPtr();
+        foreach ($ptr as $key => $value) {
             if (!in_array($key, $allowed_fields)) {
-                unset($Filtered[$key]);
+                unset($ptr[$key]);
             }
         }
         return $Filtered;
