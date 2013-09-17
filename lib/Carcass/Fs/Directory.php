@@ -149,6 +149,7 @@ class Directory {
                 static::mkdirIfNotExists($dest . '/' . $path, $mkdir_perm);
             } else {
                 copy($item, $dest . '/' . $path);
+                chmod($dest . '/' . $path, fileperms($item));
             }
         }
     }

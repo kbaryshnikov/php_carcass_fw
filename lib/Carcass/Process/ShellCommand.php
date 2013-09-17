@@ -76,7 +76,7 @@ class ShellCommand {
      * @throws \InvalidArgumentException
      */
     public function setInputSource($input = null) {
-        if (null !== $input && !is_resource($input) || !Corelib\ArrayTools::isTraversable($input)) {
+        if (null !== $input && !is_resource($input) && !Corelib\ArrayTools::isTraversable($input)) {
             throw new \InvalidArgumentException("Argument is expected to be typeof null|array|Traversable|resource");
         }
         $this->input = $input;
@@ -120,7 +120,7 @@ class ShellCommand {
                 fwrite($pipes[self::STDIN], $line);
             }
         }
-        fclose($pipes[self::STDIN]);
+        isset($pipes[self::STDIN]) and fclose($pipes[self::STDIN]);
         if (null !== $stdout && !is_resource($stdout)) {
             $stdout = stream_get_contents($pipes[self::STDOUT]);
             fclose($pipes[self::STDOUT]);

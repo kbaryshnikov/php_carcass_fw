@@ -27,8 +27,7 @@ class DeployScript extends Controller {
         }
         $Args->f = $archive_file;
         $Args->r = null;
-        $this->deployDistArchive($Args);
-        return 0;
+        return $this->deployDistArchive($Args);
     }
 
     public function actionArchive(Corelib\Hash $Args) {
@@ -39,6 +38,10 @@ class DeployScript extends Controller {
         $this->Response->writeLn("Distribution tarball has been created:");
         $this->Response->writeLn($archive_file);
         return 0;
+    }
+
+    public function actionPut(Corelib\Hash $Args) {
+        return $this->deployDistArchive($Args);
     }
 
     protected function buildDistArchive(Corelib\Hash $Args) {
@@ -62,22 +65,33 @@ class DeployScript extends Controller {
     }
 
     protected function deployDistArchive(Corelib\Hash $Args) {
-        $filename = $Args->get('f');
-        if (!$filename) {
-            throw new \LogicException("Missing -f argument");
-        }
-        if (!file_exists($filename)) {
-            throw new \LogicException("File not found: $filename");
-        }
-        $revno = (int)$Args->get('r');
-        if (!$revno && preg_match('/\.\(d+)\.tgz$/', $filename, $matches)) {
-            $revno = (int)$matches[1];
-        }
-        if (!$revno) {
-            throw new \LogicException("No -r argument, and revision number could not be extracted from the file name");
-        }
-        if ($Args->has('only')) {
-            $only_to_servers = explode(',', $Args->only);
+        try {
+            $filename = $Args->get('f');
+            if (!$filename) {
+                throw new \LogicException("Missing -f argument");
+            }
+            if (!file_exists($filename)) {
+                throw new \LogicException("File not found: $filename");
+            }
+            $revno = (int)$Args->get('r');
+            if (!$revno && preg_match('/\.(\d+)\.tgz$/', $filename, $matches)) {
+                $revno = (int)$matches[1];
+            }
+            if (!$revno) {
+                throw new \LogicException("No -r argument, and revision number could not be extracted from the file name");
+            }
+            if ($Args->has('only')) {
+                $only_to_servers = explode(',', $Args->only);
+            } else {
+                $only_to_servers = [];
+            }
+            $Deployer = new Deployer($this->AppConfig->deploy, $this->Response);
+            $Deployer->deploy($filename, $revno, $only_to_servers);
+            return 0;
+        } catch (\Exception $e) {
+            $this->Response->writeErrorLn('ERROR: ' . $e->getMessage());
+            $this->Response->writeErrorLn($e->getTraceAsString());
+            return 1;
         }
     }
 
