@@ -76,8 +76,8 @@ class ShellCommand {
      * @throws \InvalidArgumentException
      */
     public function setInputSource($input = null) {
-        if (null !== $input && !Corelib\ArrayTools::isTraversable($input)) {
-            throw new \InvalidArgumentException("Argument is expected to be typeof null|array|Traversable");
+        if (null !== $input && !is_resource($input) || !Corelib\ArrayTools::isTraversable($input)) {
+            throw new \InvalidArgumentException("Argument is expected to be typeof null|array|Traversable|resource");
         }
         $this->input = $input;
         return $this;

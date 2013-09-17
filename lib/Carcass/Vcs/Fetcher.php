@@ -83,9 +83,9 @@ abstract class Fetcher {
      */
     public function __construct($repository_url, $local_root, $revision = '', $branch = '') {
         $this->repository_url = (string)$repository_url;
-        $this->local_root     = rtrim($local_root, '/');
-        $this->revision       = (string)$revision ? : null;
-        $this->branch         = (string)$branch ? : null;
+        $this->local_root = rtrim($local_root, '/');
+        $this->revision = (string)$revision ? : null;
+        $this->branch = (string)$branch ? : null;
     }
 
     public function fetch($allow_delete = false) {
@@ -95,7 +95,7 @@ abstract class Fetcher {
             }
             if (!$allow_delete) {
                 throw new \RuntimeException("Directory {$this->local_root} already exists, "
-                    . "but VCS configuration is not saved or saved data does not match current VCS settings");
+                . "but VCS configuration is not saved or saved data does not match current VCS settings");
             }
             Directory::deleteRecursively($this->local_root);
         }
@@ -123,6 +123,10 @@ abstract class Fetcher {
     abstract public function execCheckout();
 
     abstract public function execUpdate();
+
+    abstract public function getRevision();
+
+    abstract public function getRevisionTimestamp();
 
     protected function ensureIsReadyForUpdate() {
         $this->ensureIsWriteableDirectory($this->local_root);
@@ -183,14 +187,14 @@ abstract class Fetcher {
         return file_exists($dir) && is_dir($dir);
     }
 
-    protected function exec($bin, $args_template, array $args, $setcwd = false) {
+    protected function exec($bin, $args_template, array $args, $setcwd = false, &$stdout = null, &$stderr = null) {
         $ShellCommand = new ShellCommand($bin, $args_template);
 
         if ($setcwd) {
             $ShellCommand->setCwd(true === $setcwd ? $this->local_root : $setcwd);
         }
 
-        if ($this->verbose) {
+        if ($this->verbose && null === $stdout && null === $stderr) {
             $stdout = STDOUT;
             $stderr = STDERR;
         }

@@ -54,4 +54,12 @@ class Fetcher_Git extends Fetcher {
     protected function getConfiguration() {
         return parent::getConfiguration() + ['branch' => $this->branch];
     }
+
+    public function getRevision() {
+        throw new \LogicException("Not implemented"); // todo
+    }
+
+    public function getRevisionTimestamp() {
+        throw new \LogicException("Not implemented"); // todo
+    }
 }

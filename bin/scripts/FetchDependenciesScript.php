@@ -16,9 +16,11 @@ class FetchDependenciesScript extends Controller {
     protected $vcs_clone_dir;
     protected $quiet = false;
     protected $force = false;
+    protected $copy_mode = false;
+    protected $remove_vcs_subdir_after_copy = false;
 
     public function actionDefault(Corelib\Hash $Args) {
-        $app_root        = $Args->get('app_root');
+        $app_root = $Args->get('app_root');
         $vendor_lib_path = null;
 
         $libs = Application\Dependencies::getApplicationDependencies(
@@ -43,11 +45,16 @@ class FetchDependenciesScript extends Controller {
 
         $this->quiet = $Args->get('q');
         $this->force = $Args->get('f');
+        $this->copy_mode = $Args->get('c');
 
         foreach ($libs as $name => $config) {
             if (!empty($config['source']) && !$this->isLocal($config['source'])) {
                 $this->updateDependency($name, $config);
             }
+        }
+
+        if ($this->copy_mode && $Args->get('x')) {
+            Fs\Directory::deleteRecursively($this->vcs_clone_dir);
         }
 
         return 0;
@@ -67,10 +74,19 @@ class FetchDependenciesScript extends Controller {
             ->fetch($this->force);
 
         $subdir = isset($config['source']['subdirectory']) ? trim($config['source']['subdirectory'], '/') : '';
-        $this->updateSymlink(
-            $clone_target . '/' . $subdir,
-            $this->vendor_lib_path . '/' . trim($config['target'], '/')
-        );
+
+        if ($this->copy_mode) {
+            Fs\Directory::copyRecursively(
+                $clone_target . '/' . $subdir,
+                $this->vendor_lib_path . '/' . trim($config['target'], '/'),
+                true
+            );
+        } else {
+            $this->updateSymlink(
+                $clone_target . '/' . $subdir,
+                $this->vendor_lib_path . '/' . trim($config['target'], '/')
+            );
+        }
     }
 
     protected function updateSymlink($target, $link) {
@@ -128,9 +144,11 @@ class FetchDependenciesScript extends Controller {
         return preg_replace('#/{2,}#', '/', trim($link));
     }
 
-    protected function getHelp() {
+    protected function getHelp($action = 'default') {
         return [
             '-f' => 'Force replacement of existing repository clones on revision mismatch',
+            '-c' => 'Copy to target directory instead of creating symlinks',
+            '-x' => 'Remove the cloned repository directories. Has effect only in the -c mode',
             '-q' => 'Be quiet',
         ];
     }

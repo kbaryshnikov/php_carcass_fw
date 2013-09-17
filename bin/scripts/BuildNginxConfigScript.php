@@ -11,7 +11,13 @@ class BuildNginxConfigScript extends Controller {
         $target = $Args->get('o', null);
 
         $app_root = $Args->get('app_root');
-        $Config = $this->getAppConfig($app_root);
+
+        $env_override = [];
+        if ($Args->has('e')) {
+            $env_override['configuration_name'] = $Args->e;
+        }
+
+        $Config = $this->getAppConfig($app_root, $env_override);
 
         try {
             $vars             = $this->buildVars($Config);
@@ -126,9 +132,10 @@ class BuildNginxConfigScript extends Controller {
         return $result;
     }
 
-    protected function getHelp() {
+    protected function getHelp($action = 'default') {
         return [
-            '-o filename' => 'Output to < filename >, default: stdout',
+            '-o=filename' => 'Output to < filename >, default: stdout',
+            '-e=configuration_name' => 'Override configuration name',
         ];
     }
 

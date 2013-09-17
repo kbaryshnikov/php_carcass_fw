@@ -80,7 +80,7 @@ class CompileLessScript extends Controller {
         }
     }
 
-    protected function getHelp() {
+    protected function getHelp($action = 'default') {
         return [
             '<filename>' => 'LESS filename or file mask. Required',
             '-o' => 'Output filename, default = print to STDOUT',

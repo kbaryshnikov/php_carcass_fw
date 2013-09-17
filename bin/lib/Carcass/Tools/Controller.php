@@ -16,20 +16,23 @@ class Controller extends Application\Controller {
         return parent::dispatch($action, $Args);
     }
 
-    protected function getHelp() {
+    protected function getHelp($action = 'default') {
         return [];
     }
 
     protected function printHelp($method, $action) {
-        (new Help($this->getHelp() + [
+        (new Help($this->getHelp(lcfirst($action ? : 'Default')) + [
             '-h' => 'Show help',
-        ], $method . ($action === 'Default' ? '' : '.' . lcfirst($action)) . ' arguments:'))->displayTo($this->Response);
+        ], $method . ' arguments:'))->displayTo($this->Response);
     }
 
-    protected function getAppConfig(&$app_root = null) {
-        $app_root = rtrim($app_root ?: getcwd(), '/') . '/';
+    protected function getAppConfig(&$app_root = null, array $env_override = []) {
+        $app_root = rtrim($app_root ? : getcwd(), '/') . '/';
 
-        $AppEnv = new Corelib\Hash(include "{$app_root}env.php");
+        $AppEnv = new Corelib\Hash($env_override
+            + (array)(include "{$app_root}env.php")
+            + (array)(include "{$app_root}etc.php")
+        );
 
         $Config = new Config\Reader($this->getConfigLocations($app_root, $AppEnv));
         $Config->addConfigVar('APP_ROOT', $app_root);

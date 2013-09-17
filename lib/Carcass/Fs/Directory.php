@@ -118,4 +118,39 @@ class Directory {
         rmdir($dir);
     }
 
+    /**
+     * @param string $source
+     * @param string $dest
+     * @param bool $unlink_dest_if_exists
+     * @param int|null $mkdir_perm, DEFAULT_MKDIR_PERM if null
+     */
+    public static function copyRecursively($source, $dest, $unlink_dest_if_exists = false, $mkdir_perm = null) {
+        if ($unlink_dest_if_exists && file_exists($dest)) {
+            if (is_link($dest) || !is_dir($dest)) {
+                unlink($dest);
+            } else {
+                static::deleteRecursively($dest);
+            }
+        }
+        static::mkdirIfNotExists($dest);
+        foreach (
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($source),
+                \RecursiveIteratorIterator::SELF_FIRST
+            ) as $item
+        ) {
+            /** @var \SplFileInfo $item */
+            if ('.' == $item->getBasename() || '..' == $item->getBasename()) {
+                continue;
+            }
+            /** @noinspection PhpUndefinedMethodInspection */
+            $path = $iterator->getSubPathName();
+            if ($item->isDir()) {
+                static::mkdirIfNotExists($dest . '/' . $path, $mkdir_perm);
+            } else {
+                copy($item, $dest . '/' . $path);
+            }
+        }
+    }
+
 }

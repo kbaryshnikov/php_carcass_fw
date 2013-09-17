@@ -45,4 +45,37 @@ class Fetcher_Hg extends Fetcher {
         return $this;
     }
 
+    public function getRevision() {
+        $result = '';
+        $this->exec(
+            $this->hg_bin,
+            'sum',
+            [],
+            true,
+            $result
+        );
+        if (preg_match('/^parent:\s+(\d+):/m', $result, $matches) && isset($matches[1]) ) {
+            return (int)$matches[1];
+        }
+        return null;
+    }
+
+    public function getRevisionTimestamp() {
+        $result = '';
+        $revno = $this->getRevision();
+        if (null === $revno) {
+            return null;
+        }
+        $this->exec(
+            $this->hg_bin,
+            'log -r {{ revno }}',
+            ['revno' => $revno],
+            true,
+            $result
+        );
+        if (preg_match('/^date:\s+(.*)$/m', $result, $matches) && isset($matches[1])) {
+            return strtotime($matches[1]);
+        }
+        return null;
+    }
 }
