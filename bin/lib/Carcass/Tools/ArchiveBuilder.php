@@ -24,7 +24,7 @@ class ArchiveBuilder {
         $this->Config = $Config;
         $this->co_dir = $this->prepareCoDir($tmp_dir ? : sys_get_temp_dir());
         $this->clean_on_destruct = $clean_on_destruct;
-        $this->has_carcass = $Config->has('source.carcass');
+        $this->has_carcass = $Config->get('source')->has('carcass');
     }
 
     public function build($target_tarball_path) {
