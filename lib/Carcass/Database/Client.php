@@ -13,7 +13,6 @@ namespace Carcass\Database;
  * Abstract Database Client
  *
  * Proxies missing methods to $Connection via __call:
- * @method int getAffectedRows()
  * @method string escapeString($str)
  * @method \Carcass\Connection\Dsn getDsn()
  * @method int getLastInsertId($sequence = null)

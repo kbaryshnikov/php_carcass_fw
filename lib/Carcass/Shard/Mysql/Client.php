@@ -109,6 +109,13 @@ class Mysql_Client extends Mysql\Client {
     }
 
     /**
+     * @return string
+     */
+    public function getSequenceTableName() {
+        return $this->sequence_table_name;
+    }
+
+    /**
      * @param $sequence_name
      * @param int $initial_value
      * @return mixed
@@ -172,6 +179,19 @@ class Mysql_Client extends Mysql\Client {
                 'table_name'    => $this->sequence_table_name,
                 'sequence_name' => $sequence_name,
                 'value'         => $value,
+            ]
+        );
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function resetAllSequences() {
+        $this->query(
+            "DELETE FROM {{ table_name }}",
+            [
+                'table_name' => $this->sequence_table_name,
             ]
         );
         return $this;
