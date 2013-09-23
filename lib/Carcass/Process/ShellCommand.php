@@ -42,11 +42,11 @@ class ShellCommand {
      * @param string $cmd command name
      * @param string $args_template
      * @param array $args
-     * @param string|null $stdout returned by ref
-     * @param string|null $stderr returned by ref
+     * @param string|bool $stdout false to skip reading stdout, by-ref
+     * @param string|bool $stderr false to skip reading stderr, by-ref
      * @return int
      */
-    public static function run($cmd, $args_template = null, array $args = [], &$stdout = null, &$stderr = null) {
+    public static function run($cmd, $args_template = null, array $args = [], &$stdout = false, &$stderr = false) {
         /** @var ShellCommand $self */
         $self = new static($cmd, $args_template);
         return $self->prepare($args)->execute($stdout, $stderr);
@@ -76,6 +76,9 @@ class ShellCommand {
      * @throws \InvalidArgumentException
      */
     public function setInputSource($input = null) {
+        if (false === $input) {
+            $input = null;
+        }
         if (null !== $input && !is_resource($input) && !Corelib\ArrayTools::isTraversable($input)) {
             throw new \InvalidArgumentException("Argument is expected to be typeof null|array|Traversable|resource");
         }
@@ -96,12 +99,12 @@ class ShellCommand {
     }
 
     /**
-     * @param $stdout
-     * @param $stderr
+     * @param string|bool $stdout false to skip reading stdout, by-ref
+     * @param string|bool $stderr false to skip reading stderr, by-ref
      * @return int
      * @throws \RuntimeException
      */
-    public function execute(&$stdout = null, &$stderr = null) {
+    public function execute(&$stdout = false, &$stderr = false) {
         $args = Corelib\StringTools::parseTemplate($this->args_template, $this->args);
         $command = escapeshellcmd($this->cmd) . ' ' . $args;
 
@@ -121,11 +124,11 @@ class ShellCommand {
             }
         }
         isset($pipes[self::STDIN]) and fclose($pipes[self::STDIN]);
-        if (null !== $stdout && !is_resource($stdout)) {
+        if (false !== $stdout && !is_resource($stdout)) {
             $stdout = stream_get_contents($pipes[self::STDOUT]);
             fclose($pipes[self::STDOUT]);
         }
-        if (null !== $stderr && !is_resource($stderr)) {
+        if (false !== $stderr && !is_resource($stderr)) {
             $stderr = stream_get_contents($pipes[self::STDERR]);
             fclose($pipes[self::STDERR]);
         }
@@ -133,7 +136,7 @@ class ShellCommand {
     }
 
     protected function getDescriptor($arg) {
-        if ($arg === null) {
+        if ($arg === false) {
             return ['file', '/dev/null', 'a'];
         } elseif (is_resource($arg)) {
             return $arg;
