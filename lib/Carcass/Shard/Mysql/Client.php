@@ -189,7 +189,7 @@ class Mysql_Client extends Mysql\Client {
      */
     public function resetAllSequences() {
         $this->query(
-            "DELETE FROM {{ table_name }}",
+            "DELETE FROM {{ t(table_name) }}",
             [
                 'table_name' => $this->sequence_table_name,
             ]
