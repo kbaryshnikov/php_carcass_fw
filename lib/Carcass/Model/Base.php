@@ -16,7 +16,7 @@ use Carcass\Corelib;
  * Base Model
  * @package Carcass\Model
  */
-abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiverInterface, Corelib\ImportableInterface, Corelib\ExportableInterface, Corelib\RenderableInterface, Query\ItemReceiverInterface {
+abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiverInterface, Corelib\ImportableInterface, Corelib\ExportableInterface, Corelib\RenderableInterface, Corelib\FilterableDatasourceInterface,  Query\ItemReceiverInterface {
     use QueryTrait;
     use Corelib\RenderableTrait;
 
@@ -285,6 +285,22 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
      */
     public function getRenderArray() {
         return $this->Fieldset->getRenderArray();
+    }
+
+    /**
+     * @param array $allowed_fields
+     * @return array
+     */
+    public function exportFilteredArray(array $allowed_fields) {
+        return $this->Fieldset->exportFilteredArray($allowed_fields);
+    }
+
+    /**
+     * @param array $allowed_fields
+     * @return Corelib\Hash
+     */
+    public function exportFilteredHash(array $allowed_fields) {
+        return $this->Fieldset->exportFilteredHash($allowed_fields);
     }
 
     protected function assembleQueryDispatcher() {

@@ -189,12 +189,26 @@ class Mysql_Client extends Mysql\Client {
      */
     public function resetAllSequences() {
         $this->query(
-            "DELETE FROM {{ t(table_name) }}",
+            "DELETE FROM {{ t(table_name) }} {{ where() }} 1 = 1",
             [
                 'table_name' => $this->sequence_table_name,
             ]
         );
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllSequenceValues() {
+        return $this->getCol(
+            "SELECT name, value FROM {{ t(table_name) }} {{ where() }} 1 = 1",
+            [
+                'table_name' => $this->sequence_table_name
+            ],
+            'name',
+            'value'
+        );
     }
 
     /**
