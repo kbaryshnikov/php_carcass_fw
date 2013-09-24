@@ -20,7 +20,7 @@ use Carcass\Connection;
  */
 class Instance {
 
-    const API_VERSION = 20130923;
+    const API_VERSION = 20130924;
 
     protected static $env_defaults = [
         'configuration_name' => null,
