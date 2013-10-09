@@ -457,9 +457,40 @@ class BaseDispatcher {
     protected function assembleDatabaseClient() {
         /** @var Database\Connection $Connection */
         $Connection = DI::getConnectionManager()->getConnection(
-            DI::getConfigReader()->getPath($this->getConfigDatabaseDsnPath())
+            $this->getDatabaseDsn()
         );
         return $Connection->assembleClient();
+    }
+
+    /**
+     * @return string|Connection\DsnInterface
+     */
+    protected function getDatabaseDsn() {
+        if (null === $this->db_dsn) {
+            $this->db_dsn = $this->getDatabaseDsnFromConfigReader();
+        }
+        return $this->db_dsn;
+    }
+
+    /**
+     * @param string|Connection\DsnInterface $dsn
+     * @return $this
+     * @throws \InvalidArgumentException
+     */
+    public function setDatabaseDsn($dsn) {
+        if (is_string($dsn) || $dsn instanceof Connection\DsnInterface) {
+            $this->db_dsn = $dsn;
+        } else {
+            throw new \InvalidArgumentException("string or DsnInterface argument is required");
+        }
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getDatabaseDsnFromConfigReader() {
+        return DI::getConfigReader()->getPath($this->getConfigDatabaseDsnPath());
     }
 
     /**
