@@ -16,5 +16,7 @@ use Carcass\Database;
  * @package Carcass\Postgresql
  */
 class QueryTemplate extends Database\QueryTemplate {
-    // pass
+
+    protected $datetime_format = 'Y-m-d H:i:s+00';
+
 }
