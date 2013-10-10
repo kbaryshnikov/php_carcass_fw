@@ -138,6 +138,9 @@ class Assert {
         if ($strict) {
             return is_int($value);
         } else {
+            if (is_float($value)) {
+                $value = (string)$value;
+            }
             return is_int($value) || (is_string($value) && ctype_digit(substr($value, 0, 1) == '-' ? substr($value, 1) : $value));
         }
     }
