@@ -111,13 +111,13 @@ class DeployScript extends Controller {
         switch ($action) {
             case 'default':
                 $this->Response->writeln("Actions:");
-                $this->Response->writeLn("  build   \t - build the distribution tarball");
+                $this->Response->writeLn("  archive \t - build the distribution tarball archive");
                 $this->Response->writeLn("  put     \t - deploy the distribution tarball onto server(s)");
                 $this->Response->writeLn("  default \t - build and deploy the distribution tarball onto server(s)\n");
                 $args = $build_args + $put_args;
                 unset($args['r']);
                 return $args;
-            case 'build':
+            case 'archive':
                 return $build_args;
             case 'put':
                 return $put_args;
