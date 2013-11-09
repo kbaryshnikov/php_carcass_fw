@@ -90,9 +90,12 @@ class ArchiveBuilder {
     protected function fetchAppDependencies() {
         $stdout = STDOUT;
         $stderr = STDERR;
-        (new ShellCommand('carcass', 'fetch-dependencies -c -x'))
+        $errno = (new ShellCommand('carcass', 'fetch-dependencies -c -x'))
             ->setCwd($this->app_dir)
             ->execute($stdout, $stderr);
+        if ($errno) {
+            throw new \RuntimeException('carcass fetch-dependencies failed with errno='.$errno);
+        }
     }
 
     protected function cleanDotFiles() {
