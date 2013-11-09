@@ -9,7 +9,7 @@
 namespace Carcass\Filter;
 
 /**
- * NullifyEmpty filter: sets value to null if it is an empty string, empty array, or "empty" non-string value
+ * NullifyEmpty filter: sets value to null if it is an empty string, empty array, or "empty" non-string and non-numeric value
  * @package Carcass\Filter
  */
 class NullifyEmpty implements FilterInterface {
@@ -18,7 +18,7 @@ class NullifyEmpty implements FilterInterface {
      * @param mixed $value
      */
     public function filter(&$value) {
-        if (is_string($value)) {
+        if (is_string($value) || is_int($value) || is_float($value)) {
             if (!strlen($value)) {
                 $value = null;
             }
@@ -27,7 +27,7 @@ class NullifyEmpty implements FilterInterface {
                 $value = null;
             }
         } else {
-            if (!strlen($value)) {
+            if (empty($value)) {
                 $value = null;
             }
         }
