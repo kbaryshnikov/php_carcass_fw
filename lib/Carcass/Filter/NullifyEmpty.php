@@ -27,7 +27,7 @@ class NullifyEmpty implements FilterInterface {
                 $value = null;
             }
         } else {
-            if (empty($value)) {
+            if (!strlen($value)) {
                 $value = null;
             }
         }
