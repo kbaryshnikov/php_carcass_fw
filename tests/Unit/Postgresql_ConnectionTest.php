@@ -94,11 +94,11 @@ class Postgresql_ConnectionTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(['id' => '1', 's' => 'new'], $row);
     }
 
-    public function testXA() {
+    public function _testXA() {
         $Manager = new Carcass\Connection\Manager;
-        $Conn = $Manager->getConnection(test_postgresql_get_dsn());
+        $Conn = $Manager->getConnection(test_postgresql_xa_get_dsn());
 
-        $ConnMock = $this->getMock('\Carcass\Postgresql\Connection', [], [ \Carcass\Connection\Dsn::factory('pgsql://mock/') ]);
+        $ConnMock = $this->getMock('\Carcass\Postgresql\Connection', [], [ \Carcass\Connection\Dsn::factory('pgsqlxa://mock/') ]);
         $ConnMock->expects($this->once())
             ->method('vote')
             ->will($this->returnValue(false));

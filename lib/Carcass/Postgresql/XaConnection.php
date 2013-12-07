@@ -9,7 +9,8 @@
 namespace Carcass\Postgresql;
 
 use Carcass\Connection\ConnectionInterface;
-use Carcass\Connection\TransactionalConnectionInterface;
+use Carcass\Connection\XaTransactionalConnectionInterface;
+use Carcass\Connection\XaTransactionalConnectionTrait;
 use Carcass\Connection\Dsn;
 use Carcass\Corelib;
 use Carcass\Application\DI;
@@ -21,11 +22,13 @@ use Carcass\Database;
  *
  * @package Carcass\Postgresql
  */
-class Connection extends Database\Connection implements ConnectionInterface, TransactionalConnectionInterface {
+class XaConnection extends Database\XaConnection implements ConnectionInterface, XaTransactionalConnectionInterface {
 
     const DSN_TYPE = 'pgsql';
 
     protected $last_result = null;
+
+    protected $xa_is_prepared = false;
 
     /**
      * @var resource
@@ -222,16 +225,58 @@ class Connection extends Database\Connection implements ConnectionInterface, Tra
         return $result;
     }
 
+    protected function doExecuteXaQuery($xa_query) {
+        $this->doExecuteQuery(
+            str_replace(
+                '#',
+                "'" . $this->escapeString($this->getXaId()) . "'",
+                $xa_query
+            )
+        );
+    }
+
+    protected function getXaId() {
+        return $this->getConnectionId() . '_' . $this->getTransactionId();
+    }
+
+    protected function prepareXa() {
+        $this->doExecuteXaQuery('PREPARE TRANSACTION #');
+        $this->xa_is_prepared = true;
+    }
+
+    protected function ensureXaIsPrepared() {
+        if (!$this->xa_is_prepared) {
+            $this->prepareXa();
+        }
+    }
+
     protected function beginTransaction() {
         $this->doExecuteQuery('BEGIN');
+        $this->xa_is_prepared = false;
     }
 
     protected function rollbackTransaction() {
-        $this->doExecuteQuery('ROLLBACK');
+        if (!$this->xa_is_prepared) {
+            $this->executeQuery('ROLLBACK');
+        } else {
+            $this->doExecuteXaQuery('ROLLBACK PREPARED #');
+            $this->xa_is_prepared = false;
+        }
     }
 
     protected function commitTransaction() {
-        $this->doExecuteQuery('COMMIT');
+        $this->ensureXaIsPrepared();
+        $this->doexecuteXaQuery('COMMIT PREPARED #');
+        $this->xa_is_prepared = false;
+    }
+
+    protected function doXaVote() {
+        try {
+            $this->prepareXa();
+        } catch (\Exception $e) {
+            return false;
+        }
+        return true;
     }
 
 }

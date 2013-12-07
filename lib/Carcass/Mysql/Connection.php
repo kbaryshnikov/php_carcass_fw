@@ -24,7 +24,7 @@ use Carcass\Database;
  *
  * @package Carcass\Mysql
  */
-class Connection extends Database\Connection implements ConnectionInterface, XaTransactionalConnectionInterface {
+class Connection extends Database\XaConnection implements ConnectionInterface, XaTransactionalConnectionInterface {
 
     const DSN_TYPE = 'mysql';
 

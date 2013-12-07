@@ -29,6 +29,10 @@ function test_postgresql_get_dsn() {
     return 'pgsql://test:test@localhost/test';
 }
 
+function test_postgresql_xa_get_dsn() {
+    return 'pgsqlxa://test:test@localhost/test';
+}
+
 function test_postgresql_get_connection() {
     return pg_connect('host=127.0.0.1 user=test password=test dbname=test');
 }

@@ -16,8 +16,6 @@ namespace Carcass\Connection;
  * @package Carcass\Connection
  */
 trait XaTransactionalConnectionTrait {
-    use TransactionalConnectionTrait;
-
     /** @var bool|null */
     protected $xa_vote_result = null;
 
