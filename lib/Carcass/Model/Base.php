@@ -159,10 +159,14 @@ abstract class Base implements Corelib\DatasourceInterface, Corelib\DataReceiver
         return $this->Fieldset;
     }
 
+    /**
+     * @param array $data
+     * @return $this
+     */
     public function importItem(array $data = null) {
+        $this->clean();
         $this->Fieldset->dynamic(
             function () use ($data) {
-                $this->Fieldset->clean();
                 $this->import($data);
             }
         );
