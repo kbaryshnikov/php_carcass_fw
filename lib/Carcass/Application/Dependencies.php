@@ -62,7 +62,7 @@ class Dependencies {
             'source' => [
                 'type'         => 'git',
                 'url'          => 'git://github.com/fabpot/Twig.git',
-                'rev'          => 'v1.12.2',
+                'rev'          => 'v1.13.2',
                 'subdirectory' => '/lib/Twig',
             ],
             'target' => 'Twig',
@@ -71,7 +71,7 @@ class Dependencies {
             'source' => [
                 'type'         => 'git',
                 'url'          => 'git://github.com/swiftmailer/swiftmailer.git',
-                'rev'          => 'v4.3.0',
+                'rev'          => 'v4.3.1',
                 'subdirectory' => '/lib',
             ],
             'target' => 'Swift',
