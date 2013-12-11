@@ -368,9 +368,9 @@ class Instance {
                 if ($realpath = realpath($path)) {
                     $lib_pathes[$realpath] = true;
                 }
-                if (isset($dependency['autoload_fn'])) {
-                    $autoload_functions[] = $dependency['autoload_fn'];
-                }
+            }
+            if (isset($dependency['autoload_fn'])) {
+                $autoload_functions[] = $dependency['autoload_fn'];
             }
         }
 
