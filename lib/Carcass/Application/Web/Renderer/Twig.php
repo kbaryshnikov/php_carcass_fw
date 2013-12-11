@@ -9,6 +9,7 @@
 namespace Carcass\Application;
 
 use Carcass\Corelib;
+use Carcass\Application\DI;
 
 /**
  * Twig renderer. Requires the Twig template engine as a dependency.
@@ -105,8 +106,14 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
         if (!isset($env_args['autoescape'])) {
             $env_args['autoescape'] = true;
         }
+        if (!isset($env_args['debug'])) {
+            $env_args['debug'] = DI::getDebugger()->isEnabled();
+        }
         /** @noinspection PhpParamsInspection */
         $Env = new \Twig_Environment($this->assembleTwigLoader(), $env_args);
+        if ($env_args['debug']) {
+            $Env->addExtension(new \Twig_Extension_Debug);
+        }
         $this->setupInternalExtensions($Env);
         foreach ($this->getSetting('extensions', []) as $ext_class => $ext_ctor_args) {
             /** @var \Twig_Extension $Extension */
