@@ -27,6 +27,8 @@ class Web_FrontController implements FrontControllerInterface {
     /** @var \Carcass\Config\ItemInterface */
     protected $Config;
 
+    protected $is_dispatching_error = false;
+
     /**
      * @param \Carcass\Corelib\Request $Request
      * @param Web_Response $Response
@@ -34,10 +36,10 @@ class Web_FrontController implements FrontControllerInterface {
      * @param \Carcass\Config\ItemInterface $WebConfig
      */
     public function __construct(Corelib\Request $Request, Web_Response $Response, Web_Router_Interface $Router, Config\ItemInterface $WebConfig = null) {
-        $this->Request  = $Request;
+        $this->Request = $Request;
         $this->Response = $Response;
-        $this->Router   = $Router;
-        $this->Config   = $WebConfig;
+        $this->Router = $Router;
+        $this->Config = $WebConfig;
     }
 
     public function run() {
@@ -103,7 +105,7 @@ class Web_FrontController implements FrontControllerInterface {
         } elseif (is_string($result)) {
             $this->Response->write($result);
         } elseif (is_int($result)) {
-            $this->Response->writeHttpError($result);
+            $this->dispatchHttpError($result);
         } else {
             $this->showInternalError("No result");
         }
@@ -114,7 +116,28 @@ class Web_FrontController implements FrontControllerInterface {
      * @return void
      */
     public function dispatchNotFound($error_message) {
-        $this->Response->writeHttpError(404, null, $error_message);
+        $this->dispatchHttpError(404, $error_message);
+    }
+
+    /**
+     * @param int $code
+     * @param string|null $error_message
+     */
+    protected function dispatchHttpError($code, $error_message = null) {
+        if (!$this->is_dispatching_error && null !== $error_route = $this->getErrorRoute($code)) {
+            $this->is_dispatching_error = true;
+            $this->dispatch($error_route, new Corelib\Hash(['code' => $code, 'error_message' => $error_message]));
+        } else {
+            $this->Response->writeHttpError($code, null, $error_message ? : $code);
+        }
+    }
+
+    /**
+     * @param $code
+     * @return string|null
+     */
+    protected function getErrorRoute($code) {
+        return strval($this->Config->getPath('error_handlers.error_' . $code)) ? : null;
     }
 
     /**

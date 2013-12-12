@@ -58,16 +58,14 @@ class Web_Renderer_Twig extends Web_Renderer_Base {
     public function setStatus($status) {
         parent::setStatus($status);
         if ($status >= 400) {
-            $template_file = null;
             if (isset($this->settings['error_page'])) {
                 if (is_array($this->settings['error_page']) && isset($this->settings['error_page'])) {
-                    $template_file = $this->settings['error_page'][$status];
+                    $this->template_file = $this->settings['error_page'][$status];
                 }
                 if (is_string($this->settings['error_page'])) {
-                    $template_file = sprintf($this->settings['error_page'], $status);
+                    $this->template_file = sprintf($this->settings['error_page'], $status);
                 }
             }
-            $this->template_file = $template_file;
         }
         return $this;
     }
