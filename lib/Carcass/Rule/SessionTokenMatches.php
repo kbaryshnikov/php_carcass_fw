@@ -39,29 +39,35 @@ class SessionTokenMatches extends Base {
     }
 
     /**
-     * @param $field_value_array
+     * @param $field_value
      * @return bool
      */
-    public function validate($field_value_array) {
-        if (!is_array($field_value_array) || empty($field_value_array)) {
+    public function validate($field_value) {
+        if (empty($field_value)) {
             return false;
         }
 
-        reset($field_value_array);
-        list($field_token_key, $field_token_value) = each($field_value_array);
+        if (is_array($field_value)) {
+            reset($field_value);
+            list($field_token_key, $field_token_value) = each($field_value);
 
-        if (empty($field_token_key) || empty($field_token_value)) {
-            return false;
+            if (empty($field_token_key) || empty($field_token_value)) {
+                return false;
+            }
+
+            $form_tokens = $this->Session->get($this->session_key);
+
+            if (!isset($form_tokens[$field_token_key]) || $form_tokens[$field_token_key]['value'] !== $field_token_value) {
+                return false;
+            }
+
+            unset($form_tokens[$field_token_key]);
+            $this->Session->set($this->session_key, $form_tokens);
+            return true;
+        } else {
+            $session_value = $this->Session->get($this->session_key);
+            $this->Session->delete($session_value);
+            return !empty($session_value) && $session_value === $field_value;
         }
-
-        $form_tokens = $this->Session->get($this->session_key);
-
-        if (!isset($form_tokens[$field_token_key]) || $form_tokens[$field_token_key]['value'] != $field_token_value) {
-            return false;
-        }
-
-        unset($form_tokens[$field_token_key]);
-        $this->Session->set($this->session_key, $form_tokens);
-        return true;
     }
 }
