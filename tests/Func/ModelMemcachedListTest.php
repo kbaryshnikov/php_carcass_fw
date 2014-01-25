@@ -33,6 +33,8 @@ class TestCachedListBaseModel extends Model\MemcachedList {
 
     public $chunk_size = 10;
 
+    public $sql_error = false;
+
     public function getMct() {
         return $this->getQueryDispatcher()->getMct();
     }
@@ -43,6 +45,7 @@ class TestCachedListBaseModel extends Model\MemcachedList {
     public function load($filter = []) {
         $this->getListQueryDispatcher($this->chunk_size)
             ->fetchList(
+                $this->sql_error ? "SELECT ERROR FROM ERROR" :
                 "SELECT
                     {{ IF COUNT }}
                         COUNT(id)
@@ -93,13 +96,17 @@ class ModelMemcachedListTest extends PHPUnit_Framework_TestCase {
         TestCachedListBaseModel::$cache_key = 'test{{ IF min_id }}{{ i(min_id) }}{{ END }}';
     }
 
-    protected function fill() {
+    protected function fill($count = 6) {
         $tokens = [];
         $id     = 1;
-        foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $letter) {
+
+        $letter = 'a';
+
+        for ($id = 1; $id <= $count; ++$id) {
             $email               = $letter . '@domain.com';
-            $this->stub_values[] = ['id' => $id++, 'email' => $email];
+            $this->stub_values[] = ['id' => $id, 'email' => $email];
             $tokens[]            = "('$email')";
+            $letter++;
         }
         $values = join(',', $tokens);
         $this->Db->executeQuery("INSERT INTO t (email) VALUES $values");
@@ -255,6 +262,42 @@ class ModelMemcachedListTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('new@value.com', $data2[3]['email']);
     }
 
+    public function testLoadLargeListWithIntersection() {
+        $this->fill(33);
+        $Model = new TestCachedListBaseModel;
+        $Model->chunk_size = 20;
+
+        $Mc = $Model->getMct()->getConnection();
+        $Mc->flush();
+
+        $Model->setLimit(10)->load();
+
+        $this->assertEquals(33, $Mc->get('|test|#')['d']);
+        $this->assertEquals(10, count($Mc->get('|test|0')['d']));
+
+        $Model->setLimit(10, 10)->load();
+
+        $this->assertEquals(33, $Mc->get('|test|#')['d']);
+        $this->assertEquals(20, count($Mc->get('|test|0')['d']));
+
+        $Model->setLimit(10, 20)->load();
+
+        $this->assertEquals(33, $Mc->get('|test|#')['d']);
+        $this->assertEquals(20, count($Mc->get('|test|0')['d']));
+        $this->assertEquals(10, count($Mc->get('|test|20')['d']));
+
+        $Model->setLimit(5, 30)->load();
+
+        $this->assertEquals(33, $Mc->get('|test|#')['d']);
+        $this->assertEquals(20, count($Mc->get('|test|0')['d']));
+        $this->assertEquals(13, count($Mc->get('|test|20')['d']));
+
+        $Model->sql_error = true;
+
+        $Model->setLimit(10, 30)->load();
+    }
+
+
     public function testExportArray() {
         $this->fill();
         $Model = new TestCachedListBaseModel;
@@ -297,7 +340,7 @@ class ModelMemcachedListTest extends PHPUnit_Framework_TestCase {
 
     public function testForEachActions() {
         $this->fill();
-        $Model = new TestListBaseModel;
+        $Model = new TestCachedListBaseModel;
         $Model->setLimit(2)->load();
         $this->assertEquals('a@domain.com', $Model[0]->email);
         $Model->forEachItemDo('uppercaseEmail');

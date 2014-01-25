@@ -90,6 +90,7 @@ class TaggedListCache {
         $this->is_incomplete = false;
 
         $slice_keys = $this->getKeysForRange($offset, $limit);
+
         $count_key  = $this->getCountKeyTemplate();
 
         $mc_result = $this->TaggedCache->getMulti($slice_keys + ['count' => $count_key], $args);
@@ -188,6 +189,7 @@ class TaggedListCache {
 
         $mset_data = [$this->getCountKeyTemplate() => $this->getCount()];
         foreach ($slices as $idx => $data) {
+            ksort($data);
             $mset_data[$this->getChunkKeyTemplate($idx)] = $data;
         }
 
