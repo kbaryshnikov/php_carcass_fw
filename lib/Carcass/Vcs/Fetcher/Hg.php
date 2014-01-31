@@ -20,7 +20,7 @@ class Fetcher_Hg extends Fetcher {
                 'source' => $this->repository_url,
                 'target' => $this->local_root,
             ]
-        );
+        ) and $this->execHgUp();
     }
 
     public function execUpdate() {
@@ -29,7 +29,11 @@ class Fetcher_Hg extends Fetcher {
             'pull',
             [],
             true
-        ) and $this->exec(
+        ) and $this->execHgUp();
+    }
+
+    protected function execHgUp() {
+        return $this->exec(
             $this->hg_bin,
             'up{{ IF branch }} -C {{ branch }}{{ END }}{{ IF revision }} -r {{ revision }}{{ END }}',
             [
