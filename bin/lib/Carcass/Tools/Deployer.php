@@ -81,9 +81,11 @@ class Deployer {
     protected function buildInstallShellLine(Corelib\Hash $server, $revision) {
         $target_dir = $server->target_path . '/' . $revision;
         $target_dir_e = escapeshellarg($target_dir);
-        $commands = [
+        $pre_commands = [
             "test ! -d $target_dir_e || (echo Directory already exists: $target_dir_e && false)",
             "mkdir -p $target_dir_e || (echo Failed to created directory $target_dir_e && false)",
+        ];
+        $commands = [
             "tar xzf - -C $target_dir_e || (echo Failed to extract the stdin tarball && false)",
         ];
         $cd = "cd $target_dir_e && ";
@@ -105,17 +107,23 @@ class Deployer {
             $commands[] = "($rotate_cmd) || true";
         }
         $commands[] = 'echo DEPLOYED OK';
-        $result = join(
+        $pre_cmd = '(' . $this->joinCommands($pre_commands) . ')';
+        $cmd = $this->joinCommands($commands);
+        if ($this->Config->getPath('clean_on_error')) {
+            $cmd = "( $cmd ) || ( cd / && rm -rf $target_dir_e )";
+        }
+        $result = "( $pre_cmd ) && ( $cmd )";
+        return $result;
+    }
+
+    protected function joinCommands($commands) {
+        return join(
             ' && ', array_map(
                 function ($cmd) {
                     return '( ' . $cmd . ' )';
                 }, $commands
             )
         );
-        if ($this->Config->getPath('clean_on_error')) {
-            $result = "( $result ) || ( cd / && rm -rf $target_dir_e )";
-        }
-        return $result;
     }
 
 }

@@ -49,7 +49,7 @@ class DeployScript extends Controller {
         $dist_tarball_file = $this->generateTmpDistTarballFilename();
         $this->Response->writeLn('> Building the distribution archive in [' . $dist_tarball_file . ']...');
         $ArchiveBuilder = new ArchiveBuilder($this->Response, $this->AppConfig->deploy, $Args->get('tmpdir'), !$Args->get('noclean'));
-        $revision_number = $ArchiveBuilder->build($dist_tarball_file);
+        $revision_number = $ArchiveBuilder->build($dist_tarball_file, $this->AppConfig);
         $target_tgz = $target_tgz_file_basename . '.' . $revision_number . '.tgz';
         $this->Response->writeLn("> Revision $revision_number archive has been built, moving [$dist_tarball_file] -> [$target_tgz]");
         rename($dist_tarball_file, $target_tgz);

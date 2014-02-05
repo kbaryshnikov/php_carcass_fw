@@ -27,12 +27,14 @@ class ArchiveBuilder {
         $this->has_carcass = $Config->get('source')->has('carcass');
     }
 
-    public function build($target_tarball_path) {
+    public function build($target_tarball_path, Config\ItemInterface $AppConfig) {
         $this->carcass_dir = $this->checkoutCarcass();
         $this->app_dir = $this->checkoutApp();
         $this->injectCarcassToApp();
         $this->prepareEnv();
-        $this->fetchAppDependencies();
+        if ($AppConfig->has('dependencies') && count($AppConfig->dependencies)) {
+            $this->fetchAppDependencies();
+        }
         $this->cleanDotFiles();
         $this->archiveTo($target_tarball_path);
         return $this->app_rev_ts;
