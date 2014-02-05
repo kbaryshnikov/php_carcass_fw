@@ -81,6 +81,7 @@ class Deployer {
     protected function buildInstallShellLine(Corelib\Hash $server, $revision) {
         $target_dir = $server->target_path . '/' . $revision;
         $target_dir_e = escapeshellarg($target_dir);
+        $target_path_e = escapeshellarg($server->target_path);
         $pre_commands = [
             "test ! -d $target_dir_e || (echo Directory already exists: $target_dir_e && false)",
             "mkdir -p $target_dir_e || (echo Failed to created directory $target_dir_e && false)",
@@ -110,7 +111,13 @@ class Deployer {
         $pre_cmd = '(' . $this->joinCommands($pre_commands) . ')';
         $cmd = $this->joinCommands($commands);
         if ($this->Config->getPath('clean_on_error')) {
-            $cmd = "( $cmd ) || ( cd / && rm -rf $target_dir_e )";
+            $cd_upper = "cd $target_path_e && ";
+            $clean_cmds = ["$cd_upper rm -rf $target_dir_e"];
+            foreach ($this->Config->exportArrayFrom('post_clean_on_error') as $clean_cmd) {
+                $clean_cmds[] = "$cd_upper ( $clean_cmd )) || (echo post_clean_on_error command at offset $idx failed && false";
+            }
+            $clean_cmd = $this->joinCommands($clean_cmds);
+            $cmd = "( $cmd ) || ( $clean_cmd )";
         }
         $result = "( $pre_cmd ) && ( $cmd )";
         return $result;
