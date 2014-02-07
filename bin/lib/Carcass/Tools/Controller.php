@@ -26,10 +26,10 @@ class Controller extends Application\Controller {
         ], $method . ' arguments:'))->displayTo($this->Response);
     }
 
-    protected function getAppConfig(&$app_root = null, array $env_override = []) {
+    protected function getAppConfig(&$app_root = null, array & $env_override = []) {
         $app_root = rtrim($app_root ? : getcwd(), '/') . '/';
 
-        $AppEnv = new Corelib\Hash($env_override
+        $AppEnv = new Corelib\Hash($env_override = $env_override
             + (array)(include "{$app_root}env.php")
             + (array)(include "{$app_root}etc.php")
         );

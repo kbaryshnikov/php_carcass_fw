@@ -22,6 +22,9 @@ class BuildNginxConfigScript extends Controller {
         try {
             $vars             = $this->buildVars($Config);
             $vars['app_root'] = rtrim($app_root, '/');
+            if (isset($env_override['configuration_name'])) {
+                $vars['configuration_name'] = $env_override['configuration_name'];
+            }
         } catch (\Exception $e) {
             $this->Response->writeLn("Configuration failure: " . $e->getMessage());
             return 1;
@@ -66,7 +69,8 @@ class BuildNginxConfigScript extends Controller {
         }
 
         $vars = [
-            'app_name' => $Config->getPath('application.name')
+            'app_name' => $Config->getPath('application.name'),
+            'configuration_name' => $Config->getPath('CONFIGURATION_NAME'),
         ];
 
         foreach ($this->Request->Env->exportArray() as $k => $v) {
