@@ -33,6 +33,13 @@ trait HashTrait {
     }
 
     /**
+     * @return string
+     */
+    public function __toString() {
+        return get_class($this);
+    }
+
+    /**
      * @param array $clone_values
      * @return array
      */
