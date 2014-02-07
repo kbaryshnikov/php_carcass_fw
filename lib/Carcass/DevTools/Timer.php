@@ -17,6 +17,7 @@ use Carcass\Corelib;
 class Timer {
 
     protected $start_time = null;
+    protected $saved_start_time = null;
     protected $elapsed = null;
     protected $title;
 
@@ -24,7 +25,7 @@ class Timer {
      * @param string $title
      */
     public function __construct($title) {
-        $this->title = (string)$title;
+        $this->changeTitle($title);
     }
 
     /**
@@ -32,6 +33,7 @@ class Timer {
      */
     public function start() {
         $this->start_time = Corelib\TimeTools::getMicrotime();
+        $this->saved_start_time = $this->start_time;
         $this->elapsed = null;
         return $this;
     }
@@ -99,7 +101,7 @@ class Timer {
      * @return mixed
      */
     public function getTitle() {
-        return $this->title;
+        return '{' . $this->saved_start_time . '} ' . $this->title;
     }
 
     /**

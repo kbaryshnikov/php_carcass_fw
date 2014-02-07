@@ -182,15 +182,20 @@ class MemcachedDispatcher extends BaseDispatcher {
                             $args[$this->last_insert_id_field_name] = $this->last_insert_id;
                         }
                     }
-                    if ($this->hasCacheKey()) {
-                        $this->getMct()->flush($args, [$this->key]);
-                    } else {
-                        $this->getMct()->flush($args);
-                    }
+                    $this->flushMemcachedTags($args);
                 }
                 return $affected_rows;
             }, $args, true, $finally_fn
         );
+    }
+
+    public function flushMemcachedTags(array $args) {
+        if ($this->hasCacheKey()) {
+            $this->getMct()->flush($args, [$this->key]);
+        } else {
+            $this->getMct()->flush($args);
+        }
+        return $this;
     }
 
     /**

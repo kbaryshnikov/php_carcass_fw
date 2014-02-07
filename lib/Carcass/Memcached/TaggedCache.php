@@ -224,9 +224,11 @@ class TaggedCache {
      */
     public function flushTags(array $tags, array $args) {
         foreach ($tags as $tag) {
-            $tag_key_template = $this->buildTagKeyTemplate($tag);
-            $TagKey = Key::create($tag_key_template, $this->key_options);
-            $TagKey and $this->getConnection()->delete($TagKey($args));
+            $TagKey = Key::create($tag, $this->key_options);
+            if ($TagKey) {
+                $tag = $this->buildTagKeyTemplate($TagKey($args));
+                $this->getConnection()->delete($tag);
+            }
         }
         return $this;
     }
