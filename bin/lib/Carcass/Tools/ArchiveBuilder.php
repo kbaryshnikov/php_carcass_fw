@@ -35,7 +35,9 @@ class ArchiveBuilder {
         if ($AppConfig->has('dependencies') && count($AppConfig->dependencies)) {
             $this->fetchAppDependencies();
         }
+        $this->runOnCheckout();
         $this->cleanDotFiles();
+        $this->cleanNoDeployDirs();
         $this->archiveTo($target_tarball_path);
         return $this->app_rev_ts;
     }
@@ -108,6 +110,31 @@ class ArchiveBuilder {
                 Fs\Directory::deleteRecursively($file);
             } else {
                 unlink($file);
+            }
+        }
+    }
+
+    protected function cleanNoDeployDirs() {
+        $no_deploy_dirs = $this->Config->exportArrayFrom('no_deploy_dirs', []);
+        if (!$no_deploy_dirs) {
+            return;
+        }
+        foreach ($no_deploy_dirs as $dir) {
+            Fs\Directory::deleteRecursively($this->app_dir . '/' . $dir);
+        }
+    }
+
+    protected function runOnCheckout() {
+        $cmds = $this->Config->exportArrayFrom('run_after_checkout', []);
+        foreach ($cmds as $cmd) {
+            $cmd = (array)$cmd;
+            $command = reset($cmd);
+            $args = next($cmd) ? : '';
+            $ShellCmd = new ShellCommand($command, $args);
+            $ShellCmd->setCwd($this->app_dir);
+            $ShellCmd->execute($stdout, $stderr);
+            if ($stderr) {
+                throw new \RuntimeException($command . ' ' . $stderr);
             }
         }
     }
