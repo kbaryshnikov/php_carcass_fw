@@ -106,8 +106,8 @@ class BuildNginxConfigScript extends Controller {
         }
 
         if ($Server->has('realip')) {
-            $vars['realip_header'] = $Server->get('realip.header');
-            $vars['realip_from']   = static::assocToValArray($Server->get('realip.from'));
+            $vars['realip_header'] = $Server->realip->get('header');
+            $vars['realip_from']   = static::assocToValArray($Server->realip->get('from'));
         }
 
         foreach ($Config->exportArrayFrom('web') as $k => $v) {
