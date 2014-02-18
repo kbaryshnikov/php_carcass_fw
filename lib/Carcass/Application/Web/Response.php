@@ -174,6 +174,7 @@ class Web_Response extends Corelib\Response {
             $this->rollback();
         }
         $this->setStatus($status);
+        $this->sendHeaders();
         $this->write($this->formatHttpError($title, $message));
         return $this;
     }
