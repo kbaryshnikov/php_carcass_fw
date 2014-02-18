@@ -12,14 +12,23 @@ class Fetcher_Hg extends Fetcher {
 
     protected $hg_bin = 'hg';
 
-    public function execCheckout() {
+    public function execCheckout($full = false) {
+        $extra_args = [];
+        if ($full) {
+            if ($this->branch) {
+                $extra_args['branch'] = $this->branch;
+            }
+            if ($this->revision) {
+                $extra_args['revision'] = $this->revision;
+            }
+        }
         return $this->exec(
             $this->hg_bin,
-            'clone {{ source }} {{ target }}',
+            'clone {{ IF branch }}-b {{ branch }} {{ END }}{{ IF revision }}-r {{ revision }} {{ END }}{{ source }} {{ target }}',
             [
                 'source' => $this->repository_url,
                 'target' => $this->local_root,
-            ]
+            ] + $extra_args
         ) and $this->execHgUp();
     }
 

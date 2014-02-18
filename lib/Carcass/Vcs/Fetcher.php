@@ -88,7 +88,7 @@ abstract class Fetcher {
         $this->branch = (string)$branch ? : null;
     }
 
-    public function fetch($allow_delete = false) {
+    public function fetch($allow_delete = false, $full_checkout = false) {
         if ($this->directoryExists($this->local_root)) {
             if ($this->doesSavedConfigurationMatchCurrent()) {
                 return $this->update();
@@ -99,12 +99,12 @@ abstract class Fetcher {
             }
             Directory::deleteRecursively($this->local_root);
         }
-        return $this->checkout()->update();
+        return $this->checkout($full_checkout)->update();
     }
 
-    public function checkout() {
+    public function checkout($full = false) {
         $this->ensureIsReadyForCheckout();
-        $this->execCheckout();
+        $this->execCheckout($full);
         $this->writeCheckoutConfigFile();
         return $this;
     }
@@ -120,7 +120,7 @@ abstract class Fetcher {
         return $this;
     }
 
-    abstract public function execCheckout();
+    abstract public function execCheckout($full = false);
 
     abstract public function execUpdate();
 

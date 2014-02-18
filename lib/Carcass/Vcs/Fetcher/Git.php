@@ -8,11 +8,50 @@
 
 namespace Carcass\Vcs;
 
+use Carcass\Fs;
+
 class Fetcher_Git extends Fetcher {
 
     protected $git_bin = 'git';
 
-    public function execCheckout() {
+    public function execCheckout($full = false) {
+        if ($full) {
+            $this->checkoutFull();
+        } else {
+            $this->checkoutPartial();
+        }
+    }
+
+    protected function checkoutPartial() {
+        Fs\Directory::mkdirIfNotExists($this->local_root);
+        return $this->exec(
+            $this->git_bin,
+            'init',
+            [],
+            $this->local_root
+        ) && $this->exec(
+            $this->git_bin,
+            'remote add origin {{ source }}',
+            [
+                'source' => $this->repository_url,
+            ],
+            $this->local_root
+        ) && $this->exec(
+            $this->git_bin,
+            'fetch --depth 1 origin {{ origin }}',
+            [
+                'origin' =>  $this->revision ? : $this->branch ? : 'HEAD'
+            ],
+            $this->local_root
+        ) && $this->exec(
+            $this->git_bin,
+            'reset --hard FETCH_HEAD',
+            [],
+            $this->local_root
+        );
+    }
+
+    protected function checkoutFull() {
         return $this->exec(
             $this->git_bin,
             'clone {{ IF branch }}-b {{ branch }} {{ END }}{{ source }} {{ target }}',

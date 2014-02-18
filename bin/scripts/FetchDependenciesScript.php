@@ -16,6 +16,7 @@ class FetchDependenciesScript extends Controller {
     protected $vcs_clone_dir;
     protected $quiet = false;
     protected $force = false;
+    protected $full = false;
     protected $copy_mode = false;
     protected $remove_vcs_subdir_after_copy = false;
 
@@ -46,6 +47,7 @@ class FetchDependenciesScript extends Controller {
         $this->quiet = $Args->get('q');
         $this->force = $Args->get('f');
         $this->copy_mode = $Args->get('c');
+        $this->full = $Args->get('F');
 
         foreach ($libs as $name => $config) {
             if (!empty($config['source']) && !$this->isLocal($config['source'])) {
@@ -71,7 +73,7 @@ class FetchDependenciesScript extends Controller {
 
         Vcs\Fetcher::factoryFromArray($config['source'], $clone_target)
             ->beVerbose(!$this->quiet)
-            ->fetch($this->force);
+            ->fetch($this->force, $this->full);
 
         $subdir = isset($config['source']['subdirectory']) ? trim($config['source']['subdirectory'], '/') : '';
 
