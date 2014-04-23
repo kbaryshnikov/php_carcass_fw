@@ -128,7 +128,7 @@ class DeployScript extends Controller {
         switch ($action) {
             case 'default':
                 $this->Response->writeln("Actions:");
-                $this->Response->writeLn("  archive                      \t - build the distribution tarball archive");
+                $this->Response->writeLn("  archive <configuration_name> \t - build the distribution tarball archive");
                 $this->Response->writeLn("  put     <configuration_name> \t - deploy the distribution tarball onto <configuration_name> server(s)");
                 $this->Response->writeLn("  default <configuration_name> \t - build and deploy the distribution tarball onto <configuration_name> server(s)\n");
                 $args = $build_args + $put_args;
