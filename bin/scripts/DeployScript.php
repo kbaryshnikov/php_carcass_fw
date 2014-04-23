@@ -29,6 +29,9 @@ class DeployScript extends Controller {
     }
 
     public function actionArchive(Corelib\Hash $Args) {
+        if (!$this->loadAppConfig($Args)) {
+            return 1;
+        }
         $archive_file = $this->buildDistArchive($Args);
         if (!$archive_file) {
             return 1;
