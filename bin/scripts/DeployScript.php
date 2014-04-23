@@ -12,15 +12,13 @@ class DeployScript extends Controller {
     /**
      * @var Config\Item
      */
-    protected $AppConfig;
+    protected $AppConfig = null;
     protected $app_root = null;
 
-    protected function init() {
-        parent::init();
-        $this->AppConfig = $this->getAppConfig($this->app_root);
-    }
-
     public function actionDefault(Corelib\Hash $Args) {
+        if (!$this->loadAppConfig($Args)) {
+            return 1;
+        }
         $archive_file = $this->buildDistArchive($Args);
         if (!$archive_file) {
             return 1;
@@ -41,7 +39,23 @@ class DeployScript extends Controller {
     }
 
     public function actionPut(Corelib\Hash $Args) {
+        if (!$this->loadAppConfig($Args)) {
+            return 1;
+        }
         return $this->deployDistArchive($Args);
+    }
+
+    protected function loadAppConfig(Corelib\Hash $Args) {
+        if (null === $this->AppConfig) {
+            $configuration_name = $Args->get(1);
+            if (!$configuration_name) {
+                $this->Response->writeErrorLn("No configuration name given. Use -h for help");
+                return false;
+            }
+            $env_override = compact('configuration_name');
+            $this->AppConfig = $this->getAppConfig($this->app_root, $env_override);
+        }
+        return true;
     }
 
     protected function buildDistArchive(Corelib\Hash $Args) {
@@ -111,9 +125,9 @@ class DeployScript extends Controller {
         switch ($action) {
             case 'default':
                 $this->Response->writeln("Actions:");
-                $this->Response->writeLn("  archive \t - build the distribution tarball archive");
-                $this->Response->writeLn("  put     \t - deploy the distribution tarball onto server(s)");
-                $this->Response->writeLn("  default \t - build and deploy the distribution tarball onto server(s)\n");
+                $this->Response->writeLn("  archive                      \t - build the distribution tarball archive");
+                $this->Response->writeLn("  put     <configuration_name> \t - deploy the distribution tarball onto <configuration_name> server(s)");
+                $this->Response->writeLn("  default <configuration_name> \t - build and deploy the distribution tarball onto <configuration_name> server(s)\n");
                 $args = $build_args + $put_args;
                 unset($args['r']);
                 return $args;

@@ -26,6 +26,9 @@ class Deployer {
         if ($revision < 1) {
             throw new \LogicException("Bad revision number: [$revision]");
         }
+        if (!$this->Config->has('servers')) {
+            throw new \LogicException("No servers configured in deploy configuration");
+        }
         $servers = $this->Config->exportHashFrom('servers');
         if ($only_to_servers) {
             $servers = $servers->exportFilteredHash($only_to_servers);
@@ -113,7 +116,7 @@ class Deployer {
         if ($this->Config->getPath('clean_on_error')) {
             $cd_upper = "cd $target_path_e && ";
             $clean_cmds = ["$cd_upper rm -rf $target_dir_e"];
-            foreach ($this->Config->exportArrayFrom('post_clean_on_error') as $clean_cmd) {
+            foreach ($this->Config->exportArrayFrom('post_clean_on_error') as $idx => $clean_cmd) {
                 $clean_cmds[] = "$cd_upper ( $clean_cmd )) || (echo post_clean_on_error command at offset $idx failed && false";
             }
             $clean_cmd = $this->joinCommands($clean_cmds);
