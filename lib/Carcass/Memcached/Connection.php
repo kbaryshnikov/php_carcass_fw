@@ -65,7 +65,7 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
         'getExtendedStats' => false,
     ];
 
-    protected static $hit_miss_methods = [
+    protected static $fetch_methods = [
         'get' => true
     ];
 
@@ -243,20 +243,30 @@ class Connection implements PoolConnectionInterface, TransactionalConnectionInte
             $this->triggerScheduledTransaction();
         }
 
-        if (!$no_delay && $this->delay_mode && true == static::$mc_methods[$method]) {
-            $delayed_call = [$method, $args, $is_required];
-            $this->delayed_calls = array_filter(
-                $this->delayed_calls, function ($value) use ($delayed_call) {
-                    return $value != $delayed_call;
+        $is_fetch_method = isset(static::$fetch_methods[$method]);
+
+        if (!$no_delay && $this->delay_mode) {
+            if (true == static::$mc_methods[$method]) {
+                $delayed_call = [$method, $args, $is_required];
+                $this->delayed_calls = array_filter(
+                    $this->delayed_calls, function ($value) use ($delayed_call) {
+                        return $value != $delayed_call;
+                    }
+                );
+                $this->delayed_calls[] = $delayed_call;
+                return true;
+            } elseif ($is_fetch_method && count($this->delayed_calls) > 0) {
+                if (isset($args[0]) && is_array($args[0])) {
+                    return [];
+                } else {
+                    return false;
                 }
-            );
-            $this->delayed_calls[] = $delayed_call;
-            return true;
+            }
         }
 
         $MemcachedInstance = $this->getMemcachedInstance();
 
-        $get_hit_miss = isset(static::$hit_miss_methods[$method]) && !empty($args[0]);
+        $get_hit_miss = $is_fetch_method && !empty($args[0]);
 
         $result = $this->develCollectExecutionTime(
             function () use ($method, $args) {
