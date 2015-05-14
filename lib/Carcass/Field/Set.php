@@ -222,8 +222,8 @@ class Set extends Corelib\Hash implements FieldInterface {
         if (null === $Field) {
             if ($this->is_dynamic) {
                 $Field = $this->autoCreateField($name);
-            //}elseif ($throw_exception_on_missing_field) {
-            //throw new \InvalidArgumentException("No '$name' field is registered");
+            } elseif ($throw_exception_on_missing_field) {
+                throw new \InvalidArgumentException("No '$name' field is registered");
             } else {
                 return null;
             }
