@@ -66,6 +66,18 @@ class Result implements ResultInterface {
     }
 
     /**
+     * Assigns raw value, without any post-processing.
+     *
+     * @param string $key
+     * @param mixed $value
+     * @return $this
+     */
+    public function assignRaw($key, $value) {
+        $this->values[$key] = $value;
+        return $this;
+    }
+
+    /**
      * Fetches array. Passes RenderableObjects and nested results recursively.
      * @throws \Exception
      * @return array
