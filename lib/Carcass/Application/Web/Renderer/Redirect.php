@@ -29,7 +29,7 @@ class Web_Renderer_Redirect extends Web_Renderer_Base {
 
     protected function sendHeaders(Web_Response $Response) {
         parent::sendHeaders($Response);
-        $Response->sendRedirect($this->url);
+        $Response->sendRedirect($this->url, $this->status);
     }
 
     protected function doRender(array $render_data) {
