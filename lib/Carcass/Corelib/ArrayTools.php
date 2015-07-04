@@ -64,7 +64,10 @@ class ArrayTools {
      * @return void
      */
     public static function mergeInto(array &$a1, $a2, array $unset_values = [], $replace = false) {
-        $a2 = static::traversableToArray($a2);
+        if (!count($a1) && !count($unset_values)) {
+            $a1 = $a2;
+            return;
+        }
         foreach ($a2 as $k => $v) {
             if (count($unset_values) && in_array($v, $unset_values, true)) {
                 unset($a1[$k]);
@@ -73,7 +76,7 @@ class ArrayTools {
             if (!array_key_exists($k, $a1)) {
                 $a1[$k] = $v;
             } else {
-                if (is_array($a2[$k]) && is_array($a1[$k])) {
+                if (is_array($a2[$k]) && static::isTraversable($a1[$k])) {
                     self::mergeInto($a1[$k], $a2[$k], $unset_values, $replace);
                 } else {
                     if ($replace) {
