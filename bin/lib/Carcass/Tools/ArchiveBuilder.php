@@ -18,13 +18,17 @@ class ArchiveBuilder {
     protected $app_rev_ts;
     protected $app_dir;
     protected $clean_on_destruct = false;
+    protected $deploy_overrides = [];
 
-    public function __construct(Corelib\ResponseInterface $Response, Config\ItemInterface $Config, $tmp_dir = null, $clean_on_destruct = false) {
+    public function __construct(Corelib\ResponseInterface $Response, Config\ItemInterface $Config, $tmp_dir = null, $clean_on_destruct = false, array $deploy_overrides = null) {
         $this->Response = $Response;
         $this->Config = $Config;
         $this->co_dir = $this->prepareCoDir($tmp_dir ? : sys_get_temp_dir());
         $this->clean_on_destruct = $clean_on_destruct;
         $this->has_carcass = $Config->get('source')->has('carcass');
+        if ($deploy_overrides) {
+            $this->deploy_overrides = $deploy_overrides;
+        }
     }
 
     public function build($target_tarball_path, Config\ItemInterface $AppConfig) {
@@ -61,7 +65,7 @@ class ArchiveBuilder {
     }
 
     protected function checkoutApp() {
-        return $this->doCheckout($this->Config->exportArrayFrom('source.app'), 'app', $this->app_rev_ts);
+        return $this->doCheckout($this->deploy_overrides + $this->Config->exportArrayFrom('source.app'), 'app', $this->app_rev_ts);
     }
 
     protected function injectCarcassToApp() {
