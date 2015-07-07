@@ -218,12 +218,13 @@ class HandlerSocket_Connection implements ConnectionInterface {
                 if ($this->Dsn->has('socket')) {
                     $socket = fsockopen('unix://' . $this->Dsn->socket, null, $errno, $errstr);
                 } else {
+                    $conn_timeout = $this->getConnTimeout();
                     $socket = fsockopen(
                         $this->Dsn->get('hostname') ? : 'localhost',
                         $this->Dsn->get('port') ? : static::DEFAULT_PORT,
                         $errno,
                         $errstr,
-                        static::CONN_TIMEOUT
+                        $conn_timeout
                     );
                 }
                 if (!$socket) {
@@ -232,7 +233,17 @@ class HandlerSocket_Connection implements ConnectionInterface {
                 return $socket;
             }
         );
-        stream_set_timeout($this->socket, static::SOCK_TIMEOUT, static::SOCK_TIMEOUT_MS);
+        $this->setSockTimeout();
+    }
+
+    protected function getConnTimeout() {
+        return $this->Dsn->args->get('conn_timeout', self::CONN_TIMEOUT);
+    }
+
+    protected function setSockTimeout() {
+        $sock_timeout = $this->Dsn->args->get('sock_timeout', self::SOCK_TIMEOUT);
+        $sock_timeout_ms = $this->Dsn->args->get('sock_timeout_ms', self::SOCK_TIMEOUT_MS);
+        stream_set_timeout($this->socket, $sock_timeout, $sock_timeout_ms);
     }
 
     protected function develGetTimerGroup() {
