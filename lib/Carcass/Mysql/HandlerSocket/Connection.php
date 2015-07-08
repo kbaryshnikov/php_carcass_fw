@@ -76,10 +76,12 @@ class HandlerSocket_Connection implements ConnectionInterface {
         return $this;
     }
 
-    public function disconnect() {
+    public function disconnect($for_reconnect = false) {
         if ($this->socket !== null) {
-            fclose($this->socket);
-            $this->next_dbname = null;
+            @fclose($this->socket);
+            if (!$for_reconnect) {
+                $this->next_dbname = null;
+            }
             $this->indexes = [];
             $this->socket = null;
         }
@@ -136,44 +138,75 @@ class HandlerSocket_Connection implements ConnectionInterface {
     /**
      * @param array $tokens
      * @param HandlerSocket_Index $Index
-     * @return array|bool
+     * @param int $max_attempts_on_error
      * @throws \LogicException
      * @throws \RuntimeException
+     * @internal param int $max_attempts
+     * @return array|bool
      */
-    public function query(array $tokens, $Index = null) {
-        if ($Index) {
-            $this->ensureIndexIsOpened($Index);
-        }
-        $query = join("\t", $tokens);
-        $h = $this->h();
-        $raw_response = null;
-        $result = $this->develCollectExecutionTime(
-            $query,
-            function () use ($h, $query, &$raw_response) {
-                fwrite($h, $query . "\n");
-                $result = array_map(
-                    function ($value) {
-                        if ($value === "\x00") {
-                            return null;
-                        }
-                        return preg_replace_callback(
-                            "/\x01(.)/",
-                            function ($match) {
-                                return chr(ord($match[1]) - 0x40);
-                            },
-                            $value
-                        );
-                    },
-                    explode("\t", rtrim($raw_response = fgets($h), "\r\n"))
-                );
-                return $result;
-            },
-            function () use (&$raw_response) {
-                return " => '{$raw_response}'";
+    public function query(array $tokens, $Index = null, $max_attempts_on_error = 10) {
+        $attempts = 0;
+        $error = null;
+        do {
+            if ($error) {
+                $this->disconnect(true);
             }
-        );
+            if ($Index) {
+                $this->ensureIndexIsOpened($Index);
+            }
+            $query = join("\t", $tokens);
+            $h = $this->h();
+            $raw_response = null;
+            $error = null;
+            $result = $this->develCollectExecutionTime(
+                $query,
+                function () use ($h, $query, &$raw_response, &$error) {
+                    $hs_line = $query . "\n";
+                    $hs_line_len = strlen($hs_line);
+                    $bytes_written = fwrite($h, $hs_line);
+                    $hs_response = null;
+                    $result = null;
+                    if (false === $bytes_written || $hs_line_len != $bytes_written) {
+                        $error = 'Write failed';
+                    }
+                    $hs_response = stream_get_line($h, 1048576, "\n");
+                    if ($hs_response === "" || $hs_response === false) {
+                        $error = 'Read failed';
+                    } else {
+                        $result = array_map(
+                            function ($value) {
+                                if ($value === "\x00") {
+                                    return null;
+                                }
+                                return preg_replace_callback(
+                                    "/\x01(.)/",
+                                    function ($match) {
+                                        return chr(ord($match[1]) - 0x40);
+                                    },
+                                    $value
+                                );
+                            },
+                            explode("\t", rtrim($hs_response, "\n"))
+                        );
+                        if (isset($result[0]) && $result[0] == 1 && isset($result[2]) && $result[2] === 'lock_tables') {
+                            $result = null;
+                            $error = 'Table is locked';
+                            usleep(10);
+                        }
+                    }
+                    return $result;
+                },
+                function () use (&$raw_response, $error) {
+                    return " => '{$raw_response}'" . ($error ? " [!] $error" : '');
+                }
+            );
+        } while ($error && $attempts++ < $max_attempts_on_error);
         if (!is_array($result) || !isset($result[0])) {
-            throw new \LogicException("Malformed HandlerSocket response: " . $raw_response);
+            if ($error) {
+                throw new \LogicException("HandlerSocket error: " . $error);
+            } else {
+                throw new \LogicException("Malformed HandlerSocket response: " . $raw_response);
+            }
         }
         if (empty($result[0])) {
             $this->last_error = null;
@@ -182,7 +215,7 @@ class HandlerSocket_Connection implements ConnectionInterface {
             $this->last_error = $result;
             if ($this->exception_on_errors) {
                 throw new \RuntimeException("Query [" . join(' ', $tokens) . "] failed: ["
-                . join(" ", $this->last_error) . "]");
+                    . join(" ", $this->last_error) . "]");
             }
             return false;
         }
