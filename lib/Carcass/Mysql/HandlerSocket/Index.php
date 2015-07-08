@@ -67,7 +67,10 @@ class HandlerSocket_Index {
      */
     public function connect() {
         if (!$this->Connection->query($this->index_connect_cmd)) {
-            throw new \RuntimeException("Could not query index {$this->index_id}, command: '" . join("\t", $this->index_connect_cmd) . "'");
+            throw new \RuntimeException(
+                "Could not query index {$this->index_id}, command: '" . join("\t", $this->index_connect_cmd) . "', last HS error: "
+                . $this->Connection->getLastError()
+            );
         }
     }
 
