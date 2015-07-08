@@ -168,30 +168,31 @@ class HandlerSocket_Connection implements ConnectionInterface {
                     $result = null;
                     if (false === $bytes_written || $hs_line_len != $bytes_written) {
                         $error = 'Write failed';
-                    }
-                    $hs_response = stream_get_line($h, 1048576, "\n");
-                    if ($hs_response === "" || $hs_response === false) {
-                        $error = 'Read failed';
                     } else {
-                        $result = array_map(
-                            function ($value) {
-                                if ($value === "\x00") {
-                                    return null;
-                                }
-                                return preg_replace_callback(
-                                    "/\x01(.)/",
-                                    function ($match) {
-                                        return chr(ord($match[1]) - 0x40);
-                                    },
-                                    $value
-                                );
-                            },
-                            explode("\t", rtrim($hs_response, "\n"))
-                        );
-                        if (isset($result[0]) && $result[0] == 1 && isset($result[2]) && $result[2] === 'lock_tables') {
-                            $result = null;
-                            $error = 'Table is locked';
-                            usleep(10);
+                        $hs_response = stream_get_line($h, 1048576, "\n");
+                        if ($hs_response === "" || $hs_response === false) {
+                            $error = 'Read failed';
+                        } else {
+                            $result = array_map(
+                                function ($value) {
+                                    if ($value === "\x00") {
+                                        return null;
+                                    }
+                                    return preg_replace_callback(
+                                        "/\x01(.)/",
+                                        function ($match) {
+                                            return chr(ord($match[1]) - 0x40);
+                                        },
+                                        $value
+                                    );
+                                },
+                                explode("\t", rtrim($hs_response, "\n"))
+                            );
+                            if (isset($result[0]) && $result[0] == 1 && isset($result[2]) && $result[2] === 'lock_tables') {
+                                $result = null;
+                                $error = 'Table is locked';
+                                usleep(10);
+                            }
                         }
                     }
                     return $result;
