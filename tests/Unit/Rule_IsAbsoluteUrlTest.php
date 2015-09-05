@@ -2,7 +2,7 @@
 
 use \Carcass\Rule\IsAbsoluteUrl;
 
-class Filter_UrlNormalizeTest extends PHPUnit_Framework_TestCase {
+class Filter_IsAbsoluteUrlTest extends PHPUnit_Framework_TestCase {
 
     public function testWellFormedPath() {
         $noUnescape = ['?', '#', '[', ']'];
