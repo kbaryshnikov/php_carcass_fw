@@ -5,9 +5,11 @@ use \Carcass\Rule\IsAbsoluteUrl;
 class Filter_IsAbsoluteUrlTest extends PHPUnit_Framework_TestCase {
 
     public function testWellFormedPath() {
-        $noUnescape = ['?', '#', '[', ']'];
+        $noUnescape = ['?', '#', '[', ']', "'", '+'];
         $unescape = [':', '/', '!', '$', '&', "'", '(', ')', '*', '+', ',', ';', '=', '~'];
-        $url = 'http://domain.tld/%2B' . join('', array_map('urlencode', $noUnescape)) . '-' . join('', array_map('urlencode', $unescape));
+        $url = 'http://domain.tld/%2B' . join('', $noUnescape) . '-' . join('', array_map('urlencode', $unescape));
+        $this->assertTrue((new IsAbsoluteUrl())->validate($url));
+        $url = 'http://plati.ru/itm/Plata+za+ljubov\'/1984697/';
         $this->assertTrue((new IsAbsoluteUrl())->validate($url));
     }
 
