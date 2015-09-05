@@ -25,7 +25,7 @@ class IsAbsoluteUrl extends Base {
      */
     public function validate($value) {
         return null === $value || preg_match(
-            '[^((https?):\/\/)?([a-z]([a-z0-9\-]*\.)+([a-z]{2,6}))(\/[a-z0-9_\-\.~+%]*)*(\?[a-z0-9+_\-\.%=\&:;,]*)?(#[a-z0-9_-]*)?$]i',
+            '[^((https?):\/\/)?(([a-z]|xn--)[a-z0-9\-]*\.)*([a-z]|xn--)([a-z0-9\-]+)(\/([a-z0-9_\-\.~+]|%[0-9a-f]{2})*)*(\?([a-z0-9+_\-\.=\&:;,]|%[0-9a-f])*)?(#.*)?$]i',
             $value
         );
     }
