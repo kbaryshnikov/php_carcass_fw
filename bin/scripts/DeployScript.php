@@ -140,7 +140,7 @@ class DeployScript extends Controller {
                 $only_to_servers = [];
             }
             $Deployer = new Deployer($this->AppConfig->deploy, $this->Response);
-            $Deployer->deploy($filename, $revno, $only_to_servers);
+            $Deployer->deploy($filename, $revno, $only_to_servers, $Args->get('keep'));
             return 0;
         } catch (\Exception $e) {
             $this->Response->writeErrorLn('ERROR: ' . $e->getMessage());
@@ -162,6 +162,7 @@ class DeployScript extends Controller {
             '-r=<rev>'                     => 'Revision number, default = autodetect by the distribution tarball filename',
             '-only=<server1[,server2...]>' => 'Deploy only to these server name(s), comma-separated',
             '-clean'                       => 'Delete the distribution tarball after successful deployment',
+            '-keep'                        => 'Keep deployed files on post_install failure and suppress post_clean_on_error commands. Overrides deploy.clean_on_error config',
         ];
         switch ($action) {
             case 'default':

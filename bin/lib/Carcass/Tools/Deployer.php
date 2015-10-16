@@ -10,13 +10,15 @@ class Deployer {
 
     protected $Config;
     protected $Response;
+    protected $keep = false;
 
     public function __construct(Config\ItemInterface $Config, Corelib\ResponseInterface $Response) {
         $this->Config = $Config;
         $this->Response = $Response;
     }
 
-    public function deploy($tarball, $revision, array $only_to_servers = null) {
+    public function deploy($tarball, $revision, array $only_to_servers = null, $keep = false) {
+        $this->keep = $keep;
         if (!file_exists($tarball)) {
             throw new \LogicException("File not found: $tarball");
         }
@@ -113,7 +115,7 @@ class Deployer {
         $commands[] = 'echo DEPLOYED OK';
         $pre_cmd = '(' . $this->joinCommands($pre_commands) . ')';
         $cmd = $this->joinCommands($commands);
-        if ($this->Config->getPath('clean_on_error')) {
+        if ($this->Config->getPath('clean_on_error') && !$this->keep) {
             $cd_upper = "cd $target_path_e && ";
             $clean_cmds = ["$cd_upper rm -rf $target_dir_e"];
             foreach ($this->Config->exportArrayFrom('post_clean_on_error') as $idx => $clean_cmd) {
